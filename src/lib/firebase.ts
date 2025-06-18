@@ -22,12 +22,18 @@ if (!getApps().length) {
       throw new Error("Failed to initialize Firebase with the provided configuration.");
     }
   } else {
-    const errorMessage = "Firebase config is missing. Ensure NEXT_PUBLIC_FIREBASE_ environment variables are set correctly and the server/build process has access to them.";
-    console.error(errorMessage); // This will log in server console
-    throw new Error(errorMessage); // This error is what the user is seeing
+    const errorMessage = "Firebase config is missing. CRITICAL: Ensure NEXT_PUBLIC_FIREBASE_ environment variables are set correctly in your .env file (at the project root) AND that the development server has been RESTARTED. Check your server startup logs for detailed messages from 'firebaseConfig.ts' about which variables are loaded or missing.";
+    // This explicit throw ensures the app doesn't proceed with a non-functional Firebase setup.
+    throw new Error(errorMessage); 
   }
 } else {
   app = getApp(); // Use the existing app
+  // Even if app exists, re-check if config was loaded for the current context (e.g. server vs client)
+  // This is a bit redundant due to the check above but ensures robustness.
+  if (!firebaseConfig.apiKey && typeof window === 'undefined') {
+     const errorMessage = "Firebase config is missing on server (existing app context). CRITICAL: Ensure NEXT_PUBLIC_FIREBASE_ environment variables are set correctly in your .env file (at the project root) AND that the development server has been RESTARTED. Check your server startup logs for detailed messages from 'firebaseConfig.ts'.";
+     throw new Error(errorMessage);
+  }
 }
 
 try {
@@ -35,8 +41,9 @@ try {
   dbInstance = getFirestore(app);
 } catch (error) {
   console.error("Error getting Firebase services (Auth/Firestore):", error);
-  console.error("This usually means the Firebase app object ('app') was not initialized correctly, possibly due to missing or invalid Firebase config.");
-  throw new Error("Failed to get Firebase services. Check Firebase initialization and configuration.");
+  console.error("This usually means the Firebase app object ('app') was not initialized correctly, possibly due to missing or invalid Firebase config. Check server logs for '[SERVER CRITICAL ERROR]' messages from firebaseConfig.ts.");
+  throw new Error("Failed to get Firebase services. Check Firebase initialization and configuration, and review server startup logs.");
 }
 
 export { app, authInstance as auth, dbInstance as db };
+
