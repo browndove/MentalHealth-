@@ -22,16 +22,20 @@ if (!getApps().length) {
       throw new Error("Failed to initialize Firebase with the provided configuration.");
     }
   } else {
-    const errorMessage = "Firebase config is missing. CRITICAL: Ensure NEXT_PUBLIC_FIREBASE_ environment variables are set correctly in your .env file (at the project root) AND that the development server has been RESTARTED. Check your server startup logs for detailed messages from 'firebaseConfig.ts' about which variables are loaded or missing.";
-    // This explicit throw ensures the app doesn't proceed with a non-functional Firebase setup.
-    throw new Error(errorMessage); 
+    const errorMessage = "Firebase config is missing. CRITICAL: Ensure NEXT_PUBLIC_FIREBASE_ environment variables are set correctly in your .env file (at the project root) AND that the Firebase Studio environment has been RESTARTED or UPDATED to load these variables. Check your SERVER STARTUP LOGS in Firebase Studio for detailed messages from 'firebaseConfig.ts' about which variables are loaded or missing.";
+    console.error("**************** Firebase Initialization Failure ****************");
+    console.error(errorMessage);
+    console.error("*****************************************************************");
+    throw new Error(errorMessage);
   }
 } else {
   app = getApp(); // Use the existing app
   // Even if app exists, re-check if config was loaded for the current context (e.g. server vs client)
-  // This is a bit redundant due to the check above but ensures robustness.
-  if (!firebaseConfig.apiKey && typeof window === 'undefined') {
-     const errorMessage = "Firebase config is missing on server (existing app context). CRITICAL: Ensure NEXT_PUBLIC_FIREBASE_ environment variables are set correctly in your .env file (at the project root) AND that the development server has been RESTARTED. Check your server startup logs for detailed messages from 'firebaseConfig.ts'.";
+  if (!firebaseConfig.apiKey && typeof window === 'undefined') { // Check only on server
+     const errorMessage = "Firebase config is missing on server (existing app context). CRITICAL: Ensure NEXT_PUBLIC_FIREBASE_ environment variables are set correctly in your .env file (at the project root) AND that the Firebase Studio server environment has been RESTARTED/UPDATED. Check your server startup logs in Firebase Studio for detailed messages from 'firebaseConfig.ts'.";
+     console.error("**************** Firebase Re-check Failure (Server) ****************");
+     console.error(errorMessage);
+     console.error("********************************************************************");
      throw new Error(errorMessage);
   }
 }
@@ -41,9 +45,9 @@ try {
   dbInstance = getFirestore(app);
 } catch (error) {
   console.error("Error getting Firebase services (Auth/Firestore):", error);
-  console.error("This usually means the Firebase app object ('app') was not initialized correctly, possibly due to missing or invalid Firebase config. Check server logs for '[SERVER CRITICAL ERROR]' messages from firebaseConfig.ts.");
-  throw new Error("Failed to get Firebase services. Check Firebase initialization and configuration, and review server startup logs.");
+  const detailMessage = "This usually means the Firebase app object ('app') was not initialized correctly, possibly due to missing or invalid Firebase config (API Key, etc.). Check server logs in Firebase Studio for '[SERVER CRITICAL ERROR]' or 'Firebase Initialization Failure' messages from firebaseConfig.ts or firebase.ts.";
+  console.error(detailMessage);
+  throw new Error(`Failed to get Firebase services. ${detailMessage}`);
 }
 
 export { app, authInstance as auth, dbInstance as db };
-
