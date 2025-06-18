@@ -24,7 +24,7 @@
     --muted: 40 30% 90%; /* Slightly darker beige for muted elements (e.g., #EDEAE4) */
     --muted-foreground: 30 10% 45%; /* Muted foreground text */
 
-    --accent: 180 40% 45%; /* Teal for alternate buttons (e.g., #4AA8A8) */
+    --accent: 180 40% 45%; /* Teal for alternate buttons (e.g., #4AA8A8) - This is our teal */
     --accent-foreground: 0 0% 100%; /* White text for on accent */
     
     --destructive: 0 70% 60%;
@@ -35,7 +35,7 @@
     --input-border: 40 20% 85%; /* Slightly darker border for inputs */
     --ring: 30 80% 65%; /* Muted Orange for focus rings */
 
-    --radius: 0.5rem; /* Default radius */
+    --radius: 0.75rem; /* Increased default radius for softer corners */
     
     /* Chart colors - can be adjusted */
     --chart-1: 30 80% 60%;
@@ -127,14 +127,15 @@
   }
 }
 
+/* Pill shaped buttons for general use */
 .btn-pill {
-    @apply rounded-full px-6 py-2 text-sm font-medium; /* Adjusted padding for typical pill */
+    @apply rounded-full px-6 py-2.5 text-sm font-medium; /* Adjusted padding for typical pill */
 }
-/* Card action buttons for "Visit Resource" type buttons, matching primary button style */
+/* Card action buttons to match primary button style (orange) */
 .btn-card-action {
     @apply bg-primary text-primary-foreground hover:bg-primary/90;
 }
+/* Card action buttons using the accent color (teal) */
 .btn-card-action-teal {
     @apply bg-accent text-accent-foreground hover:bg-accent/90;
 }
-

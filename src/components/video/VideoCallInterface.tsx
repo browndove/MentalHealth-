@@ -2,275 +2,334 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Video, Mic, PhoneOff, ScreenShare, MessageSquare, Users, Maximize, Minimize, VideoOff, MicOff, AlertTriangle, UserCircle } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Video, Mic, PhoneOff, ScreenShare, MessageSquare, User, MoreHorizontal, ChevronDown, Copy,
+  Settings2, Volume2, Maximize, VideoOff, MicOff, Users, Info, MessageCircle, Hand, ListVideo, SmilePlus, AlertTriangle
+} from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
+import { AppLogo } from '../layout/AppLogo'; // Using AppLogo for branding
+import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { ScrollArea } from '../ui/scroll-area'; // Added import
-import { Input } from '../ui/input'; // Added import
-import { XCircle } from 'lucide-react'; // Added for chat close
+import { useToast } from '@/hooks/use-toast';
 
-// Placeholder for participant data - simplified for this example
 interface Participant {
   id: string;
   name: string;
-  isLocal: boolean;
+  avatarUrl?: string;
   avatarFallback: string;
-  isRemoteVideoOff?: boolean; // For remote participant's video status (simulated)
+  isLocal?: boolean;
+  isMuted?: boolean;
+  isVideoOff?: boolean;
+  isSpeaking?: boolean;
 }
 
-const localUserPlaceholder: Participant = {
-  id: 'localUser',
-  name: 'You (Student/Counselor)',
-  isLocal: true,
-  avatarFallback: 'U',
-};
+const mockParticipants: Participant[] = [
+  { id: 'local', name: 'You (Counselor)', avatarFallback: 'U', isLocal: true, isMuted: false, isVideoOff: false },
+  { id: 'remote1', name: 'Akwasi Mensah (Student)', avatarFallback: 'AM', avatarUrl: 'https://placehold.co/200x200.png?text=Student', isMuted: true, isVideoOff: false, isSpeaking: true },
+  { id: 'remote2', name: 'Dr. Emily Carter (Observer)', avatarFallback: 'EC', avatarUrl: 'https://placehold.co/200x200.png?text=Observer', isMuted: false, isVideoOff: true },
+];
 
-const remoteParticipantPlaceholder: Participant = {
-  id: 'remoteUser',
-  name: 'Participant Name', // This would be dynamic
-  isLocal: false,
-  avatarFallback: 'P',
-  isRemoteVideoOff: false, // Simulate remote video is on by default
-};
+const mockTranscript = [
+    { id: 't1', name: 'Akwasi Mensah', time: '10:15 AM', text: "Good morning, counselor. Thanks for meeting with me. I've been feeling quite overwhelmed with my coursework lately." },
+    { id: 't2', name: 'You (Counselor)', time: '10:16 AM', text: "Good morning, Akwasi. I'm here to help. Can you tell me a bit more about what's been feeling overwhelming?" },
+    { id: 't3', name: 'Akwasi Mensah', time: '10:17 AM', text: "It's mainly the volume of assignments and the upcoming exams. I feel like I can't keep up, and it's affecting my sleep." },
+    { id: 't4', name: 'You (Counselor)', time: '10:18 AM', text: "That sounds really tough. It's common for students to feel this way. Let's explore some strategies to manage this workload and stress." },
+];
+
 
 export function VideoCallInterface() {
+  const [participants, setParticipants] = useState<Participant[]>(mockParticipants);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
-  
-  const [isMicMuted, setIsMicMuted] = useState(false);
+  const { toast } = useToast();
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+
+
+  const [isChatPanelOpen, setIsChatPanelOpen] = useState(true); // Transcript panel is open by default as in image
+  const [currentDate] = useState(new Date());
+
+  // Local media states
+  const [isLocalMicMuted, setIsLocalMicMuted] = useState(false);
   const [isLocalVideoOff, setIsLocalVideoOff] = useState(false);
-  
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(false);
-  const [callDuration, setCallDuration] = useState(0);
-  const [permissionsError, setPermissionsError] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCallDuration(prev => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    async function setupLocalMedia() {
+    const getCameraPermission = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        setHasCameraPermission(true);
         setLocalStream(stream);
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
-        setPermissionsError(null);
-      } catch (err) {
-        console.error("Error accessing media devices.", err);
-        let message = "An unknown error occurred while accessing media devices.";
-        if (err instanceof Error) {
-          if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-            message = "Camera and microphone access denied. Please enable permissions in your browser settings and refresh the page.";
-          } else {
-            message = `Error accessing media devices: ${err.message}. Check console for details.`;
-          }
-        }
-        setPermissionsError(message);
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings to use video call features.',
+        });
       }
-    }
-    setupLocalMedia();
+    };
 
+    getCameraPermission();
+    
     return () => {
       localStream?.getTracks().forEach(track => track.stop());
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const formatDuration = (seconds: number) => {
-    const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-    const s = (seconds % 60).toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
-  };
 
-  const toggleMute = () => {
+  const toggleLocalMute = () => {
     if (localStream) {
       localStream.getAudioTracks().forEach(track => {
         track.enabled = !track.enabled;
       });
-      setIsMicMuted(prev => !prev);
+      setIsLocalMicMuted(prev => !prev);
+      setParticipants(prev => prev.map(p => p.isLocal ? {...p, isMuted: !p.isMuted} : p));
     }
   };
 
-  const toggleVideo = () => {
+  const toggleLocalVideo = () => {
     if (localStream) {
       localStream.getVideoTracks().forEach(track => {
         track.enabled = !track.enabled;
       });
       setIsLocalVideoOff(prev => !prev);
+       setParticipants(prev => prev.map(p => p.isLocal ? {...p, isVideoOff: !p.isVideoOff} : p));
     }
   };
-  
-  const toggleScreenShare = () => setIsScreenSharing(!isScreenSharing); // Placeholder
-  const toggleChat = () => setIsChatOpen(!isChatOpen);
-  
-  const toggleFullScreen = () => {
-    if (!document.fullscreenElement && !isFullScreen) {
-      document.documentElement.requestFullscreen().then(() => setIsFullScreen(true)).catch(err => console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`));
-    } else if (document.exitFullscreen && isFullScreen) {
-      document.exitFullscreen().then(() => setIsFullScreen(false)).catch(err => console.error(`Error attempting to exit full-screen mode: ${err.message} (${err.name})`));
-    }
+
+  const handleLeaveCall = () => {
+    alert("Leave Call clicked (functionality not implemented). In a real app, this would disconnect from the session.");
+    localStream?.getTracks().forEach(track => track.stop());
+    // Add navigation logic here, e.g., router.push('/dashboard')
   };
-  
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullScreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
 
+  const ParticipantVideo = ({ participant }: { participant: Participant }) => {
+    const isLocalAndNoPermission = participant.isLocal && hasCameraPermission === false;
+    const showVideo = participant.isLocal ? localStream && !isLocalVideoOff && hasCameraPermission : !participant.isVideoOff;
 
-  const RemoteParticipantView = () => (
-    <div className="relative aspect-video bg-muted rounded-lg overflow-hidden shadow-inner w-full h-full">
-      {remoteParticipantPlaceholder.isRemoteVideoOff ? (
-        <div className="flex flex-col items-center justify-center h-full bg-foreground/10">
-          <Avatar className="w-24 h-24 text-4xl mb-2">
-            <AvatarFallback>{remoteParticipantPlaceholder.avatarFallback}</AvatarFallback>
-          </Avatar>
-          <p className="text-muted-foreground">{remoteParticipantPlaceholder.name}</p>
-          <VideoOff className="w-8 h-8 text-destructive mt-1" strokeWidth={1.5} />
-        </div>
-      ) : (
-        <Image src={`https://placehold.co/1280x720.png`} alt={`${remoteParticipantPlaceholder.name}'s video`} layout="fill" objectFit="cover" data-ai-hint="person webcam call" />
-      )}
-      <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded flex items-center">
-        {remoteParticipantPlaceholder.name}
-        {/* Simulate remote mute icon if needed: <MicOff className="inline w-3 h-3 text-yellow-400 ml-1" /> */}
-      </div>
-    </div>
-  );
-
-  const LocalParticipantView = () => (
-    <div className="relative aspect-video bg-muted rounded-lg overflow-hidden shadow-md w-full h-full">
-      {isLocalVideoOff || !localStream ? (
-        <div className="flex flex-col items-center justify-center h-full bg-foreground/10">
-          <Avatar className="w-16 h-16 text-2xl mb-1">
-            <AvatarFallback>{localUserPlaceholder.avatarFallback}</AvatarFallback>
-          </Avatar>
-          <p className="text-xs text-muted-foreground">{localUserPlaceholder.name}</p>
-          {!localStream && permissionsError ? null : <VideoOff className="w-5 h-5 text-destructive mt-0.5" strokeWidth={1.5} />}
-        </div>
-      ) : (
-        <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-      )}
-       <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded flex items-center">
-        {localUserPlaceholder.name} {isMicMuted && <MicOff className="inline w-3 h-3 text-yellow-400 ml-1" />}
-      </div>
-    </div>
-  );
-
-  return (
-    <Card className={`w-full mx-auto shadow-2xl flex flex-col ${isFullScreen ? 'fixed inset-0 z-[100] rounded-none border-0' : 'max-w-5xl h-[calc(100vh-100px)] max-h-[800px]'}`}>
-      <CardHeader className="flex flex-row items-center justify-between bg-card-foreground text-primary-foreground p-3 border-b">
-        <CardTitle className="text-lg font-semibold">Secure Video Session</CardTitle>
-        <div className="text-sm font-mono bg-black/30 px-2 py-1 rounded">{formatDuration(callDuration)}</div>
-      </CardHeader>
-
-      <CardContent className="flex-1 p-1 md:p-2 grid grid-rows-[1fr_auto] gap-2 overflow-auto bg-background/50 relative">
-        {permissionsError && (
-          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-20 p-4">
-            <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
-            <p className="text-destructive-foreground text-center font-semibold mb-2">Media Permissions Error</p>
-            <p className="text-muted-foreground text-center text-sm">{permissionsError}</p>
+    return (
+      <div className={cn(
+        "relative aspect-video bg-zinc-800 rounded-lg overflow-hidden shadow-md flex items-center justify-center group",
+        participant.isSpeaking && !participant.isLocal && "ring-2 ring-blue-500"
+      )}>
+        {showVideo && !isLocalAndNoPermission ? (
+          participant.isLocal && localStream ? (
+            <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+          ) : (
+            <Image src={participant.avatarUrl || `https://placehold.co/300x225.png`} data-ai-hint="person webcam image" alt={`${participant.name}'s video`} layout="fill" objectFit="cover" />
+          )
+        ) : (
+          <div className="flex flex-col items-center text-neutral-400">
+            <Avatar className="w-16 h-16 text-2xl mb-2">
+              <AvatarImage src={participant.avatarUrl} alt={participant.name} />
+              <AvatarFallback>{participant.avatarFallback}</AvatarFallback>
+            </Avatar>
+            {isLocalAndNoPermission ? <AlertTriangle className="w-6 h-6 text-destructive mt-1" /> : <VideoOff className="w-6 h-6 mt-1" />}
           </div>
         )}
-        
-        <div className="relative w-full h-full min-h-[200px]"> {/* Main video area */}
-          {isScreenSharing ? (
-            <div className="w-full h-full border-2 border-primary rounded-lg p-4 bg-muted flex flex-col items-center justify-center">
-                <ScreenShare size={64} className="text-primary/50 mb-4" />
-                <p className="text-center text-primary font-semibold">You are presenting your screen.</p>
-                <p className="text-xs text-muted-foreground mt-1">(This is a placeholder for actual screen content)</p>
+        <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5">
+          {participant.isMuted ? <MicOff size={12} className="text-yellow-400" /> : <Mic size={12} />}
+          {participant.name}
+        </div>
+      </div>
+    );
+  };
+  
+  const controlButtonClass = "bg-zinc-700 hover:bg-zinc-600 text-neutral-200 rounded-lg p-2.5 h-auto aspect-square flex flex-col items-center justify-center text-xs gap-1";
+  const destructiveButtonClass = "bg-red-600 hover:bg-red-700 text-white rounded-lg p-2.5 h-auto aspect-square flex flex-col items-center justify-center text-xs gap-1";
+
+
+  return (
+    <TooltipProvider>
+    <div className="h-screen w-screen flex flex-col bg-zinc-900 text-neutral-100 antialiased overflow-hidden">
+      {/* Top Header */}
+      <header className="px-4 py-2.5 flex items-center justify-between border-b border-zinc-700 shrink-0">
+        <div className="flex items-center gap-3">
+          <AppLogo /> {/* Using Mental Guide logo */}
+          <div className="h-6 w-px bg-zinc-700"></div>
+          <div>
+            <h1 className="text-md font-semibold">Counseling Session</h1>
+            <p className="text-xs text-neutral-400">
+              {currentDate.toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })} • {currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 text-sm">
+           <div className="flex items-center gap-2 text-neutral-300">
+             <Users size={16} />
+             <span>{participants.length} Participants</span>
+             <ChevronDown size={16} className="text-neutral-500" />
+           </div>
+           <div className="h-6 w-px bg-zinc-700"></div>
+           <Button variant="outline" size="sm" className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-neutral-300 text-xs h-8">
+             meet.mentalguide.app/session-link
+             <Copy size={14} className="ml-2 text-neutral-400" />
+           </Button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 flex overflow-hidden">
+        {/* Video Grid */}
+        <div className="flex-1 p-3 grid grid-cols-1 md:grid-cols-2 gap-3 auto-rows-fr overflow-y-auto">
+          {participants.map(p => <ParticipantVideo key={p.id} participant={p} />)}
+           {hasCameraPermission === false && (
+            <div className="md:col-span-2 flex flex-col items-center justify-center text-center p-4 bg-zinc-800 rounded-lg">
+              <AlertTriangle className="w-12 h-12 text-destructive mb-3" />
+              <h3 className="text-lg font-semibold text-neutral-100">Camera & Microphone Access Required</h3>
+              <p className="text-neutral-400 text-sm">
+                Mental Guide needs access to your camera and microphone for video calls. 
+                Please enable these permissions in your browser settings and refresh the page.
+              </p>
             </div>
-          ) : (
-             <RemoteParticipantView />
           )}
         </div>
-        
-        {/* Local Participant's Video (PIP style) */}
-        <div className={`absolute bottom-2 right-2 w-[120px] h-auto sm:w-[160px] md:w-[200px] z-10 transition-opacity duration-300 ${isScreenSharing ? 'opacity-50 hover:opacity-100' : 'opacity-100'}`}>
-            <LocalParticipantView />
-        </div>
-      </CardContent>
 
-      <CardFooter className="p-2 sm:p-3 border-t bg-card flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-3">
-        <div className="flex items-center gap-2 md:gap-3">
-            <Button variant={isMicMuted ? "destructive" : "outline"} size="icon" onClick={toggleMute} aria-label={isMicMuted ? "Unmute Microphone" : "Mute Microphone"} disabled={!localStream || !!permissionsError}>
-            {isMicMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-            </Button>
-            <Button variant={isLocalVideoOff ? "destructive" : "outline"} size="icon" onClick={toggleVideo} aria-label={isLocalVideoOff ? "Start Video" : "Stop Video"} disabled={!localStream || !!permissionsError}>
-            {isLocalVideoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
-            </Button>
-            <Button variant={isScreenSharing ? "secondary" : "outline"} size="icon" onClick={toggleScreenShare} aria-label={isScreenSharing ? "Stop Sharing Screen" : "Share Screen"} disabled={!!permissionsError}>
-            <ScreenShare className="h-5 w-5" />
-            </Button>
-        </div>
-        <Button variant="destructive" size="lg" className="px-4 sm:px-6 font-semibold my-2 sm:my-0 order-first sm:order-none" onClick={() => alert('Call Ended (Simulated)')}>
-          <PhoneOff className="h-5 w-5 mr-2" /> End Call
-        </Button>
-        <div className="flex items-center gap-2 md:gap-3">
-            <Button variant="outline" size="icon" onClick={toggleChat} aria-label="Toggle Chat Panel">
-            <MessageSquare className="h-5 w-5" />
-            </Button>
-            <Button variant="outline" size="icon" disabled aria-label="View Participants">
-            <Users className="h-5 w-5" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={toggleFullScreen} aria-label={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}>
-             {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-            </Button>
-        </div>
-      </CardFooter>
-
-      {/* Chat Panel */}
-      {isChatOpen && (
-        <div className={`absolute top-0 right-0 h-full w-full sm:w-72 md:w-80 bg-card shadow-xl border-l transform transition-transform duration-300 ease-in-out p-0 flex flex-col z-30 ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-            <div className="p-3 border-b flex justify-between items-center bg-card-foreground text-primary-foreground">
-                <h4 className="font-semibold text-md">Session Chat</h4>
-                <Button variant="ghost" size="icon" onClick={toggleChat} className="text-primary-foreground hover:bg-white/20">
-                    <XCircle className="h-5 w-5" />
-                    <span className="sr-only">Close chat</span>
-                </Button>
+        {/* Transcript Panel */}
+        {isChatPanelOpen && (
+          <aside className="w-[340px] bg-white text-zinc-900 flex flex-col border-l border-zinc-700 shrink-0">
+            <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
+              <h2 className="font-semibold text-md">Transcript</h2>
+              <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-zinc-800" onClick={() => setIsChatPanelOpen(false)}>
+                <Info size={18} />
+              </Button>
             </div>
-            <ScrollArea className="flex-1 p-3 space-y-3 bg-background/70">
-                {/* Example Chat Messages */}
-                <div className="flex items-start space-x-2">
-                    <Avatar className="w-8 h-8">
-                        <AvatarFallback><UserCircle size={18}/></AvatarFallback>
-                    </Avatar>
-                    <div className="bg-secondary p-2.5 rounded-lg rounded-tl-none shadow">
-                        <p className="text-xs font-semibold text-secondary-foreground">John Mensah</p>
-                        <p className="text-sm text-secondary-foreground">Hello! Just wanted to check in.</p>
-                        <p className="text-xs text-muted-foreground/80 mt-0.5 text-right">10:30 AM</p>
-                    </div>
+            <ScrollArea className="flex-1 p-4 space-y-4">
+              {mockTranscript.map(entry => (
+                <div key={entry.id}>
+                  <div className="flex justify-between items-center mb-0.5">
+                    <span className="text-xs font-semibold text-zinc-700">{entry.name}</span>
+                    <span className="text-xs text-zinc-400">{entry.time}</span>
+                  </div>
+                  <p className="text-sm text-zinc-600 leading-relaxed">{entry.text}</p>
                 </div>
-                 <div className="flex items-start space-x-2 justify-end">
-                     <div className="bg-primary p-2.5 rounded-lg rounded-tr-none shadow">
-                        <p className="text-xs font-semibold text-primary-foreground text-right">You</p>
-                        <p className="text-sm text-primary-foreground">Hi John, thanks for reaching out!</p>
-                        <p className="text-xs text-primary-foreground/80 mt-0.5 text-right">10:31 AM</p>
-                    </div>
-                    <Avatar className="w-8 h-8">
-                        <AvatarFallback className="bg-primary text-primary-foreground">{localUserPlaceholder.avatarFallback}</AvatarFallback>
-                    </Avatar>
-                </div>
-                 <p className="text-xs text-muted-foreground text-center py-2">Chat functionality is a placeholder.</p>
+              ))}
             </ScrollArea>
-            <div className="p-3 border-t bg-card">
-                <Input placeholder="Type a message..." disabled />
+             <div className="p-3 border-t border-zinc-200">
+                <p className="text-xs text-zinc-500 text-center">AI summary will be available after the call. (Demo)</p>
             </div>
+          </aside>
+        )}
+      </main>
+
+      {/* Bottom Control Bar */}
+      <footer className="px-4 py-2.5 bg-zinc-900 border-t border-zinc-700 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className={controlButtonClass} disabled>
+                        <Volume2 size={20}/> <span>Record</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Start Recording (Disabled)</p></TooltipContent>
+            </Tooltip>
         </div>
-      )}
-    </Card>
+        <div className="flex items-center gap-2.5">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button 
+                        variant="ghost" 
+                        className={cn(controlButtonClass, isLocalMicMuted && "bg-red-600 hover:bg-red-700 text-white")}
+                        onClick={toggleLocalMute}
+                        disabled={hasCameraPermission === false}
+                    >
+                        {isLocalMicMuted ? <MicOff size={20}/> : <Mic size={20}/>} 
+                        <span>{isLocalMicMuted ? 'Unmute' : 'Mute'}</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>{isLocalMicMuted ? 'Unmute Microphone' : 'Mute Microphone'}</p></TooltipContent>
+            </Tooltip>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button 
+                        variant="ghost" 
+                        className={cn(controlButtonClass, isLocalVideoOff && "bg-red-600 hover:bg-red-700 text-white")}
+                        onClick={toggleLocalVideo}
+                        disabled={hasCameraPermission === false}
+                    >
+                         {isLocalVideoOff ? <VideoOff size={20}/> : <Video size={20}/>} 
+                        <span>{isLocalVideoOff ? 'Start Cam': 'Stop Cam'}</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>{isLocalVideoOff ? 'Start Camera': 'Stop Camera'}</p></TooltipContent>
+            </Tooltip>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className={controlButtonClass} disabled>
+                        <ScreenShare size={20}/> <span>Share</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Share Screen (Disabled)</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className={destructiveButtonClass} onClick={handleLeaveCall}>
+                        <PhoneOff size={20}/> <span>Leave</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Leave Call</p></TooltipContent>
+            </Tooltip>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className={controlButtonClass} onClick={() => setIsChatPanelOpen(prev => !prev)}>
+                        <MessageCircle size={20}/> <span>Chat</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>{isChatPanelOpen ? 'Hide' : 'Show'} Transcript</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className={controlButtonClass} disabled>
+                        <SmilePlus size={20}/> <span>Sticker</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Stickers (Disabled)</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className={controlButtonClass} disabled>
+                        <MoreHorizontal size={20}/> <span>More</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>More Options (Disabled)</p></TooltipContent>
+            </Tooltip>
+        </div>
+        <div className="flex items-center gap-2">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className={controlButtonClass} disabled>
+                        <Hand size={20}/> <span>Raise</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Raise Hand (Disabled)</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className={controlButtonClass} disabled>
+                        <ListVideo size={20}/> <span>Captions</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Toggle Captions (Disabled)</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className={controlButtonClass} disabled>
+                        <Info size={20}/> <span>Detail</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Session Details (Disabled)</p></TooltipContent>
+            </Tooltip>
+        </div>
+      </footer>
+    </div>
+    </TooltipProvider>
   );
 }
-
