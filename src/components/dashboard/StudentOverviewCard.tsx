@@ -19,34 +19,34 @@ interface StudentOverviewCardProps {
 export function StudentOverviewCard({ student }: StudentOverviewCardProps) {
   const initials = student.name.split(" ").map(n => n[0]).join("");
   return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader className="flex flex-row items-center gap-4">
-        <Avatar className="h-12 w-12">
+    <Card className="hover:shadow-xl transition-all duration-300 rounded-xl border hover:-translate-y-0.5">
+      <CardHeader className="p-5 flex flex-row items-center gap-4">
+        <Avatar className="h-14 w-14 border-2 border-primary/20">
           <AvatarImage src={student.avatarUrl || `https://placehold.co/64x64.png`} alt={student.name} data-ai-hint={student.aiHint || "student portrait"} />
-          <AvatarFallback>{initials}</AvatarFallback>
+          <AvatarFallback className="text-lg">{initials}</AvatarFallback>
         </Avatar>
         <div>
-          <CardTitle className="text-lg font-headline">{student.name}</CardTitle>
-          <CardDescription>ID: {student.universityId}</CardDescription>
+          <CardTitle className="text-lg font-semibold">{student.name}</CardTitle>
+          <CardDescription className="text-xs">ID: {student.universityId}</CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2 text-sm">
+      <CardContent className="p-5 pt-0 space-y-2 text-sm">
         {student.lastSession && (
-          <p className="text-muted-foreground flex items-center"><Calendar className="w-4 h-4 mr-2 text-primary" /> Last Session: {student.lastSession}</p>
+          <p className="text-muted-foreground flex items-center"><Calendar className="w-4 h-4 mr-2 text-primary/80" /> Last Session: {student.lastSession}</p>
         )}
         {student.nextSession && (
-          <p className="text-muted-foreground flex items-center"><Calendar className="w-4 h-4 mr-2 text-accent" /> Next Session: {student.nextSession}</p>
+          <p className="text-muted-foreground flex items-center"><Calendar className="w-4 h-4 mr-2 text-accent/80" /> Next Session: {student.nextSession}</p>
         )}
         {!student.lastSession && !student.nextSession && (
-            <p className="text-muted-foreground">No recent session activity.</p>
+            <p className="text-muted-foreground py-1">No recent session activity.</p>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between gap-2">
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`/counselor/students/${student.id}/profile`}><User className="w-4 h-4 mr-2"/>View Profile</Link>
+      <CardFooter className="p-5 pt-2 flex justify-between gap-2">
+        <Button variant="outline" size="sm" asChild className="btn-pill !px-4 !py-2">
+          <Link href={`/counselor/students/${student.id}/profile`}><User className="w-4 h-4 mr-1.5"/>Profile</Link>
         </Button>
-        <Button size="sm" asChild>
-          <Link href={`/counselor/sessions/new?studentId=${student.id}`}><MessageSquare className="w-4 h-4 mr-2"/>New Note</Link>
+        <Button size="sm" asChild className="btn-pill !px-4 !py-2 btn-card-action">
+          <Link href={`/counselor/sessions/new-session-placeholder/notes?studentId=${student.id}`}><MessageSquare className="w-4 h-4 mr-1.5"/>New Note</Link>
         </Button>
       </CardFooter>
     </Card>
