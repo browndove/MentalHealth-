@@ -1,6 +1,7 @@
 
 'use client';
 
+import React from 'react'; // Added import
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
