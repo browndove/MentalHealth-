@@ -1,8 +1,10 @@
+
 'use server';
 
-import { studentTriageAssistant, SummarizeSessionNotesInput, summarizeSessionNotes } from '@/ai/flows'; // Assuming correct paths
+import { studentTriageAssistant } from '@/ai/flows/student-triage-assistant';
+import { SummarizeSessionNotesInput, summarizeSessionNotes } from '@/ai/flows/counselor-session-summary';
 import { z } from 'zod';
-import { AiChatSchema, SessionNotesSchema } from './schemas';
+import { AiChatSchema } from './schemas'; // SessionNotesSchema was not used here previously.
 
 export async function handleAiAssistantChat(input: { message: string }): Promise<{ answer: string } | { error: string }> {
   try {
@@ -34,3 +36,4 @@ export async function handleSummarizeSessionNotes(
     return { error: 'Failed to summarize session notes. Please try again.' };
   }
 }
+

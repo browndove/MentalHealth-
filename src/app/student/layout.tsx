@@ -1,3 +1,5 @@
+'use client';
+
 import { Header } from "@/components/layout/Header";
 import { SidebarNav } from "@/components/layout/SidebarNav";
 import { SidebarProvider, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
