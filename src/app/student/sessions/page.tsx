@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,15 +57,15 @@ export default function StudentSessionsPage() {
       </p>
 
       <Tabs defaultValue="upcoming" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-1/2">
-          <TabsTrigger value="upcoming">Upcoming Sessions ({upcomingSessions.length})</TabsTrigger>
-          <TabsTrigger value="past">Past Sessions ({pastSessions.length})</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 md:w-1/2 rounded-lg">
+          <TabsTrigger value="upcoming" className="rounded-md">Upcoming Sessions ({upcomingSessions.length})</TabsTrigger>
+          <TabsTrigger value="past" className="rounded-md">Past Sessions ({pastSessions.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="upcoming" className="mt-6">
           {upcomingSessions.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2">
               {upcomingSessions.map(session => (
-                <Card key={session.id} className="hover:shadow-lg transition-shadow">
+                <Card key={session.id} className="hover:shadow-xl transition-shadow duration-300 rounded-xl">
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
@@ -82,18 +83,18 @@ export default function StudentSessionsPage() {
                     <p className="text-sm text-muted-foreground mt-1">Your session is scheduled. You will receive a reminder.</p>
                   </CardContent>
                   <CardFooter className="gap-2">
-                    <Button variant="outline" size="sm" disabled>Reschedule (Coming Soon)</Button>
-                    <Button variant="destructive" size="sm" disabled>Cancel (Coming Soon)</Button>
+                    <Button variant="outline" size="sm" disabled className="rounded-md">Reschedule (Coming Soon)</Button>
+                    <Button variant="destructive" size="sm" disabled className="rounded-md">Cancel (Coming Soon)</Button>
                   </CardFooter>
                 </Card>
               ))}
             </div>
           ) : (
-            <Card className="col-span-full">
+            <Card className="col-span-full rounded-xl shadow-md">
               <CardContent className="pt-6 text-center">
-                <Image src="https://placehold.co/300x200.png" alt="No upcoming sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty calendar" />
+                <Image src="https://placehold.co/300x200.png" alt="No upcoming sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty student calendar Ghana" />
                 <p className="text-muted-foreground">You have no upcoming sessions scheduled.</p>
-                <Button asChild className="mt-4">
+                <Button asChild className="mt-4 rounded-md">
                   <Link href="/student/appointments/request">Request a New Session</Link>
                 </Button>
               </CardContent>
@@ -104,7 +105,7 @@ export default function StudentSessionsPage() {
           {pastSessions.length > 0 ? (
             <div className="space-y-6">
               {pastSessions.map(session => (
-                <Card key={session.id} className="hover:shadow-lg transition-shadow">
+                <Card key={session.id} className="hover:shadow-xl transition-shadow duration-300 rounded-xl">
                   <CardHeader>
                      <div className="flex justify-between items-start">
                       <div>
@@ -123,17 +124,17 @@ export default function StudentSessionsPage() {
                   </CardContent>
                   <CardFooter className="gap-2">
                     {session.notesAvailable && (
-                      <Button variant="outline" size="sm" asChild>
+                      <Button variant="outline" size="sm" asChild className="rounded-md">
                         <Link href={`/student/sessions/${session.id}/notes`}><FileText className="mr-2 h-4 w-4"/>View Notes</Link>
                       </Button>
                     )}
                     {session.type === 'Video Call' && (
-                       <Button variant="outline" size="sm" disabled>
+                       <Button variant="outline" size="sm" disabled className="rounded-md">
                          <Video className="mr-2 h-4 w-4"/>Recording (N/A)
                        </Button>
                     )}
                      {session.type === 'Chat Session' && (
-                       <Button variant="outline" size="sm" disabled>
+                       <Button variant="outline" size="sm" disabled className="rounded-md">
                          <MessageSquare className="mr-2 h-4 w-4"/>Transcript (N/A)
                        </Button>
                     )}
@@ -142,9 +143,9 @@ export default function StudentSessionsPage() {
               ))}
             </div>
           ) : (
-             <Card className="col-span-full">
+             <Card className="col-span-full rounded-xl shadow-md">
               <CardContent className="pt-6 text-center">
-                <Image src="https://placehold.co/300x200.png" alt="No past sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty history" />
+                <Image src="https://placehold.co/300x200.png" alt="No past sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty history illustration Ghana" />
                 <p className="text-muted-foreground">You have no past sessions recorded.</p>
               </CardContent>
             </Card>

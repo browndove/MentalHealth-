@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,7 @@ const recentNotes = [
 export default function StudentDashboardPage() {
   return (
     <div className="space-y-8">
-      <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-xl overflow-hidden">
+      <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-xl overflow-hidden rounded-xl">
         <CardHeader className="relative z-10">
           <div className="flex items-center justify-between">
             <div>
@@ -28,19 +29,19 @@ export default function StudentDashboardPage() {
         <CardContent className="relative z-10">
           <p className="mb-4">Here you can manage your appointments, access resources, and connect with support.</p>
           <div className="flex gap-4">
-            <Button asChild variant="secondary" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+            <Button asChild variant="secondary" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 rounded-md">
               <Link href="/student/appointments/request">Request Appointment</Link>
             </Button>
-            <Button asChild variant="outline" className="border-primary-foreground/50 text-primary-foreground hover:bg-primary-foreground/10">
+            <Button asChild variant="outline" className="border-primary-foreground/50 text-primary-foreground hover:bg-primary-foreground/10 rounded-md">
               <Link href="/student/ai-assistant">Chat with AI Assistant</Link>
             </Button>
           </div>
         </CardContent>
-         <Image src="https://placehold.co/1200x300.png" alt="Abstract background" layout="fill" objectFit="cover" className="opacity-20" data-ai-hint="wellness abstract" />
+         <Image src="https://placehold.co/1200x300.png" alt="Ghanaian student wellness and university life" layout="fill" objectFit="cover" className="opacity-20" data-ai-hint="Ghana student wellness university life" />
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow rounded-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl"><CalendarPlus className="text-primary" /> Upcoming Appointments</CardTitle>
           </CardHeader>
@@ -61,7 +62,7 @@ export default function StudentDashboardPage() {
           </CardFooter>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow rounded-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl"><ClipboardList className="text-primary" /> Recent Session Notes</CardTitle>
           </CardHeader>
@@ -82,7 +83,7 @@ export default function StudentDashboardPage() {
           </CardFooter>
         </Card>
         
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow rounded-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl"><BookOpen className="text-primary" /> Mental Health Resources</CardTitle>
           </CardHeader>
@@ -101,7 +102,7 @@ export default function StudentDashboardPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow rounded-lg">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl"><UserCircle className="text-primary"/> My Profile</CardTitle>
             </CardHeader>
@@ -109,12 +110,12 @@ export default function StudentDashboardPage() {
                 <p className="text-muted-foreground">Keep your information up to date for seamless service.</p>
             </CardContent>
             <CardFooter>
-                 <Button asChild>
+                 <Button asChild className="rounded-md">
                     <Link href="/student/profile">Manage Profile</Link>
                  </Button>
             </CardFooter>
         </Card>
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow rounded-lg">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl"><Bot className="text-primary" /> AI Quick Help</CardTitle>
             </CardHeader>
@@ -122,13 +123,13 @@ export default function StudentDashboardPage() {
                 <p className="text-muted-foreground">Have a quick question? Our AI assistant is here to help 24/7.</p>
             </CardContent>
             <CardFooter>
-                <Button asChild>
+                <Button asChild className="rounded-md">
                   <Link href="/student/ai-assistant">Ask AI Assistant</Link>
                 </Button>
             </CardFooter>
         </Card>
       </div>
-       <Card className="mt-6 hover:shadow-lg transition-shadow">
+       <Card className="mt-6 hover:shadow-lg transition-shadow rounded-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl"><Activity className="text-primary" /> Mood Checker (Coming Soon)</CardTitle>
           <CardDescription>Track your mood and gain insights into your emotional well-being.</CardDescription>

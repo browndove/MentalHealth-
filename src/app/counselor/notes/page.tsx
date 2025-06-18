@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -46,11 +47,11 @@ export default function CounselorNotesPage() {
         </div>
         <div className="flex gap-2 items-center">
             <div className="relative w-full md:w-auto max-w-sm">
-            <Input type="search" placeholder="Search notes by student or date..." className="pl-10" />
+            <Input type="search" placeholder="Search notes by student or date..." className="pl-10 rounded-md" />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             </div>
             {/* This button could link to a page to select a student/session THEN open the editor */}
-            <Button asChild>
+            <Button asChild className="rounded-md">
                 <Link href={`/counselor/sessions/new-session-placeholder/notes`}> {/* Replace with actual logic */}
                     <PlusCircle className="mr-2 h-4 w-4" /> Create New Note
                 </Link>
@@ -64,9 +65,9 @@ export default function CounselorNotesPage() {
       {filteredNotes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNotes.map(note => (
-            <Card key={note.id} className="hover:shadow-lg transition-shadow">
+            <Card key={note.id} className="hover:shadow-xl transition-shadow duration-300 rounded-xl">
               <CardHeader>
-                <CardTitle className="text-xl font-headline">Note for {note.studentName}</CardTitle>
+                <CardTitle className="text-xl font-headline">{note.studentName}</CardTitle>
                 <CardDescription>Session Date: {note.sessionDate}</CardDescription>
               </CardHeader>
               <CardContent>
@@ -74,7 +75,7 @@ export default function CounselorNotesPage() {
                 <p className="text-xs text-muted-foreground mt-2">Last Updated: {note.lastUpdated}</p>
               </CardContent>
               <CardFooter>
-                <Button asChild className="w-full">
+                <Button asChild className="w-full rounded-md">
                   <Link href={`/counselor/sessions/${note.sessionId}/notes`}>
                     <FileText className="mr-2 h-4 w-4" /> View/Edit Note
                   </Link>
@@ -84,9 +85,9 @@ export default function CounselorNotesPage() {
           ))}
         </div>
       ) : (
-        <Card>
+        <Card className="rounded-xl shadow-md">
           <CardContent className="pt-6 text-center">
-            <Image src="https://placehold.co/300x200.png" alt="No notes found" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty notebook" />
+            <Image src="https://placehold.co/300x200.png" alt="No notes found" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty notebook illustration Ghana" />
             <p className="text-muted-foreground">No session notes found. Start by creating a new note for a session.</p>
           </CardContent>
         </Card>
@@ -94,7 +95,7 @@ export default function CounselorNotesPage() {
       
       <div className="text-center mt-8">
         {/* Pagination would go here */}
-        {filteredNotes.length > 5 && <Button variant="outline">Load More Notes</Button>}
+        {filteredNotes.length > 5 && <Button variant="outline" className="rounded-md">Load More Notes</Button>}
       </div>
     </div>
   );

@@ -1,7 +1,8 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { StudentOverviewCard } from '@/components/dashboard/StudentOverviewCard';
 import { AppointmentCard, type Appointment } from '@/components/dashboard/AppointmentCard';
 import { UpcomingSessionCard } from '@/components/dashboard/UpcomingSessionCard';
@@ -12,19 +13,19 @@ import Image from 'next/image';
 
 // Placeholder data
 const assignedStudents = [
-  { id: 's1', name: 'Aisha Bello', universityId: 'ATU005678', lastSession: '2024-07-28', nextSession: '2024-08-10', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "female student" },
-  { id: 's2', name: 'Kwame Annan', universityId: 'ATU001234', lastSession: '2024-07-25', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "male student"  },
-  { id: 's3', name: 'Fatima Ibrahim', universityId: 'ATU009012', nextSession: '2024-08-12', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "female student smiling" },
+  { id: 's1', name: 'Aisha Bello', universityId: 'ATU005678', lastSession: '2024-07-28', nextSession: '2024-08-10', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "female student Ghana" },
+  { id: 's2', name: 'Kwame Annan', universityId: 'ATU001234', lastSession: '2024-07-25', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "male student Ghana"  },
+  { id: 's3', name: 'Fatima Ibrahim', universityId: 'ATU009012', nextSession: '2024-08-12', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "Ghanaian student smiling" },
 ];
 
 const pendingAppointments: Appointment[] = [
-  { id: 'a1', studentName: 'Chinedu Okoro', date: '2024-08-09', time: '03:00 PM', reasonPreview: 'Feeling overwhelmed with coursework and need to talk about stress management.', status: 'pending', communicationMode: 'video', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "male student thinking" },
-  { id: 'a2', studentName: 'Amina Yusuf', date: '2024-08-10', time: '11:00 AM', reasonPreview: 'Want to discuss some personal issues affecting my studies.', status: 'pending', communicationMode: 'chat', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "female student glasses" },
+  { id: 'a1', studentName: 'Chinedu Okoro', date: '2024-08-09', time: '03:00 PM', reasonPreview: 'Feeling overwhelmed with coursework and need to talk about stress management.', status: 'pending', communicationMode: 'video', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "male student thinking Ghana" },
+  { id: 'a2', studentName: 'Amina Yusuf', date: '2024-08-10', time: '11:00 AM', reasonPreview: 'Want to discuss some personal issues affecting my studies.', status: 'pending', communicationMode: 'chat', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "female student glasses Ghana" },
 ];
 
 const upcomingSessions = [
-  { id: 'sess1', studentName: 'Aisha Bello', dateTime: 'Tomorrow, 10:00 AM', type: 'video' as const, studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "female student" },
-  { id: 'sess2', studentName: 'John Mensah', dateTime: 'Aug 18, 2:30 PM', type: 'chat' as const, studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "male student laptop" },
+  { id: 'sess1', studentName: 'Aisha Bello', dateTime: 'Tomorrow, 10:00 AM', type: 'video' as const, studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "female student profile Ghana" },
+  { id: 'sess2', studentName: 'John Mensah', dateTime: 'Aug 18, 2:30 PM', type: 'chat' as const, studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "male student laptop Ghana" },
 ];
 
 export default function CounselorDashboardPage() {
@@ -46,12 +47,12 @@ export default function CounselorDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-xl overflow-hidden">
+      <Card className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-xl overflow-hidden rounded-xl">
         <CardHeader className="relative z-10">
            <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-3xl font-headline">Welcome, Counselor Name!</CardTitle> {/* Replace with actual counselor name */}
-              <CardDescription className="text-primary-foreground/80 text-lg">Your central hub for managing student sessions.</CardDescription>
+              <CardDescription className="text-primary-foreground/80 text-lg">Your central hub for managing student sessions at Accra TechMind.</CardDescription>
             </div>
             <Activity size={64} className="opacity-30"/>
           </div>
@@ -62,11 +63,11 @@ export default function CounselorDashboardPage() {
             <Link href="/counselor/appointments">View Full Schedule</Link>
           </Button>
         </CardContent>
-        <Image src="https://placehold.co/1200x300.png" alt="Abstract network" layout="fill" objectFit="cover" className="opacity-20" data-ai-hint="calm office" />
+        <Image src="https://placehold.co/1200x300.png" alt="Serene professional counseling space in Ghana" layout="fill" objectFit="cover" className="opacity-20" data-ai-hint="professional counseling space Ghana" />
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-1">
+        <Card className="xl:col-span-1 rounded-lg shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl"><AlertTriangle className="text-yellow-500" /> Pending Appointments ({pendingAppointments.length})</CardTitle>
             <CardDescription>Review and respond to new session requests.</CardDescription>
@@ -88,7 +89,7 @@ export default function CounselorDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="xl:col-span-2">
+        <Card className="xl:col-span-2 rounded-lg shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl"><CalendarCheck className="text-primary" /> Upcoming Sessions ({upcomingSessions.length})</CardTitle>
              <CardDescription>Prepare for your scheduled student interactions.</CardDescription>
@@ -110,7 +111,7 @@ export default function CounselorDashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-headline flex items-center gap-2"><Users className="text-primary" /> My Assigned Students ({assignedStudents.length})</h2>
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild className="rounded-md">
                 <Link href="/counselor/students">View All Students</Link>
             </Button>
         </div>
@@ -120,12 +121,12 @@ export default function CounselorDashboardPage() {
           ))}
         </div>
          {assignedStudents.length === 0 && (
-            <Card><CardContent className="p-6 text-center text-muted-foreground">No students currently assigned.</CardContent></Card>
+            <Card className="rounded-lg shadow-md"><CardContent className="p-6 text-center text-muted-foreground">No students currently assigned.</CardContent></Card>
         )}
       </div>
 
        <div className="grid gap-6 md:grid-cols-2">
-         <Card className="hover:shadow-lg transition-shadow">
+         <Card className="hover:shadow-lg transition-shadow rounded-lg">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl"><MessageCircle className="text-primary"/> Session Note Tools</CardTitle>
             </CardHeader>
@@ -133,12 +134,12 @@ export default function CounselorDashboardPage() {
                 <p className="text-muted-foreground">Efficiently manage and summarize your session notes with AI assistance.</p>
             </CardContent>
             <CardFooter>
-                 <Button asChild>
+                 <Button asChild className="rounded-md">
                     <Link href="/counselor/notes">Access Notes Dashboard</Link> {/* Or direct to create new note */}
                  </Button>
             </CardFooter>
         </Card>
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card className="hover:shadow-lg transition-shadow rounded-lg">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl"><BarChart className="text-primary"/> Analytics Overview (Coming Soon)</CardTitle>
             </CardHeader>
