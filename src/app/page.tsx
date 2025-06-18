@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -8,7 +9,7 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react'; // Added Loader2
+import { Loader2, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -21,7 +22,7 @@ export default function HomePage() {
       } else if (user.role === 'counselor') {
         router.replace('/counselor/dashboard');
       }
-      // No 'else' needed here, if no role or other role, they stay on homepage or go to a generic authenticated page
+      // If role is null or other, no redirect from here; UI will handle it.
     }
   }, [user, loading, router]);
 
@@ -34,17 +35,33 @@ export default function HomePage() {
     );
   }
   
-  // If user is loaded and exists, they would have been redirected by useEffect.
-  // This content is for non-logged-in users.
   if (user) {
-     return ( // Show a minimal loading state while redirecting
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Redirecting to your dashboard...</p>
-      </div>
-    );
+     // User is loaded and exists
+     if (user.role === 'student' || user.role === 'counselor') {
+        // Valid role, useEffect is redirecting
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="mt-4 text-muted-foreground">Redirecting to your dashboard...</p>
+            </div>
+        );
+     } else {
+        // User is loaded, but role is null or invalid
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4 text-center">
+                <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+                <h1 className="text-2xl font-semibold mb-2 text-destructive-foreground">Login Issue</h1>
+                <p className="text-muted-foreground mb-1">Could not determine your user role.</p>
+                <p className="text-muted-foreground mb-4 text-sm">This might be due to an incomplete profile or a data issue.</p>
+                <p className="text-muted-foreground text-xs mb-4">Please ensure your 'role' (student/counselor) is correctly set in your user profile in the database.</p>
+                <Button onClick={() => router.push('/login')}>Try Logging In Again</Button>
+                 {/* It might be useful to have a logout button here too if stuck */}
+            </div>
+        );
+     }
   }
 
+  // Default homepage content for non-logged-in users
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
       <header className="absolute top-0 left-0 right-0 p-4 sm:p-6 flex justify-between items-center">
@@ -106,6 +123,7 @@ export default function HomePage() {
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary/10 rounded-md">
+                     {/* Using a generic shield icon for simplicity as Lock/CalendarDays/Bot aren't directly usable here without mapping like in SidebarNav */}
                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                   </div>
                   <CardTitle className="font-headline text-primary">{feature.title}</CardTitle>
