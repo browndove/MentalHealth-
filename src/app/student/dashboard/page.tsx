@@ -1,9 +1,12 @@
 
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarPlus, Bot, BookOpen, ClipboardList, UserCircle, Activity, TrendingUp, Smile, Briefcase } from 'lucide-react';
+import { CalendarPlus, Bot, BookOpen, ClipboardList, UserCircle, Activity, Smile } from 'lucide-react'; // Added Smile
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext'; // Added useAuth import
 
 // Placeholder data - replace with actual data fetching
 const upcomingAppointments = [
@@ -14,14 +17,16 @@ const recentNotes = [
 ];
 
 export default function StudentDashboardPage() {
+  const { user } = useAuth(); // Get user from AuthContext
+
   return (
     <div className="space-y-10 container mx-auto px-4 py-8">
       <Card className="bg-gradient-to-br from-primary/10 via-background to-background text-foreground shadow-xl overflow-hidden rounded-xl border-primary/20 border">
         <CardHeader className="relative z-10 p-6 md:p-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-3xl md:text-4xl font-bold font-headline">Hello, Student Name!</CardTitle> {/* Replace with actual student name */}
-              <CardDescription className="text-lg text-muted-foreground mt-1">Welcome to your Accra TechMind portal.</CardDescription>
+              <CardTitle className="text-3xl md:text-4xl font-bold font-headline">Hello, {user?.fullName || 'Student'}!</CardTitle>
+              <CardDescription className="text-lg text-muted-foreground mt-1">Welcome to your Mental Guide portal.</CardDescription>
             </div>
             <Smile size={52} className="text-primary opacity-70 mt-2 sm:mt-0"/>
           </div>
