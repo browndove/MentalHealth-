@@ -16,12 +16,17 @@ import { LoginSchema, type LoginInput } from '@/lib/schemas';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, KeyRound } from 'lucide-react';
-import React from 'react';
+import { Eye, EyeOff, KeyRound, Loader2 } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export function LoginForm() {
   const { toast } = useToast();
+  const { login, user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(LoginSchema),
@@ -31,17 +36,49 @@ export function LoginForm() {
     },
   });
 
+  useEffect(() => {
+    if (!authLoading && user) {
+      if (user.role === 'student') {
+        router.push('/student/dashboard');
+      } else if (user.role === 'counselor') {
+        router.push('/counselor/dashboard');
+      } else {
+        // Fallback or admin dashboard if implemented
+        router.push('/'); 
+      }
+    }
+  }, [user, authLoading, router]);
+
   async function onSubmit(values: LoginInput) {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log(values);
-    toast({
-      title: 'Login Submitted (Simulated)',
-      description: 'If this were real, you would be logged in!',
-    });
-    // On success, redirect: router.push('/dashboard') or based on role
-    // For now, just log and show toast
+    setIsSubmitting(true);
+    try {
+      const loggedInUser = await login(values);
+      toast({
+        title: 'Login Successful',
+        description: `Welcome back, ${loggedInUser?.fullName || 'User'}!`,
+      });
+      // Redirection is handled by useEffect
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: error.message || 'An unexpected error occurred. Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
+  
+  if (authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
 
   return (
     <Card className="w-full max-w-md shadow-xl">
@@ -101,8 +138,9 @@ export function LoginForm() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Signing In...' : 'Sign In'}
+            <Button type="submit" className="w-full" disabled={isSubmitting || authLoading}>
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isSubmitting ? 'Signing In...' : 'Sign In'}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}

@@ -17,13 +17,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import React from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export function RegisterForm() {
   const { toast } = useToast();
+  const { signup, user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(RegisterSchema),
@@ -33,20 +38,55 @@ export function RegisterForm() {
       fullName: '',
       password: '',
       confirmPassword: '',
-      role: undefined, // 'student' or 'counselor'
+      role: undefined, 
     },
   });
 
+ useEffect(() => {
+    // If user gets created and auto-logged-in by signup, or if already logged in
+    if (!authLoading && user) {
+      if (user.role === 'student') {
+        router.push('/student/dashboard');
+      } else if (user.role === 'counselor') {
+        router.push('/counselor/dashboard');
+      } else {
+        router.push('/'); // Fallback if role is not set or for other roles
+      }
+    }
+  }, [user, authLoading, router]);
+
+
   async function onSubmit(values: RegisterInput) {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log(values);
-    toast({
-      title: 'Registration Submitted (Simulated)',
-      description: `Welcome, ${values.fullName}! Check your email to verify your account.`,
-    });
-    // On success, redirect: router.push('/login') or '/verify-email'
+    setIsSubmitting(true);
+    try {
+      const registeredUser = await signup(values);
+      toast({
+        title: 'Registration Successful',
+        description: `Welcome, ${registeredUser?.fullName}! Please check your email if verification is required.`,
+      });
+      // Redirection is handled by useEffect as signup auto-logs in.
+      // If not auto-login, redirect to /login: router.push('/login');
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Registration Failed',
+        description: error.message || 'An unexpected error occurred. Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
+  
+  if (authLoading && !user) { // Show loader only if loading and no user (to avoid flash on redirect)
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
 
   return (
     <Card className="w-full max-w-md shadow-xl">
@@ -177,8 +217,9 @@ export function RegisterForm() {
             />
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Registering...' : 'Register'}
+            <Button type="submit" className="w-full" disabled={isSubmitting || authLoading}>
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isSubmitting ? 'Registering...' : 'Register'}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{' '}
