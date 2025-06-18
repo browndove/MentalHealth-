@@ -47,15 +47,21 @@ export default function HomePage() {
         );
      } else {
         // User is loaded, but role is null or invalid
+        console.log(`HomePage: User ${user.uid} logged in, but role is '${user.role || 'not set/null'}'. Displaying login issue message.`);
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4 text-center">
                 <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
                 <h1 className="text-2xl font-semibold mb-2 text-destructive-foreground">Login Issue</h1>
                 <p className="text-muted-foreground mb-1">Could not determine your user role.</p>
                 <p className="text-muted-foreground mb-4 text-sm">This might be due to an incomplete profile or a data issue.</p>
-                <p className="text-muted-foreground text-xs mb-4">Please ensure your 'role' (student/counselor) is correctly set in your user profile in the database.</p>
+                <p className="text-muted-foreground text-xs mb-2">
+                  UID: {user.uid}
+                </p>
+                <p className="text-muted-foreground text-xs mb-4">
+                  Please ensure your 'role' (must be 'student' or 'counselor') is correctly set in your user profile in the Firestore 'users' database collection.
+                  Currently detected role: <span className="font-semibold">{user.role || 'Not set'}</span>.
+                </p>
                 <Button onClick={() => router.push('/login')}>Try Logging In Again</Button>
-                 {/* It might be useful to have a logout button here too if stuck */}
             </div>
         );
      }
