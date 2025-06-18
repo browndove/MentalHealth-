@@ -1,40 +1,40 @@
-import { Home, CalendarPlus, Bot, BookOpen, UserCircle, Users, ClipboardList, MessageSquare, Video, SettingsIcon } from 'lucide-react';
+import { Home, CalendarPlus, Bot, BookOpen, UserCircle, Users, ClipboardList, MessageSquare, Video, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type NavItem = {
   title: string;
   href: string;
-  icon: LucideIcon;
+  iconName: string; // Changed from icon: LucideIcon
   label?: string;
   disabled?: boolean;
   external?: boolean;
 };
 
 export const studentNavItems: NavItem[] = [
-  { title: 'Dashboard', href: '/student/dashboard', icon: Home },
-  { title: 'Request Appointment', href: '/student/appointments/request', icon: CalendarPlus },
-  { title: 'AI Assistant', href: '/student/ai-assistant', icon: Bot },
-  { title: 'My Sessions', href: '/student/sessions', icon: ClipboardList },
-  { title: 'Resources', href: '/student/resources', icon: BookOpen },
-  { title: 'Video Call', href: '/session/placeholder-id/video', icon: Video, disabled: true }, // Example, enable when session active
-  { title: 'Profile', href: '/student/profile', icon: UserCircle },
+  { title: 'Dashboard', href: '/student/dashboard', iconName: 'Home' },
+  { title: 'Request Appointment', href: '/student/appointments/request', iconName: 'CalendarPlus' },
+  { title: 'AI Assistant', href: '/student/ai-assistant', iconName: 'Bot' },
+  { title: 'My Sessions', href: '/student/sessions', iconName: 'ClipboardList' },
+  { title: 'Resources', href: '/student/resources', iconName: 'BookOpen' },
+  { title: 'Video Call', href: '/session/placeholder-id/video', iconName: 'Video', disabled: true },
+  { title: 'Profile', href: '/student/profile', iconName: 'UserCircle' },
 ];
 
 export const counselorNavItems: NavItem[] = [
-  { title: 'Dashboard', href: '/counselor/dashboard', icon: Home },
-  { title: 'My Students', href: '/counselor/students', icon: Users },
-  { title: 'Appointments', href: '/counselor/appointments', icon: CalendarPlus },
-  { title: 'Session Notes', href: '/counselor/notes', icon: MessageSquare }, // General notes or link to specific session notes
-  { title: 'Video Call', href: '/session/placeholder-id/video', icon: Video, disabled: true },
-  { title: 'Profile', href: '/counselor/profile', icon: UserCircle },
+  { title: 'Dashboard', href: '/counselor/dashboard', iconName: 'Home' },
+  { title: 'My Students', href: '/counselor/students', iconName: 'Users' },
+  { title: 'Appointments', href: '/counselor/appointments', iconName: 'CalendarPlus' },
+  { title: 'Session Notes', href: '/counselor/notes', iconName: 'MessageSquare' },
+  { title: 'Video Call', href: '/session/placeholder-id/video', iconName: 'Video', disabled: true },
+  { title: 'Profile', href: '/counselor/profile', iconName: 'UserCircle' },
 ];
 
 export const adminNavItems: NavItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard', icon: Home },
-    { title: 'Manage Users', href: '/admin/users', icon: Users },
-    { title: 'Manage Counselors', href: '/admin/counselors', icon: Users },
-    { title: 'System Analytics', href: '/admin/analytics', icon: SettingsIcon /* Replace with better icon e.g. BarChart */},
-    { title: 'Reports', href: '/admin/reports', icon: ClipboardList },
+    { title: 'Dashboard', href: '/admin/dashboard', iconName: 'Home' },
+    { title: 'Manage Users', href: '/admin/users', iconName: 'Users' },
+    { title: 'Manage Counselors', href: '/admin/counselors', iconName: 'Users' },
+    { title: 'System Analytics', href: '/admin/analytics', iconName: 'Settings' }, // Changed from SettingsIcon
+    { title: 'Reports', href: '/admin/reports', iconName: 'ClipboardList' },
 ];
 
 export const APP_NAME = "Accra TechMind";
