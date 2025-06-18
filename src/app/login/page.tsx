@@ -1,3 +1,5 @@
+'use client';
+
 import { LoginForm } from '@/components/auth/LoginForm';
 import { AppLogo } from '@/components/layout/AppLogo';
 import Link from 'next/link';
