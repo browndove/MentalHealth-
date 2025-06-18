@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/AuthContext';
 
 export const metadata: Metadata = {
-  title: 'Accra TechMind',
-  description: 'Mental health and counseling services for Accra Technical University.',
+  title: 'Mental Guide',
+  description: 'Mental health and counseling resources for students.',
 };
 
 export default function RootLayout({

@@ -2,14 +2,13 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookOpen, Search, FileText, Youtube, Headphones, ShieldCheck, ExternalLink, Filter, ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
+import { BookOpen, Search, FileText, Youtube, Headphones, ShieldCheck, ExternalLink, Filter, ChevronLeft, ChevronRight, PlayCircle, Sparkles, Info } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { cn } from '@/lib/utils';
 
 interface Resource {
   id: string;
@@ -17,134 +16,133 @@ interface Resource {
   type: 'Article' | 'Video' | 'Audio' | 'Tool' | 'Guided Session';
   Icon: React.ElementType;
   description: string;
-  link: string;
+  link: string; // Can be internal path or external URL
   image: string;
   dataAiHint: string;
-  category: string;
+  category: string; // e.g., "Anxiety", "Stress Management", "Academic Support"
   tags: string[];
+  buttonStyle?: 'primary' | 'teal'; // To control button color
 }
 
+// Updated resourcesData with Ghanaian context and varied content
 const resourcesData: Resource[] = [
   {
     id: "res1",
-    title: "Managing Exam Stress: Tips for Accra Technical University Students",
+    title: "Understanding and Managing Anxiety",
     type: "Article",
     Icon: FileText,
-    description: "An in-depth article tailored for ATU students, offering practical strategies to cope with academic pressure and exam anxiety. Features insights from Ghanaian counselors.",
+    description: "An in-depth article on recognizing anxiety symptoms and practical coping strategies, tailored for students in Ghana. Published by ATU Wellness.",
     link: "#", 
     image: "https://placehold.co/400x300.png",
-    dataAiHint: "Ghanaian student studying calmly library",
-    category: "Academic Stress",
-    tags: ["anxiety", "coping", "mental health", "article", "ATU", "exam stress"],
+    dataAiHint: "Ghanaian student calm reflective library",
+    category: "Anxiety",
+    tags: ["anxiety", "coping", "mental health", "article", "ATU", "Ghana"],
+    buttonStyle: 'primary',
   },
   {
     id: "res2",
-    title: "Guided Adhan/Azan Meditation for Inner Peace (10 min)",
-    type: "Guided Session", // Changed type
-    Icon: PlayCircle, // Changed Icon
-    description: "A short guided audio meditation incorporating calming Adhan/Azan elements, designed to help reduce stress and promote relaxation in a culturally resonant way.",
+    title: "Guided Meditation for Stress Relief (10 min)",
+    type: "Guided Session",
+    Icon: Sparkles, // More evocative for meditation/relaxation
+    description: "A short guided audio meditation designed to help reduce stress and promote relaxation. Suitable for beginners. Features calming sounds of Ghanaian nature.",
     link: "#",
     image: "https://placehold.co/400x300.png",
-    dataAiHint: "serene mosque Ghana audio meditation",
-    category: "Mindfulness & Relaxation",
-    tags: ["meditation", "stress", "audio", "mindfulness", "Ghanaian culture", "Islamic meditation", "guided session"],
+    dataAiHint: "serene Aburi gardens meditation Ghana",
+    category: "Stress Management",
+    tags: ["meditation", "stress", "audio", "mindfulness", "Ghana", "guided session"],
+    buttonStyle: 'teal',
   },
   {
     id: "res3",
-    title: "Effective Study Habits for Success at Ghanaian Universities",
+    title: "Effective Study Habits for Academic Success",
     type: "Video",
     Icon: Youtube,
     description: "A video guide by a University of Ghana learning specialist on developing effective study techniques and time management skills relevant to the Ghanaian academic environment.",
     link: "#",
     image: "https://placehold.co/400x300.png",
-    dataAiHint: "University of Ghana student video lecture",
+    dataAiHint: "University of Ghana student studying focused video",
     category: "Academic Support",
     tags: ["study skills", "video", "time management", "academic", "Ghana university"],
+    buttonStyle: 'teal',
   },
   {
     id: "res4",
-    title: "Building Healthy Sleep Habits for Peak Performance",
+    title: "Building Healthy Sleep Habits in Accra",
     type: "Article",
     Icon: FileText,
-    description: "Learn about the importance of sleep for mental and physical health, with tips for improving sleep hygiene in a tropical climate.",
+    description: "Learn about the importance of sleep for mental and physical health, with tips for improving sleep hygiene in a tropical urban setting like Accra.",
     link: "#",
     image: "https://placehold.co/400x300.png",
-    dataAiHint: "peaceful night scene Accra moon",
+    dataAiHint: "peaceful night scene Accra bedroom",
     category: "Well-being",
-    tags: ["sleep", "health", "article", "wellbeing", "tropical health"],
+    tags: ["sleep", "health", "article", "wellbeing", "Accra"],
+    buttonStyle: 'primary',
   },
   {
     id: "res5",
-    title: "Ghana Mental Health Crisis Hotlines & Emergency Contacts",
+    title: "Ghana Mental Health Hotlines & Support Directory",
     type: "Tool",
     Icon: ShieldCheck,
-    description: "A vital list of verified phone numbers and resources for immediate mental health support and crisis situations within Ghana.",
+    description: "A vital directory of verified phone numbers and resources for immediate mental health support and crisis situations within Ghana.",
     link: "#",
     image: "https://placehold.co/400x300.png",
-    dataAiHint: "emergency support phone Ghana",
+    dataAiHint: "support hands diverse Ghana",
     category: "Crisis Support",
     tags: ["emergency", "hotline", "support", "crisis", "Ghana mental health"],
+    buttonStyle: 'teal',
   },
   {
     id: "res6",
-    title: "Understanding Depression: Signs and Support in Our Community",
+    title: "Understanding Depression in Our Community",
     type: "Article",
     Icon: FileText,
     description: "A culturally sensitive article discussing the signs of depression and how to seek or offer support within the Ghanaian community context.",
     link: "#",
     image: "https://placehold.co/400x300.png",
-    dataAiHint: "support group discussion Ghana",
+    dataAiHint: "community support group Ghana discussion",
     category: "Mental Health Conditions",
     tags: ["depression", "community support", "Ghana", "article"],
+    buttonStyle: 'primary',
   },
    {
     id: "res7",
-    title: "Mindful Walking at Aburi Botanical Gardens (Audio Guide)",
-    type: "Guided Session", // Changed type
-    Icon: PlayCircle, // Changed Icon
-    description: "An immersive audio guide for a mindful walking experience, designed to be used at Aburi Botanical Gardens or any serene natural space in Ghana.",
+    title: "Mindful Walking: A Volta River Reflection (Audio)",
+    type: "Guided Session",
+    Icon: PlayCircle,
+    description: "An immersive audio guide for a mindful walking experience, drawing inspiration from the serene Volta River landscapes.",
     link: "#",
     image: "https://placehold.co/400x300.png",
-    dataAiHint: "Aburi Gardens serene path audio",
+    dataAiHint: "Volta River serene nature audio",
     category: "Mindfulness & Relaxation",
-    tags: ["mindfulness", "audio", "nature therapy", "Aburi", "Ghana", "guided session"],
+    tags: ["mindfulness", "audio", "nature therapy", "Volta River", "Ghana", "guided session"],
+    buttonStyle: 'teal',
   },
   {
     id: "res8",
-    title: "Balancing Studies and Social Life at University in Ghana",
+    title: "Balancing Studies & Social Life: ATU Student Perspectives",
     type: "Video",
     Icon: Youtube,
-    description: "Ghanaian student vloggers share tips and experiences on managing academic workload while maintaining a healthy social life at university.",
+    description: "ATU students share tips and experiences on managing academic workload while maintaining a healthy social life on campus.",
     link: "#",
     image: "https://placehold.co/400x300.png",
-    dataAiHint: "Ghanaian students socializing campus life",
+    dataAiHint: "ATU students socializing campus life video",
     category: "Student Life",
-    tags: ["student life", "video", "work-life balance", "Ghana university"],
+    tags: ["student life", "video", "work-life balance", "ATU Ghana"],
+    buttonStyle: 'teal',
   },
   {
     id: "res9",
-    title: "Local Ghanaian Foods for Brain Health and Mood Boost",
+    title: "Nourish Your Mind: Ghanaian Foods for Brain Health",
     type: "Article",
     Icon: FileText,
     description: "Discover local Ghanaian ingredients and simple recipes that can contribute to better mental clarity and a positive mood.",
     link: "#",
     image: "https://placehold.co/400x300.png",
-    dataAiHint: "Ghanaian food market healthy colourful",
+    dataAiHint: "Ghanaian food market vibrant healthy",
     category: "Well-being",
     tags: ["nutrition", "mental wellness", "Ghanaian food", "article"],
+    buttonStyle: 'primary',
   },
-  {
-    id: "res10",
-    title: "Online CBT Tools for Self-Help (Internationally Recognized)",
-    type: "Tool",
-    Icon: ExternalLink, // Changed to ExternalLink for tools
-    description: "Access to internationally recognized Cognitive Behavioral Therapy (CBT) tools and apps that can be used for self-guided mental wellness.",
-    link: "#",
-    image: "https://placehold.co/400x300.png",
-    dataAiHint: "CBT app interface phone screen",
-    category: "Self-Help Tools",
-    tags: ["CBT", "self-help", "app", "tool", "mental health"],
-  }
 ];
 
 const ITEMS_PER_PAGE = 6;
@@ -155,8 +153,8 @@ export default function ResourcesPage() {
   const [selectedType, setSelectedType] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const categories = useMemo(() => ['all', ...Array.from(new Set(resourcesData.map(r => r.category)))], []);
-  const types = useMemo(() => ['all', ...Array.from(new Set(resourcesData.map(r => r.type)))], []);
+  const categories = useMemo(() => ['All Categories', ...Array.from(new Set(resourcesData.map(r => r.category)))], []);
+  const types = useMemo(() => ['All Types', ...Array.from(new Set(resourcesData.map(r => r.type)))], []);
 
   const filteredResources = useMemo(() => {
     return resourcesData.filter(resource => {
@@ -164,8 +162,8 @@ export default function ResourcesPage() {
         resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         resource.tags.join(" ").toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || resource.category === selectedCategory;
-      const matchesType = selectedType === 'all' || resource.type === selectedType;
+      const matchesCategory = selectedCategory === 'All Categories' || resource.category === selectedCategory;
+      const matchesType = selectedType === 'All Types' || resource.type === selectedType;
       return matchesSearch && matchesCategory && matchesType;
     });
   }, [searchTerm, selectedCategory, selectedType]);
@@ -193,99 +191,95 @@ export default function ResourcesPage() {
   };
 
   return (
-    <div className="space-y-10 container mx-auto px-4 py-8">
-      <Card className="shadow-xl bg-card/80 backdrop-blur-lg rounded-xl">
-        <CardHeader className="pb-4 text-center">
-          <div className="inline-flex items-center justify-center space-x-3 mx-auto">
-            <BookOpen className="h-10 w-10 text-primary" />
-            <h1 className="text-4xl font-bold font-headline tracking-tight">Mental Wellness Hub</h1>
-          </div>
-           <CardDescription className="text-lg text-muted-foreground pt-2 max-w-2xl mx-auto">
-            Explore a curated collection of articles, videos, tools, and guided sessions from Accra TechMind to support your mental well-being.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 max-w-3xl mx-auto">
-            <div className="relative md:col-span-1">
-              <Input 
-                type="search" 
-                placeholder="Search resources..." 
-                className="pl-10 h-12 text-base rounded-full focus:shadow-md" 
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            </div>
-            <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-              <SelectTrigger className="h-12 text-base rounded-full focus:shadow-md">
-                <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent className="rounded-lg">
-                {categories.map(category => (
-                  <SelectItem key={category} value={category} className="text-base py-2">
-                    {category === 'all' ? 'All Categories' : category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedType} onValueChange={handleTypeChange}>
-              <SelectTrigger className="h-12 text-base rounded-full focus:shadow-md">
-                 <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent className="rounded-lg">
-                {types.map(type => (
-                  <SelectItem key={type} value={type} className="text-base py-2">
-                    {type === 'all' ? 'All Types' : type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-8 container mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
+        <div>
+          <h1 className="text-4xl font-bold font-headline tracking-tight text-foreground">Mental Health Resources</h1>
+          <p className="text-lg text-muted-foreground mt-1 max-w-2xl">
+            Explore a curated collection of articles, videos, tools, and other resources to support your mental well-being.
+          </p>
+        </div>
+        <div className="relative w-full md:w-auto md:min-w-[300px]">
+          <Input 
+            type="search" 
+            placeholder="Search resources by keyword..." 
+            className="pl-10 h-11 text-sm rounded-lg border-input-border focus:ring-primary focus:border-primary" 
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+          />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        </div>
+      </div>
+
+       <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+          <SelectTrigger className="h-11 text-sm rounded-lg border-input-border data-[placeholder]:text-muted-foreground">
+            <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
+            <SelectValue placeholder="Filter by category" />
+          </SelectTrigger>
+          <SelectContent className="rounded-lg">
+            {categories.map(category => (
+              <SelectItem key={category} value={category} className="text-sm py-2">
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedType} onValueChange={handleTypeChange}>
+          <SelectTrigger className="h-11 text-sm rounded-lg border-input-border data-[placeholder]:text-muted-foreground">
+              <Info className="mr-2 h-4 w-4 text-muted-foreground" />
+            <SelectValue placeholder="Filter by type" />
+          </SelectTrigger>
+          <SelectContent className="rounded-lg">
+            {types.map(type => (
+              <SelectItem key={type} value={type} className="text-sm py-2">
+                {type}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
 
       {paginatedResources.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
           {paginatedResources.map(resource => (
-            <Card key={resource.id} className="flex flex-col bg-card rounded-xl shadow-lg overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-              <div className="relative h-56 w-full overflow-hidden">
+            <Card key={resource.id} className="flex flex-col bg-card rounded-xl shadow-md overflow-hidden group transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-border">
+              <div className="relative h-48 w-full overflow-hidden">
                 <Image 
                   src={resource.image} 
                   alt={resource.title} 
                   layout="fill" 
                   objectFit="cover" 
                   data-ai-hint={resource.dataAiHint}
-                  className="transition-transform duration-500 group-hover:scale-110"
+                  className="transition-transform duration-500 group-hover:scale-105"
                 />
               </div>
-              <CardContent className="p-6 flex flex-col flex-grow space-y-3">
-                 <div className="flex items-center text-sm text-muted-foreground">
-                    <resource.Icon className="w-4 h-4 mr-1.5 text-primary" />
-                    <span>{resource.type}</span>
-                    <span className="mx-1.5">•</span>
-                    <span>{resource.category}</span>
+              <CardContent className="p-5 flex flex-col flex-grow space-y-2.5">
+                 <div className="flex items-center text-xs text-muted-foreground font-medium">
+                    <resource.Icon className="w-3.5 h-3.5 mr-1.5 text-primary" />
+                    <span>{resource.type} {resource.category !== resource.type ? `• ${resource.category}` : ''}</span>
                  </div>
-                <CardTitle className="text-xl font-semibold leading-tight group-hover:text-primary transition-colors flex-grow">{resource.title}</CardTitle>
+                <CardTitle className="text-lg font-semibold leading-snug group-hover:text-primary transition-colors flex-grow">{resource.title}</CardTitle>
                 <p className="text-sm text-muted-foreground line-clamp-3 flex-grow">{resource.description}</p>
-                 <Button asChild className="w-full btn-pill btn-card-action mt-auto py-3">
+              </CardContent>
+              <CardFooter className="p-5 pt-0">
+                 <Button asChild className={`w-full btn-pill ${resource.buttonStyle === 'teal' ? 'btn-card-action-teal' : 'btn-card-action'}`}>
                   <Link href={resource.link} target={resource.link.startsWith('http') ? '_blank' : '_self'} rel={resource.link.startsWith('http') ? 'noopener noreferrer' : ''}>
-                     {resource.link.startsWith('http') ? <ExternalLink className="mr-2 h-5 w-5" /> : <resource.Icon className="mr-2 h-5 w-5" />}
-                     {resource.type === "Tool" && resource.id === "res5" ? "View Contacts" : "Access Resource"}
+                     {resource.link.startsWith('http') ? <ExternalLink className="mr-2 h-4 w-4" /> : <BookOpen className="mr-2 h-4 w-4" />}
+                     Visit Resource
                   </Link>
                 </Button>
-              </CardContent>
+              </CardFooter>
             </Card>
           ))}
         </div>
       ) : (
-        <Card className="shadow-lg rounded-xl col-span-full">
+        <Card className="shadow-md rounded-xl col-span-full border border-border">
           <CardContent className="pt-10 pb-8 text-center">
-            <Image src="https://placehold.co/300x200.png" alt="No results found" width={200} height={133} className="mx-auto mb-6 rounded-lg shadow-md" data-ai-hint="magnifying glass empty Ghana" />
-            <h3 className="text-2xl font-semibold mb-2">No Resources Found</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
+            <Image src="https://placehold.co/200x150.png" alt="No results found" width={150} height={112} className="mx-auto mb-6 rounded-lg shadow-sm" data-ai-hint="magnifying glass empty results Ghana" />
+            <h3 className="text-xl font-semibold mb-2 text-foreground">No Resources Found</h3>
+            <p className="text-muted-foreground max-w-md mx-auto text-sm">
               Sorry, we couldn't find any resources matching your current search and filter criteria. Try adjusting your terms or broadening your search.
             </p>
           </CardContent>
@@ -293,16 +287,16 @@ export default function ResourcesPage() {
       )}
        
       {totalPages > 1 && (
-        <div className="flex justify-center items-center space-x-2 pt-8">
+        <div className="flex justify-center items-center space-x-2 pt-10">
           <Button
             variant="outline"
             size="icon"
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
             aria-label="Go to previous page"
-            className="rounded-full h-10 w-10"
+            className="rounded-full h-9 w-9 border-input-border"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </Button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
             <Button
@@ -311,9 +305,9 @@ export default function ResourcesPage() {
               size="icon"
               onClick={() => handlePageChange(pageNumber)}
               aria-label={`Go to page ${pageNumber}`}
-              className="rounded-full h-10 w-10"
+              className="rounded-full h-9 w-9 border-input-border"
             >
-              {pageNumber}
+             <span className="text-xs">{pageNumber}</span>
             </Button>
           ))}
           <Button
@@ -322,16 +316,12 @@ export default function ResourcesPage() {
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
             aria-label="Go to next page"
-            className="rounded-full h-10 w-10"
+            className="rounded-full h-9 w-9 border-input-border"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       )}
-      <div className="text-center mt-10 text-sm text-muted-foreground">
-        <p>Please note: Some external links will open in a new tab. Accra TechMind is not responsible for the content of external sites.</p>
-        <p className="mt-1">Images used are placeholders. For the best experience, these should be replaced with actual, high-quality, culturally relevant photos.</p>
-      </div>
     </div>
   );
 }

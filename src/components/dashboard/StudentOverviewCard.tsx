@@ -19,15 +19,15 @@ interface StudentOverviewCardProps {
 export function StudentOverviewCard({ student }: StudentOverviewCardProps) {
   const initials = student.name.split(" ").map(n => n[0]).join("");
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 rounded-xl border hover:-translate-y-0.5">
+    <Card className="hover:shadow-lg transition-all duration-300 rounded-xl border border-border hover:-translate-y-0.5 bg-card">
       <CardHeader className="p-5 flex flex-row items-center gap-4">
-        <Avatar className="h-14 w-14 border-2 border-primary/20">
-          <AvatarImage src={student.avatarUrl || `https://placehold.co/64x64.png`} alt={student.name} data-ai-hint={student.aiHint || "student portrait"} />
+        <Avatar className="h-14 w-14 border-2 border-primary/30">
+          <AvatarImage src={student.avatarUrl || `https://placehold.co/64x64.png`} alt={student.name} data-ai-hint={student.aiHint || "student portrait Ghana"} />
           <AvatarFallback className="text-lg">{initials}</AvatarFallback>
         </Avatar>
         <div>
-          <CardTitle className="text-lg font-semibold">{student.name}</CardTitle>
-          <CardDescription className="text-xs">ID: {student.universityId}</CardDescription>
+          <CardTitle className="text-lg font-semibold text-card-foreground">{student.name}</CardTitle>
+          <CardDescription className="text-xs text-muted-foreground">ID: {student.universityId}</CardDescription>
         </div>
       </CardHeader>
       <CardContent className="p-5 pt-0 space-y-2 text-sm">
@@ -42,11 +42,11 @@ export function StudentOverviewCard({ student }: StudentOverviewCardProps) {
         )}
       </CardContent>
       <CardFooter className="p-5 pt-2 flex justify-between gap-2">
-        <Button variant="outline" size="sm" asChild className="btn-pill !px-4 !py-2">
-          <Link href={`/counselor/students/${student.id}/profile`}><User className="w-4 h-4 mr-1.5"/>Profile</Link>
+        <Button variant="outline" size="sm" asChild className="btn-pill !px-4 !py-2 border-input-border text-foreground hover:bg-muted">
+          <Link href={`/counselor/students/${student.id}/profile`}><User className="w-3.5 h-3.5 mr-1.5"/>Profile</Link>
         </Button>
         <Button size="sm" asChild className="btn-pill !px-4 !py-2 btn-card-action">
-          <Link href={`/counselor/sessions/new-session-placeholder/notes?studentId=${student.id}`}><MessageSquare className="w-4 h-4 mr-1.5"/>New Note</Link>
+          <Link href={`/counselor/sessions/new-session-placeholder/notes?studentId=${student.id}`}><MessageSquare className="w-3.5 h-3.5 mr-1.5"/>New Note</Link>
         </Button>
       </CardFooter>
     </Card>
