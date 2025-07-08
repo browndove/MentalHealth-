@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { AiChatSchema } from './schemas'; // SessionNotesSchema was not used here previously.
 import { db } from './firebase';
 import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, getDoc } from 'firebase/firestore';
+import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai/flows/call-transcript-summary';
 
 
 export async function getCounselors(): Promise<{ id: string; name: string }[]> {
@@ -137,5 +138,22 @@ export async function handleSummarizeSessionNotes(
   } catch (error) {
     console.error('Session Notes Summarization Error:', error);
     return { error: 'Failed to summarize session notes. Please try again.' };
+  }
+}
+
+export async function handleSummarizeCallTranscript(
+  input: SummarizeCallTranscriptInput
+): Promise<{ summary: string } | { error: string }> {
+  try {
+    // The Genkit flow already validates the input against its Zod schema.
+    const result = await summarizeCallTranscript(input);
+    return { summary: result.summary };
+  } catch (error: any) {
+    console.error('Call Transcript Summarization Error:', error);
+    // Attempt to provide a more specific error message if it's a validation error from the flow.
+    if (error.message && error.message.includes('Validation')) {
+      return { error: 'The provided transcript is too short. Please provide at least 50 characters.' };
+    }
+    return { error: 'Failed to summarize the call transcript. Please try again.' };
   }
 }

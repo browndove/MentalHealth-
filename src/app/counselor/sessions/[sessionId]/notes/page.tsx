@@ -11,10 +11,10 @@ export default function SessionNotesPage({ params }: { params: { sessionId: stri
     <div className="space-y-6">
        <div className="flex items-center space-x-3">
         <MessageSquare className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-headline">Session Notes</h1>
+        <h1 className="text-3xl font-headline">Session Workspace</h1>
       </div>
        <p className="text-muted-foreground">
-        Record and manage notes for your counseling sessions. Utilize the AI summarization tool for quick overviews.
+        Record session notes, manage call transcripts, and utilize AI tools for summarization.
       </p>
       <SessionNotesEditor sessionId={sessionId} studentName={studentName} />
     </div>
