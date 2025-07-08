@@ -5,7 +5,7 @@ import { SummarizeSessionNotesInput, summarizeSessionNotes } from '@/ai/flows/co
 import { z } from 'zod';
 import { AiChatSchema } from './schemas'; // SessionNotesSchema was not used here previously.
 import { db } from './firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, getDoc } from 'firebase/firestore';
 
 
 export async function getCounselors(): Promise<{ id: string; name: string }[]> {
@@ -23,19 +23,105 @@ export async function getCounselors(): Promise<{ id: string; name: string }[]> {
   }
 }
 
-export async function handleAiAssistantChat(input: { message: string }): Promise<{ answer: string } | { error: string }> {
+export async function handleAiAssistantChat(input: {
+  message: string;
+  conversationId: string | null;
+  userId: string;
+}): Promise<{ answer: string; conversationId: string } | { error: string }> {
   try {
-    const validatedInput = AiChatSchema.parse(input);
+    const validatedInput = AiChatSchema.parse({ message: input.message });
+     if (!input.userId) {
+      return { error: 'User not authenticated.' };
+    }
+
+    let conversationId = input.conversationId;
+
+    // If no conversationId, create a new one.
+    if (!conversationId) {
+      const newConversationRef = await addDoc(collection(db, 'ai_conversations'), {
+        userId: input.userId,
+        title: validatedInput.message.substring(0, 40) + (validatedInput.message.length > 40 ? '...' : ''),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        messages: [],
+      });
+      conversationId = newConversationRef.id;
+    }
+    
+    const conversationRef = doc(db, 'ai_conversations', conversationId);
+
+    // Add user message to conversation
+    await updateDoc(conversationRef, {
+      messages: arrayUnion({
+        id: Date.now().toString(),
+        text: validatedInput.message,
+        sender: 'user',
+        createdAt: new Date().toISOString(),
+      }),
+      updatedAt: serverTimestamp(),
+    });
+
     const result = await studentTriageAssistant({ question: validatedInput.message });
-    return { answer: result.answer };
+    if (!result.answer) {
+        throw new Error('Failed to get response from AI assistant.');
+    }
+
+    // Add AI response to conversation
+    await updateDoc(conversationRef, {
+      messages: arrayUnion({
+        id: (Date.now() + 1).toString(),
+        text: result.answer,
+        sender: 'ai',
+        createdAt: new Date().toISOString(),
+      }),
+    });
+
+    return { answer: result.answer, conversationId };
+
   } catch (error) {
-    if (error instanceof z.ZodError) {
+     if (error instanceof z.ZodError) {
       return { error: error.errors.map(e => e.message).join(', ') };
     }
     console.error('AI Assistant Error:', error);
     return { error: 'Failed to get response from AI assistant. Please try again.' };
   }
 }
+
+export async function getUserConversations(userId: string): Promise<{ id: string; title: string; updatedAt: any }[] | { error: string }> {
+    if (!userId) return { error: "User not authenticated." };
+
+    try {
+        const q = query(collection(db, 'ai_conversations'), where('userId', '==', userId), orderBy('updatedAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const conversations = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        })) as { id: string; title: string; updatedAt: any }[];
+        return conversations;
+    } catch (error) {
+        console.error("Error fetching conversations:", error);
+        return { error: "Could not fetch conversations." };
+    }
+}
+
+export async function getConversationMessages(conversationId: string, userId: string): Promise<{ messages: any[] } | { error: string }> {
+    if (!userId) return { error: "User not authenticated." };
+
+    try {
+        const conversationRef = doc(db, 'ai_conversations', conversationId);
+        const docSnap = await getDoc(conversationRef);
+
+        if (!docSnap.exists() || docSnap.data().userId !== userId) {
+            return { error: "Conversation not found or access denied." };
+        }
+
+        return { messages: docSnap.data().messages || [] };
+    } catch (error) {
+        console.error("Error fetching conversation messages:", error);
+        return { error: "Could not fetch messages." };
+    }
+}
+
 
 export async function handleSummarizeSessionNotes(
   input: SummarizeSessionNotesInput
