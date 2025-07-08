@@ -30,22 +30,24 @@ export function RequestAppointmentForm() {
   const { toast } = useToast();
   const [counselors, setCounselors] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingCounselors, setIsLoadingCounselors] = useState(true);
+  const [counselorError, setCounselorError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchCounselors() {
-      try {
-        const counselorList = await getCounselors();
-        setCounselors(counselorList);
-      } catch (error) {
-        console.error("Failed to fetch counselors for form", error);
+      setIsLoadingCounselors(true);
+      setCounselorError(null);
+      const result = await getCounselors();
+      if ('error' in result) {
+        setCounselorError(result.error);
         toast({
           variant: "destructive",
-          title: "Failed to load counselors",
-          description: "Could not retrieve the list of counselors. Please try again later."
+          title: "Failed to Load Counselors",
+          description: result.error,
         });
-      } finally {
-        setIsLoadingCounselors(false);
+      } else {
+        setCounselors(result);
       }
+      setIsLoadingCounselors(false);
     }
     fetchCounselors();
   }, [toast]);
@@ -89,6 +91,8 @@ export function RequestAppointmentForm() {
                     <SelectValue placeholder={
                       isLoadingCounselors
                         ? "Loading counselors..."
+                        : counselorError
+                        ? "Error: Could not load counselors"
                         : counselors.length === 0
                         ? "No counselors available"
                         : "Select a counselor if you have a preference"
@@ -107,6 +111,7 @@ export function RequestAppointmentForm() {
                   )}
                 </SelectContent>
               </Select>
+              {counselorError && <FormDescription className="text-destructive">{counselorError}</FormDescription>}
               <FormMessage />
             </FormItem>
           )}

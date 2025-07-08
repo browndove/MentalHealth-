@@ -9,7 +9,7 @@ import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, update
 import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai/flows/call-transcript-summary';
 
 
-export async function getCounselors(): Promise<{ id: string; name: string }[]> {
+export async function getCounselors(): Promise<{ id: string; name: string }[] | { error: string }> {
   try {
     const counselorsQuery = query(collection(db, 'users'), where('role', '==', 'counselor'));
     const querySnapshot = await getDocs(counselorsQuery);
@@ -18,9 +18,12 @@ export async function getCounselors(): Promise<{ id: string; name: string }[]> {
       name: doc.data().fullName || 'Unnamed Counselor',
     }));
     return counselors;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching counselors: ", error);
-    return []; // Return empty array on error to prevent crashes
+    if (error.code === 'permission-denied') {
+        return { error: "Permission denied. Please check your Firestore security rules to allow reading the 'users' collection." };
+    }
+    return { error: "A server error occurred while fetching the list of counselors." };
   }
 }
 
