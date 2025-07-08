@@ -16,23 +16,40 @@ import { Textarea } from '@/components/ui/textarea';
 import { AppointmentRequestSchema, type AppointmentRequestInput } from '@/lib/schemas';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Clock } from 'lucide-react';
+import { CalendarIcon, Clock, Loader2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-// Dummy data for counselors and time slots
-const counselors = [
-  { id: 'counselor1', name: 'Dr. Emily Carter' },
-  { id: 'counselor2', name: 'Mr. David Lee' },
-  { id: 'counselor3', name: 'Ms. Sarah Chen' },
-];
+import React, { useState, useEffect } from 'react';
+import { getCounselors } from '@/lib/actions';
 
 const timeSlots = ['09:00 AM', '10:00 AM', '11:00 AM', '02:00 PM', '03:00 PM', '04:00 PM'];
 
 export function RequestAppointmentForm() {
   const { toast } = useToast();
+  const [counselors, setCounselors] = useState<{ id: string; name: string }[]>([]);
+  const [isLoadingCounselors, setIsLoadingCounselors] = useState(true);
+
+  useEffect(() => {
+    async function fetchCounselors() {
+      try {
+        const counselorList = await getCounselors();
+        setCounselors(counselorList);
+      } catch (error) {
+        console.error("Failed to fetch counselors for form", error);
+        toast({
+          variant: "destructive",
+          title: "Failed to load counselors",
+          description: "Could not retrieve the list of counselors. Please try again later."
+        });
+      } finally {
+        setIsLoadingCounselors(false);
+      }
+    }
+    fetchCounselors();
+  }, [toast]);
+
   const form = useForm<AppointmentRequestInput>({
     resolver: zodResolver(AppointmentRequestSchema),
     defaultValues: {
@@ -62,16 +79,32 @@ export function RequestAppointmentForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Preferred Counselor (Optional)</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoadingCounselors || counselors.length === 0}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a counselor if you have a preference" />
+                    <SelectValue placeholder={
+                      isLoadingCounselors
+                        ? "Loading counselors..."
+                        : counselors.length === 0
+                        ? "No counselors available"
+                        : "Select a counselor if you have a preference"
+                    } />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {counselors.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
+                  {isLoadingCounselors ? (
+                    <div className="flex items-center justify-center p-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  ) : (
+                    counselors.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -106,7 +139,7 @@ export function RequestAppointmentForm() {
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() -1)) || date < new Date("1900-01-01")} // Disable past dates
+                      disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
                       initialFocus
                     />
                   </PopoverContent>

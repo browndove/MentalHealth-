@@ -1,10 +1,27 @@
-
 'use server';
 
 import { studentTriageAssistant } from '@/ai/flows/student-triage-assistant';
 import { SummarizeSessionNotesInput, summarizeSessionNotes } from '@/ai/flows/counselor-session-summary';
 import { z } from 'zod';
 import { AiChatSchema } from './schemas'; // SessionNotesSchema was not used here previously.
+import { db } from './firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+
+
+export async function getCounselors(): Promise<{ id: string; name: string }[]> {
+  try {
+    const counselorsQuery = query(collection(db, 'users'), where('role', '==', 'counselor'));
+    const querySnapshot = await getDocs(counselorsQuery);
+    const counselors = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().fullName || 'Unnamed Counselor',
+    }));
+    return counselors;
+  } catch (error) {
+    console.error("Error fetching counselors: ", error);
+    return []; // Return empty array on error to prevent crashes
+  }
+}
 
 export async function handleAiAssistantChat(input: { message: string }): Promise<{ answer: string } | { error: string }> {
   try {
@@ -36,4 +53,3 @@ export async function handleSummarizeSessionNotes(
     return { error: 'Failed to summarize session notes. Please try again.' };
   }
 }
-
