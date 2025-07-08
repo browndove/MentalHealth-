@@ -11,7 +11,8 @@ export function Header({ showSidebarTrigger = true }: HeaderProps) {
     <header className="sticky top-0 z-40 w-full border-b bg-card/80 backdrop-blur-lg">
       <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0 px-4 md:px-6">
         <div className="flex items-center gap-4">
-          {showSidebarTrigger && <SidebarTrigger className="md:hidden" />} 
+          {/* The SidebarTrigger is now always visible to toggle the sidebar */}
+          {showSidebarTrigger && <SidebarTrigger />} 
           <AppLogo />
         </div>
         
