@@ -52,6 +52,9 @@ const studentTriageAssistantFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error("The AI model did not produce a valid output. This could be due to a content safety policy or a model issue.");
+    }
+    return output;
   }
 );

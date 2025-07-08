@@ -84,7 +84,12 @@ export async function handleAiAssistantChat(input: {
       return { error: error.errors.map(e => e.message).join(', ') };
     }
     console.error('AI Assistant Error:', error);
-    return { error: 'Failed to get response from AI assistant. Please try again.' };
+    // Pass safe, specific errors to the frontend.
+    if (error instanceof Error && error.message.includes("The AI model did not produce a valid output")) {
+      return { error: error.message };
+    }
+    // For all other errors, use a generic message.
+    return { error: 'An unexpected error occurred while communicating with the AI. Please try again.' };
   }
 }
 

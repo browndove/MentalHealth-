@@ -86,7 +86,7 @@ export function AiAssistantChat({ conversationId: initialConversationId, initial
         title: 'AI Assistant Error',
         description: result.error,
       });
-      const errorResponse: Message = { id: (Date.now() + 1).toString(), text: "Sorry, I couldn't process that. Please try again.", sender: 'ai' };
+      const errorResponse: Message = { id: (Date.now() + 1).toString(), text: result.error, sender: 'ai' };
       setMessages(prev => [...prev, errorResponse]);
     } else if (result.answer && result.conversationId) {
       const aiResponse: Message = { id: (Date.now() + 1).toString(), text: result.answer, sender: 'ai' };
