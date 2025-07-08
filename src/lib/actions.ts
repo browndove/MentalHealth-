@@ -80,16 +80,18 @@ export async function handleAiAssistantChat(input: {
     return { answer: result.answer, conversationId };
 
   } catch (error) {
-     if (error instanceof z.ZodError) {
+    if (error instanceof z.ZodError) {
       return { error: error.errors.map(e => e.message).join(', ') };
     }
     console.error('AI Assistant Error:', error);
-    // Pass safe, specific errors to the frontend.
-    if (error instanceof Error && error.message.includes("The AI model did not produce a valid output")) {
-      return { error: error.message };
+    if (error instanceof Error) {
+        // Genkit often wraps errors, so we can pass the message.
+        // It could be a safety policy error, API key issue, etc.
+        // These messages are generally user-friendly enough.
+        return { error: error.message };
     }
-    // For all other errors, use a generic message.
-    return { error: 'An unexpected error occurred while communicating with the AI. Please try again.' };
+    // A non-Error object was thrown, which is rare.
+    return { error: 'An unexpected non-error object was thrown. Please check server logs.' };
   }
 }
 
