@@ -11,7 +11,7 @@ import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai
 
 export async function getCounselors(): Promise<{ id: string; name: string }[] | { error: string }> {
   try {
-    const counselorsQuery = query(collection(db, 'counselors'));
+    const counselorsQuery = query(collection(db, 'users'), where('role', '==', 'counselor'));
     const querySnapshot = await getDocs(counselorsQuery);
     
     if (querySnapshot.empty) {
@@ -28,7 +28,7 @@ export async function getCounselors(): Promise<{ id: string; name: string }[] | 
   } catch (error: any) {
     console.error("Error fetching counselors: ", error);
     if (error.code === 'permission-denied') {
-        return { error: "Permission Denied: Your security rules are blocking the app from listing the public 'counselors' collection. Please ensure your Firestore rules have a rule like `match /counselors/{counselorId} { allow read: if request.auth != null; }` or, more explicitly, `match /counselors { allow list: if request.auth != null; }`." };
+        return { error: "Permission Denied: Your security rules are blocking the app from listing counselors. Please ensure your Firestore rules allow any authenticated user to read the 'users' collection where the role is 'counselor'. A rule like 'allow read: if request.auth != null;' on the 'users/{userId}' path is what's needed." };
     }
     return { error: "A server error occurred while fetching the list of counselors." };
   }
