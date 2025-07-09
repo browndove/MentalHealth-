@@ -11,55 +11,41 @@ import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai
 
 export async function getCounselors(userId: string): Promise<{ id: string; name: string }[] | { error: string }> {
   if (!userId) {
-    return { error: 'Authentication failed. You must be logged in to view counselors.' };
+    return { error: 'Authentication failed. Please log in to see available counselors.' };
   }
   
   try {
-    // --- TEMPORARY DEBUGGING STEP ---
-    // Instead of querying with a "where" clause (which requires an index),
-    // we fetch all users and filter in the code. This helps determine if the
-    // issue is a basic read permission or a missing Firestore Index.
-    console.log("DEBUG: Fetching all users to manually filter for counselors...");
-    const usersCollectionRef = collection(db, 'users');
-    const querySnapshot = await getDocs(usersCollectionRef);
+    const q = query(collection(db, 'users'), where('role', '==', 'counselor'));
+    const querySnapshot = await getDocs(q);
 
-    const counselors = querySnapshot.docs
-      .map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          fullName: data.fullName,
-          role: data.role,
-        };
-      })
-      .filter(user => user.role === 'counselor')
-      .map(counselor => ({
-        id: counselor.id,
-        name: counselor.fullName || 'Unnamed Counselor',
-      }));
-    
-    console.log(`DEBUG: Found ${counselors.length} counselors out of ${querySnapshot.docs.length} total users.`);
+    const counselors = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().fullName || 'Unnamed Counselor',
+    }));
 
-    if (counselors.length === 0 && querySnapshot.docs.length > 0) {
-        console.log("DEBUG: No documents with role='counselor' found in the 'users' collection.");
+    if (counselors.length === 0) {
+      // This is not an error, but a log for the developer to know why the list might be empty.
+      console.log("Query for counselors completed, but found 0 results. Ensure counselor accounts exist with role='counselor'.");
     }
     
     return counselors;
 
   } catch (error: any) {
-    console.error("Error fetching users collection: ", error);
+    console.error("Error fetching counselors: ", error);
 
-    // Specific check for a missing index error
+    // Specific check for a missing index error, which is a common issue with new queries.
     if (error.code === 'failed-precondition') {
       const errorMessage = "CRITICAL: Firestore Index Required. The query to find counselors was blocked because a database index is missing. In your Firebase Console, go to the Firestore section. You should see an error message with a link to create the required index for the 'users' collection on the 'role' field. This is a one-time setup step that can take a few minutes to complete after you click the create button.";
       return { error: errorMessage };
     }
     
+    // Specific check for a permissions error.
     if (error.code === 'permission-denied') {
-      const errorMessage = "CRITICAL: Firestore Permission Denied. Your security rules are blocking this query. Please go to the Firestore 'Rules' tab in your Firebase Console and ensure you have a rule like: 'match /users/{userId} { allow read: if request.auth != null; }'.";
+      const errorMessage = "CRITICAL: Firestore Permission Denied. Your security rules are blocking this query. Please go to the Firestore 'Rules' tab in your Firebase Console and ensure you have a rule like: 'match /users/{userId} { allow read: if request.auth != null; }' or more explicitly 'match /users/{userId} { allow list: if request.auth != null; }'.";
       return { error: errorMessage };
     }
     
+    // Generic error for other issues.
     return { error: `An unexpected server error occurred: ${error.message}` };
   }
 }
