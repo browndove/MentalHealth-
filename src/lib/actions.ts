@@ -42,7 +42,6 @@ export async function getCounselors(userId: string): Promise<{ data: { id: strin
     return { data: counselors };
   } catch (error: any) {
     console.error("Error fetching counselors: ", error);
-    // A 'permission-denied' or 'failed-precondition' error on a query often means a missing Firestore index.
     if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
         const errorMessage = `CRITICAL: The query to find counselors was blocked. This is almost always caused by a **MISSING FIRESTORE INDEX**, not your security rules.
 
@@ -68,7 +67,7 @@ export async function requestAppointment(
   try {
     const validatedInput = AppointmentRequestSchema.parse(input);
 
-    if (!userId) {
+    if (!userId || !studentName) {
       return { error: 'You must be logged in to request an appointment.' };
     }
     
@@ -82,7 +81,7 @@ export async function requestAppointment(
 
     await addDoc(collection(db, 'appointments'), {
       studentId: userId,
-      studentName: studentName || 'Unknown Student',
+      studentName: studentName,
       counselorId: validatedInput.counselorId || null,
       counselorName: counselorName,
       preferredDate: validatedInput.preferredDate,
@@ -148,9 +147,22 @@ export async function getStudentSessions(userId: string): Promise<{ data: any[] 
     });
     
     return { data: sessions };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching student sessions:', error);
-    return { error: 'Could not fetch session data.' };
+    if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
+        const errorMessage = `CRITICAL: The query to find your appointments was blocked. This is often caused by a **MISSING FIRESTORE INDEX**, not your security rules.
+
+**ACTION REQUIRED:**
+1. Open your Firebase Studio **Server Logs**.
+2. Look for an error message that contains a long URL. This is a link to create the required index.
+3. Click that link. It will take you to your Firebase Console.
+4. Click the "Create Index" button in the Firebase Console.
+5. Wait a few minutes for the index to build, then refresh the app.
+
+The required index is on the 'appointments' collection for the 'studentId' and 'createdAt' fields.`;
+        return { error: errorMessage };
+    }
+    return { error: `An unexpected error occurred: ${error.message}` };
   }
 }
 
