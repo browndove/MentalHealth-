@@ -13,22 +13,22 @@ export async function getCounselors(): Promise<{ id: string; name: string }[] | 
   try {
     const counselorsQuery = query(collection(db, 'users'), where('role', '==', 'counselor'));
     const querySnapshot = await getDocs(counselorsQuery);
-    
+
     if (querySnapshot.empty) {
-        return [];
+      return [];
     }
 
     const counselors = querySnapshot.docs.map(doc => ({
       id: doc.id,
       name: doc.data().fullName || 'Unnamed Counselor',
     }));
-    
-    return counselors;
 
+    return counselors;
   } catch (error: any) {
     console.error("Error fetching counselors: ", error);
     if (error.code === 'permission-denied') {
-        return { error: "Permission Denied: Your security rules are blocking the app from listing counselors. Please ensure your Firestore rules allow any authenticated user to read the 'users' collection. A rule like 'allow read: if request.auth != null;' on the 'users/{userId}' path is what's needed." };
+        // This is a more direct error message to guide the user.
+        return { error: "CRITICAL: Firestore Permission Denied. Your app's code is trying to query the 'users' collection, but your database security rules are blocking it. This is not a code bug. To fix this, you MUST update your Firestore rules in the Firebase Console to allow this query. The required rule is: 'match /users/{userId} { allow read: if request.auth != null; }'" };
     }
     return { error: "A server error occurred while fetching the list of counselors." };
   }
