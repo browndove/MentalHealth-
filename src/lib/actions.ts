@@ -26,11 +26,20 @@ export async function getCounselors(): Promise<{ id: string; name: string }[] | 
     return counselors;
   } catch (error: any) {
     console.error("Error fetching counselors: ", error);
-    if (error.code === 'permission-denied') {
-        // This is a more direct error message to guide the user.
-        return { error: "CRITICAL: Firestore Permission Denied. Your app's code is trying to query the 'users' collection, but your database security rules are blocking it. This is not a code bug. To fix this, you MUST update your Firestore rules in the Firebase Console to allow this query. The required rule is: 'match /users/{userId} { allow read: if request.auth != null; }'" };
+
+    // NEW: More specific error handling to guide the user.
+    if (error.code === 'failed-precondition') {
+      // This is the specific error Firestore throws for a missing index.
+      const errorMessage = "CRITICAL: Firestore Index Required. The query to find counselors was blocked because a database index is missing. In your Firebase Console, go to the Firestore section. You should see an error message with a link to create the required index for the 'users' collection. This is a one-time setup step.";
+      return { error: errorMessage };
     }
-    return { error: "A server error occurred while fetching the list of counselors." };
+    if (error.code === 'permission-denied') {
+      // This is the error for security rules.
+      const errorMessage = "CRITICAL: Firestore Permission Denied. Your security rules are blocking this query. Please go to the Firestore 'Rules' tab in your Firebase Console and ensure you have a rule like: 'match /users/{userId} { allow read: if request.auth != null; }'.";
+      return { error: errorMessage };
+    }
+    // Fallback for any other type of error.
+    return { error: "An unexpected server error occurred while fetching the list of counselors." };
   }
 }
 
