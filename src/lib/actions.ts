@@ -287,5 +287,3 @@ export async function handleSummarizeCallTranscript(
     return { error: 'Failed to summarize the call transcript. Please try again.' };
   }
 }
-
-    
