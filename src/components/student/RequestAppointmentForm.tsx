@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,13 +17,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { AppointmentRequestSchema, type AppointmentRequestInput } from '@/lib/schemas';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Clock, Loader2 } from 'lucide-react';
+import { CalendarIcon, Clock, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getCounselors } from '@/lib/actions';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const timeSlots = ['09:00 AM', '10:00 AM', '11:00 AM', '02:00 PM', '03:00 PM', '04:00 PM'];
 
@@ -32,25 +34,21 @@ export function RequestAppointmentForm() {
   const [isLoadingCounselors, setIsLoadingCounselors] = useState(true);
   const [counselorError, setCounselorError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchCounselors() {
-      setIsLoadingCounselors(true);
-      setCounselorError(null);
-      const result = await getCounselors();
-      if ('error' in result) {
-        setCounselorError(result.error);
-        toast({
-          variant: "destructive",
-          title: "Failed to Load Counselors",
-          description: result.error,
-        });
-      } else {
-        setCounselors(result);
-      }
-      setIsLoadingCounselors(false);
+  const fetchCounselors = useCallback(async () => {
+    setIsLoadingCounselors(true);
+    setCounselorError(null);
+    const result = await getCounselors();
+    if (result.error) {
+      setCounselorError(result.error);
+    } else {
+      setCounselors(result);
     }
+    setIsLoadingCounselors(false);
+  }, []);
+
+  useEffect(() => {
     fetchCounselors();
-  }, [toast]);
+  }, [fetchCounselors]);
 
   const form = useForm<AppointmentRequestInput>({
     resolver: zodResolver(AppointmentRequestSchema),
@@ -84,7 +82,7 @@ export function RequestAppointmentForm() {
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
-                disabled={isLoadingCounselors || counselors.length === 0}
+                disabled={isLoadingCounselors || counselors.length === 0 || !!counselorError}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -92,7 +90,7 @@ export function RequestAppointmentForm() {
                       isLoadingCounselors
                         ? "Loading counselors..."
                         : counselorError
-                        ? "Error: Could not load counselors"
+                        ? "Could not load counselors"
                         : counselors.length === 0
                         ? "No counselors available"
                         : "Select a counselor if you have a preference"
@@ -100,22 +98,45 @@ export function RequestAppointmentForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {isLoadingCounselors ? (
-                    <div className="flex items-center justify-center p-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    </div>
-                  ) : (
-                    counselors.map(c => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))
-                  )}
+                  {counselors.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              {counselorError && <FormDescription className="text-destructive">{counselorError}</FormDescription>}
               <FormMessage />
             </FormItem>
           )}
         />
+        
+        {counselorError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Action Required: Could Not Load Counselors</AlertTitle>
+            <AlertDescription className="space-y-2">
+              <p className="font-semibold">{counselorError}</p>
+              <p>This error means your Firebase project is blocking the app. Please verify the following in your Firebase Console:</p>
+              <ol className="list-decimal list-inside space-y-1 text-xs">
+                <li>
+                  <strong>Collection Name:</strong> Go to Firestore Database. Ensure you have a collection named exactly `users` (all lowercase).
+                </li>
+                <li>
+                  <strong>Published Rules:</strong> Go to the Firestore `Rules` tab. Ensure the rules you've published contain the following block and that you've clicked **Publish**:
+                  <pre className="mt-1 p-2 bg-zinc-800 rounded-md text-white text-[10px]">
+                    {`match /users/{userId} {\n  allow read: if request.auth != null;\n}`}
+                  </pre>
+                </li>
+                 <li>
+                  <strong>Firestore Index:</strong> Check your server logs or the Firestore `Indexes` tab for any "missing index" errors. If you see one, click the link to create it.
+                </li>
+              </ol>
+               <Button type="button" variant="secondary" size="sm" className="mt-3" onClick={fetchCounselors}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
