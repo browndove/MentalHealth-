@@ -15,22 +15,39 @@ export async function getCounselors(userId: string): Promise<{ id: string; name:
   }
   
   try {
-    // This is the query that requires an index on the 'role' field.
-    const counselorsQuery = query(collection(db, 'users'), where('role', '==', 'counselor'));
-    const querySnapshot = await getDocs(counselorsQuery);
+    // --- TEMPORARY DEBUGGING STEP ---
+    // Instead of querying with a "where" clause (which requires an index),
+    // we fetch all users and filter in the code. This helps determine if the
+    // issue is a basic read permission or a missing Firestore Index.
+    console.log("DEBUG: Fetching all users to manually filter for counselors...");
+    const usersCollectionRef = collection(db, 'users');
+    const querySnapshot = await getDocs(usersCollectionRef);
 
-    if (querySnapshot.empty) {
-      return [];
+    const counselors = querySnapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          fullName: data.fullName,
+          role: data.role,
+        };
+      })
+      .filter(user => user.role === 'counselor')
+      .map(counselor => ({
+        id: counselor.id,
+        name: counselor.fullName || 'Unnamed Counselor',
+      }));
+    
+    console.log(`DEBUG: Found ${counselors.length} counselors out of ${querySnapshot.docs.length} total users.`);
+
+    if (counselors.length === 0 && querySnapshot.docs.length > 0) {
+        console.log("DEBUG: No documents with role='counselor' found in the 'users' collection.");
     }
-
-    const counselors = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      name: doc.data().fullName || 'Unnamed Counselor',
-    }));
-
+    
     return counselors;
+
   } catch (error: any) {
-    console.error("Error fetching counselors: ", error);
+    console.error("Error fetching users collection: ", error);
 
     // Specific check for a missing index error
     if (error.code === 'failed-precondition') {
@@ -43,7 +60,7 @@ export async function getCounselors(userId: string): Promise<{ id: string; name:
       return { error: errorMessage };
     }
     
-    return { error: "An unexpected server error occurred while fetching the list of counselors." };
+    return { error: `An unexpected server error occurred: ${error.message}` };
   }
 }
 
