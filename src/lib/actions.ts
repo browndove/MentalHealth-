@@ -3,25 +3,33 @@
 import { studentTriageAssistant } from '@/ai/flows/student-triage-assistant';
 import { SummarizeSessionNotesInput, summarizeSessionNotes } from '@/ai/flows/counselor-session-summary';
 import { z } from 'zod';
-import { AiChatSchema } from './schemas'; // SessionNotesSchema was not used here previously.
+import { AiChatSchema } from './schemas';
 import { db } from './firebase';
-import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, getDoc } from 'firebase/firestore';
 import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai/flows/call-transcript-summary';
-
 
 export async function getCounselors(): Promise<{ id: string; name: string }[] | { error: string }> {
   try {
-    const counselorsQuery = query(collection(db, 'users'), where('role', '==', 'counselor'));
+    // Query the new, public 'counselors' collection instead of 'users'
+    const counselorsQuery = query(collection(db, 'counselors'));
     const querySnapshot = await getDocs(counselorsQuery);
+    
+    if (querySnapshot.empty) {
+        return []; // No counselors found, but not an error.
+    }
+
     const counselors = querySnapshot.docs.map(doc => ({
       id: doc.id,
       name: doc.data().fullName || 'Unnamed Counselor',
     }));
+    
     return counselors;
+
   } catch (error: any) {
     console.error("Error fetching counselors: ", error);
+    // This error will now likely only trigger on a network issue or if the collection doesn't exist.
     if (error.code === 'permission-denied') {
-        return { error: "Permission Denied: Your security rules are blocking the app from listing counselors. Please ensure your Firestore rules allow any authenticated user to read the 'users' collection. A rule like 'allow read: if request.auth != null;' on the 'users/{userId}' path is what's needed." };
+        return { error: "Permission Denied: Your security rules are blocking access to the public 'counselors' list. Please check your Firestore rules." };
     }
     return { error: "A server error occurred while fetching the list of counselors." };
   }
@@ -88,13 +96,9 @@ export async function handleAiAssistantChat(input: {
     }
     console.error('AI Assistant Error:', error);
     if (error instanceof Error) {
-        // Genkit often wraps errors, so we can pass the message.
-        // It could be a safety policy error, API key issue, etc.
-        // These messages are generally user-friendly enough.
         return { error: error.message };
     }
-    // A non-Error object was thrown, which is rare.
-    return { error: 'An unexpected non-error object was thrown. Please check server logs.' };
+    return { error: 'An unexpected error occurred while communicating with the AI. Please try again.' };
   }
 }
 
@@ -138,8 +142,6 @@ export async function handleSummarizeSessionNotes(
   input: SummarizeSessionNotesInput
 ): Promise<{ summary: string } | { error: string }> {
   try {
-    // Basic validation, actual schema for this AI flow is internal to it.
-    // For robustness, you might want to define a Zod schema here that matches SummarizeSessionNotesInput
     if (!input.sessionNotes || input.sessionNotes.length < 20) {
         return { error: "Session notes must be at least 20 characters long."};
     }
@@ -155,12 +157,10 @@ export async function handleSummarizeCallTranscript(
   input: SummarizeCallTranscriptInput
 ): Promise<{ summary: string } | { error: string }> {
   try {
-    // The Genkit flow already validates the input against its Zod schema.
     const result = await summarizeCallTranscript(input);
     return { summary: result.summary };
   } catch (error: any) {
     console.error('Call Transcript Summarization Error:', error);
-    // Attempt to provide a more specific error message if it's a validation error from the flow.
     if (error.message && error.message.includes('Validation')) {
       return { error: 'The provided transcript is too short. Please provide at least 50 characters.' };
     }

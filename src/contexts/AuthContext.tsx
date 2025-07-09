@@ -11,7 +11,7 @@ import {
   onAuthStateChanged,
   updateProfile
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import type { LoginInput, RegisterInput } from '@/lib/schemas';
 
 export interface UserProfile {
@@ -110,7 +110,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: serverTimestamp(),
       };
 
+      // Create the main user document in the 'users' collection
       await setDoc(doc(db, 'users', firebaseUser.uid), userProfileData);
+
+      // If the user is a counselor, create a public-facing document for them
+      if (input.role === 'counselor') {
+        const counselorPublicProfile = {
+          uid: firebaseUser.uid,
+          fullName: input.fullName,
+        };
+        await setDoc(doc(db, 'counselors', firebaseUser.uid), counselorPublicProfile);
+      }
+
       setUser(userProfileData); // Update context state
       return userProfileData;
     }
