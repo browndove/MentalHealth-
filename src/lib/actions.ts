@@ -4,34 +4,136 @@
 import { studentTriageAssistant } from '@/ai/flows/student-triage-assistant';
 import { SummarizeSessionNotesInput, summarizeSessionNotes } from '@/ai/flows/counselor-session-summary';
 import { z } from 'zod';
-import { AiChatSchema } from './schemas';
+import { AiChatSchema, AppointmentRequestSchema, type AppointmentRequestInput } from './schemas';
 import { db } from './firebase';
-import { collection, getDocs, query, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, getDoc, where } from 'firebase/firestore';
+import { 
+  collection, 
+  getDocs, 
+  query, 
+  addDoc, 
+  serverTimestamp, 
+  doc, 
+  updateDoc, 
+  arrayUnion, 
+  orderBy, 
+  getDoc, 
+  where 
+} from 'firebase/firestore';
 import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai/flows/call-transcript-summary';
 
-export async function getCounselors(userId: string): Promise<{ id: string; name: string }[] | { error: string }> {
-  // Ensure the request is from an authenticated user.
+export async function getCounselors(userId: string): Promise<{ data: { id: string; name: string }[] } | { error: string }> {
   if (!userId) {
-    return { error: 'Authentication is required to fetch counselors.' };
+    return { error: "Action requires an authenticated user." };
   }
   
   try {
-    // Query the 'users' collection for documents where the role is 'counselor'.
     const q = query(collection(db, 'users'), where('role', '==', 'counselor'));
     const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return { data: [] };
+    }
 
-    // Map the results to a simpler array of objects.
     const counselors = querySnapshot.docs.map(doc => ({
       id: doc.id,
       name: doc.data().fullName || 'Unnamed Counselor',
     }));
     
-    return counselors;
-
+    return { data: counselors };
   } catch (error: any) {
-    // Return a simple, generic error message if the query fails for any reason.
     console.error("Error fetching counselors: ", error);
-    return { error: `An unexpected error occurred while fetching counselors. Please check server logs and Firestore rules.` };
+     if (error.code === 'permission-denied') {
+       return { error: "CRITICAL: Firestore Permission Denied. Your security rules are blocking this query. Please go to the Firestore 'Rules' tab in your Firebase Console and ensure you have a rule like: 'match /users/{userId} { allow read: if request.auth != null; }'." };
+    }
+    if (error.code === 'failed-precondition') {
+        return { error: "CRITICAL: Firestore index missing. The query requires a composite index. Please check the server logs or Firebase Console for a link to create the required index on the 'users' collection for the 'role' field." };
+    }
+    return { error: `An unexpected error occurred: ${error.message}` };
+  }
+}
+
+export async function requestAppointment(
+  input: AppointmentRequestInput,
+  userId: string,
+  studentName: string | null
+): Promise<{ success: boolean } | { error: string }> {
+  try {
+    const validatedInput = AppointmentRequestSchema.parse(input);
+
+    if (!userId) {
+      return { error: 'You must be logged in to request an appointment.' };
+    }
+    
+    let counselorName: string | null = null;
+    if(validatedInput.counselorId) {
+        const counselorDoc = await getDoc(doc(db, 'users', validatedInput.counselorId));
+        if(counselorDoc.exists()) {
+            counselorName = counselorDoc.data().fullName;
+        }
+    }
+
+    await addDoc(collection(db, 'appointments'), {
+      studentId: userId,
+      studentName: studentName || 'Unknown Student',
+      counselorId: validatedInput.counselorId || null,
+      counselorName: counselorName,
+      preferredDate: validatedInput.preferredDate,
+      preferredTime: validatedInput.preferredTime,
+      communicationMode: validatedInput.communicationMode,
+      reason: validatedInput.reason,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+    });
+
+    return { success: true };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { error: error.errors.map(e => e.message).join(', ') };
+    }
+    console.error('Appointment Request Error:', error);
+    if (error instanceof Error) {
+        return { error: error.message };
+    }
+    return { error: 'An unexpected error occurred while submitting your request.' };
+  }
+}
+
+export async function getStudentSessions(userId: string): Promise<{ data: any[] } | { error: string }> {
+  if (!userId) {
+    return { error: 'Authentication required.' };
+  }
+
+  try {
+    const q = query(
+      collection(db, 'appointments'),
+      where('studentId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+
+    const querySnapshot = await getDocs(q);
+    const sessions = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      // Firestore timestamps need to be converted to a serializable format (e.g., ISO string)
+      // for client components.
+      const dateValue = data.preferredDate.toDate ? data.preferredDate.toDate() : new Date(data.preferredDate);
+      
+      return {
+        id: doc.id,
+        ...data,
+        date: dateValue.toISOString(),
+        time: data.preferredTime,
+        counselor: data.counselorName || 'Not Assigned',
+        type: data.communicationMode.charAt(0).toUpperCase() + data.communicationMode.slice(1) + ' Session',
+        notesAvailable: data.status === 'completed', // Example logic
+        summary: data.summary || null, // Assuming summary might be added later
+        status: data.status.charAt(0).toUpperCase() + data.status.slice(1),
+      };
+    });
+    
+    return { data: sessions };
+  } catch (error) {
+    console.error('Error fetching student sessions:', error);
+    return { error: 'Could not fetch session data.' };
   }
 }
 

@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import React, { useState, useEffect, useCallback } from 'react';
-import { getCounselors } from '@/lib/actions';
+import { getCounselors, requestAppointment } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -35,10 +35,11 @@ export function RequestAppointmentForm() {
   const [counselors, setCounselors] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingCounselors, setIsLoadingCounselors] = useState(true);
   const [counselorError, setCounselorError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchCounselors = useCallback(async () => {
     if (!user) {
-      setCounselorError("Authentication required. Please log in to see available counselors.");
+      setCounselorError("You must be logged in to see available counselors.");
       setIsLoadingCounselors(false);
       return;
     }
@@ -46,10 +47,10 @@ export function RequestAppointmentForm() {
     setIsLoadingCounselors(true);
     setCounselorError(null);
     const result = await getCounselors(user.uid);
-    if (result.error) {
+    if ('error' in result) {
       setCounselorError(result.error);
     } else {
-      setCounselors(result as any);
+      setCounselors(result.data);
     }
     setIsLoadingCounselors(false);
   }, [user]);
@@ -68,14 +69,31 @@ export function RequestAppointmentForm() {
   });
 
   async function onSubmit(values: AppointmentRequestInput) {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    console.log(values);
-    toast({
-      title: 'Appointment Request Submitted',
-      description: 'Your request has been sent. You will be notified once confirmed.',
-    });
-    form.reset();
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Error',
+        description: 'You must be logged in to request an appointment.',
+      });
+      return;
+    }
+    setIsSubmitting(true);
+    const result = await requestAppointment(values, user.uid, user.fullName);
+    
+    if ('error' in result) {
+        toast({
+            variant: 'destructive',
+            title: 'Submission Failed',
+            description: result.error,
+        });
+    } else {
+        toast({
+          title: 'Appointment Request Submitted',
+          description: 'Your request has been sent. You will be notified once confirmed.',
+        });
+        form.reset();
+    }
+    setIsSubmitting(false);
   }
 
   return (
@@ -119,21 +137,9 @@ export function RequestAppointmentForm() {
         {counselorError && (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Action Required: Could Not Load Counselors</AlertTitle>
+            <AlertTitle>Could Not Load Counselors</AlertTitle>
             <AlertDescription className="space-y-2">
-              <p className="font-semibold">{counselorError}</p>
-              <p>This error means your Firebase project is blocking the app. Please verify the following in your Firebase Console:</p>
-              <ol className="list-decimal list-inside space-y-1 text-xs">
-                <li>
-                  <strong>Correct Rules:</strong> Go to the Firestore `Rules` tab. Ensure your rules for the `users` collection look exactly like this and are **Published**:
-                  <pre className="mt-1 p-2 bg-zinc-800 rounded-md text-white text-[10px]">
-                    {`match /users/{userId} {\n  allow read: if request.auth != null;\n}`}
-                  </pre>
-                </li>
-                 <li>
-                  <strong>Firestore Index:</strong> Check your server logs or the Firestore `Indexes` tab for any "missing index" errors related to the `users` collection. If you see one, click the link to create it. It can take a few minutes to build.
-                </li>
-              </ol>
+              <p>{counselorError}</p>
                <Button type="button" variant="secondary" size="sm" className="mt-3" onClick={fetchCounselors}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Retry
@@ -249,8 +255,8 @@ export function RequestAppointmentForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? 'Submitting...' : 'Request Appointment'}
+        <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+          {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Request Appointment'}
         </Button>
       </form>
     </Form>

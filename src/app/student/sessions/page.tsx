@@ -1,51 +1,76 @@
 
+'use client';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardList, FileText, Video, MessageSquare } from "lucide-react";
+import { ClipboardList, FileText, Video, MessageSquare, Loader2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { getStudentSessions } from "@/lib/actions";
+import { format } from "date-fns";
 
-// Placeholder data for sessions
-const sessions = [
-  {
-    id: "s1",
-    date: "2024-07-20",
-    time: "10:00 AM",
-    counselor: "Dr. Emily Carter",
-    type: "Video Call",
-    status: "Completed",
-    notesAvailable: true,
-    summary: "Discussed stress management techniques and upcoming exam anxieties. Action items: practice mindfulness for 10 mins daily.",
-    videoRecordingLink: "#", // Placeholder
-  },
-  {
-    id: "s2",
-    date: "2024-08-05",
-    time: "02:00 PM",
-    counselor: "Mr. David Lee",
-    type: "Chat Session",
-    status: "Completed",
-    notesAvailable: true,
-    summary: "Talked about balancing social life with academic responsibilities. Explored time management strategies.",
-    chatTranscriptLink: "#", // Placeholder
-  },
-  {
-    id: "s3",
-    date: "2024-08-22",
-    time: "11:00 AM",
-    counselor: "Dr. Emily Carter",
-    type: "Video Call",
-    status: "Upcoming",
-    notesAvailable: false,
-    summary: null,
-  },
-];
-
-const upcomingSessions = sessions.filter(s => s.status === "Upcoming");
-const pastSessions = sessions.filter(s => s.status === "Completed");
+// Define a type for the session data we expect from the backend
+interface Session {
+  id: string;
+  date: string;
+  time: string;
+  counselor: string;
+  type: string;
+  status: 'Upcoming' | 'Completed' | 'Pending' | 'Cancelled';
+  notesAvailable: boolean;
+  summary: string | null;
+  videoRecordingLink?: string;
+  chatTranscriptLink?: string;
+}
 
 export default function StudentSessionsPage() {
+  const { user } = useAuth();
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setLoading(true);
+      setError(null);
+      getStudentSessions(user.uid)
+        .then(result => {
+          if ('error' in result) {
+            setError(result.error);
+          } else {
+            setSessions(result.data as Session[]);
+          }
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [user]);
+
+  const upcomingSessions = sessions.filter(s => s.status === "Upcoming" || s.status === "Pending");
+  const pastSessions = sessions.filter(s => s.status === "Completed" || s.status === "Cancelled");
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading your sessions...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center">
+        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold text-destructive-foreground mb-2">Failed to Load Sessions</h2>
+        <p className="text-muted-foreground">{error}</p>
+      </div>
+    );
+  }
+
+
   return (
     <div className="space-y-8">
       <div className="flex items-center space-x-3">
@@ -70,10 +95,10 @@ export default function StudentSessionsPage() {
                     <div className="flex justify-between items-start">
                       <div>
                         <CardTitle className="text-xl font-headline">Session with {session.counselor}</CardTitle>
-                        <CardDescription>{session.date} at {session.time}</CardDescription>
+                        <CardDescription>{format(new Date(session.date), "PPP")} at {session.time}</CardDescription>
                       </div>
                       <div className={`text-xs font-semibold px-2 py-1 rounded-full ${session.type === 'Video Call' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                        {session.type === 'Video Call' ? <Video className="inline mr-1 h-4 w-4"/> : <MessageSquare className="inline mr-1 h-4 w-4"/>}
+                        {session.type.includes('Video') ? <Video className="inline mr-1 h-4 w-4"/> : <MessageSquare className="inline mr-1 h-4 w-4"/>}
                         {session.type}
                       </div>
                     </div>
@@ -110,10 +135,10 @@ export default function StudentSessionsPage() {
                      <div className="flex justify-between items-start">
                       <div>
                         <CardTitle className="text-xl font-headline">Session with {session.counselor}</CardTitle>
-                        <CardDescription>{session.date} at {session.time}</CardDescription>
+                        <CardDescription>{format(new Date(session.date), "PPP")} at {session.time}</CardDescription>
                       </div>
-                      <div className={`text-xs font-semibold px-2 py-1 rounded-full ${session.type === 'Video Call' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                         {session.type === 'Video Call' ? <Video className="inline mr-1 h-4 w-4"/> : <MessageSquare className="inline mr-1 h-4 w-4"/>}
+                      <div className={`text-xs font-semibold px-2 py-1 rounded-full ${session.type.includes('Video') ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                         {session.type.includes('Video') ? <Video className="inline mr-1 h-4 w-4"/> : <MessageSquare className="inline mr-1 h-4 w-4"/>}
                         {session.type}
                       </div>
                     </div>
@@ -128,12 +153,12 @@ export default function StudentSessionsPage() {
                         <Link href={`/student/sessions/${session.id}/notes`}><FileText className="mr-2 h-4 w-4"/>View Notes</Link>
                       </Button>
                     )}
-                    {session.type === 'Video Call' && (
+                    {session.type.includes('Video') && (
                        <Button variant="outline" size="sm" disabled className="rounded-md">
                          <Video className="mr-2 h-4 w-4"/>Recording (N/A)
                        </Button>
                     )}
-                     {session.type === 'Chat Session' && (
+                     {session.type.includes('Chat') && (
                        <Button variant="outline" size="sm" disabled className="rounded-md">
                          <MessageSquare className="mr-2 h-4 w-4"/>Transcript (N/A)
                        </Button>
