@@ -21,7 +21,7 @@ export async function getCounselors(): Promise<{ id: string; name: string }[] | 
   } catch (error: any) {
     console.error("Error fetching counselors: ", error);
     if (error.code === 'permission-denied') {
-        return { error: "Permission denied. Please check your Firestore security rules to allow reading the 'users' collection." };
+        return { error: "Permission Denied: Your security rules are blocking the app from listing counselors. Please ensure your Firestore rules allow any authenticated user to read the 'users' collection. A rule like 'allow read: if request.auth != null;' on the 'users/{userId}' path is what's needed." };
     }
     return { error: "A server error occurred while fetching the list of counselors." };
   }
