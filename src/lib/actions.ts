@@ -101,7 +101,13 @@ export async function requestAppointment(
     console.error('Appointment Request Error:', error);
     if (error instanceof Error) {
         if (error.message.includes('permission-denied') || error.message.includes('PERMISSION_DENIED')) {
-            return { error: "Permission Denied: Your security rules are blocking the creation of appointments. Please ensure your firestore.rules file allows students to create documents in the 'appointments' collection." }
+            const rulesError = `Permission Denied: Your security rules are blocking the creation of appointments. Please ensure your firestore.rules file allows students to create documents in the 'appointments' collection. 
+            
+A rule like this is needed:
+match /appointments/{appointmentId} { 
+  allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid; 
+}`;
+            return { error: rulesError };
         }
         return { error: error.message };
     }
@@ -281,3 +287,5 @@ export async function handleSummarizeCallTranscript(
     return { error: 'Failed to summarize the call transcript. Please try again.' };
   }
 }
+
+    
