@@ -9,7 +9,11 @@ import { db } from './firebase';
 import { collection, getDocs, query, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, getDoc, where } from 'firebase/firestore';
 import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai/flows/call-transcript-summary';
 
-export async function getCounselors(): Promise<{ id: string; name: string }[] | { error: string }> {
+export async function getCounselors(userId: string): Promise<{ id: string; name: string }[] | { error: string }> {
+  if (!userId) {
+    return { error: 'Authentication failed. You must be logged in to view counselors.' };
+  }
+  
   try {
     const counselorsQuery = query(collection(db, 'users'), where('role', '==', 'counselor'));
     const querySnapshot = await getDocs(counselorsQuery);
@@ -27,18 +31,15 @@ export async function getCounselors(): Promise<{ id: string; name: string }[] | 
   } catch (error: any) {
     console.error("Error fetching counselors: ", error);
 
-    // NEW: More specific error handling to guide the user.
     if (error.code === 'failed-precondition') {
-      // This is the specific error Firestore throws for a missing index.
-      const errorMessage = "CRITICAL: Firestore Index Required. The query to find counselors was blocked because a database index is missing. In your Firebase Console, go to the Firestore section. You should see an error message with a link to create the required index for the 'users' collection. This is a one-time setup step.";
+      const errorMessage = "CRITICAL: Firestore Index Required. A database index is missing, which is needed to query for counselors. In your Firebase Console, go to the Firestore section. You should see an error message with a link to create the required index for the 'users' collection on the 'role' field. This is a one-time setup step.";
       return { error: errorMessage };
     }
     if (error.code === 'permission-denied') {
-      // This is the error for security rules.
       const errorMessage = "CRITICAL: Firestore Permission Denied. Your security rules are blocking this query. Please go to the Firestore 'Rules' tab in your Firebase Console and ensure you have a rule like: 'match /users/{userId} { allow read: if request.auth != null; }'.";
       return { error: errorMessage };
     }
-    // Fallback for any other type of error.
+    
     return { error: "An unexpected server error occurred while fetching the list of counselors." };
   }
 }

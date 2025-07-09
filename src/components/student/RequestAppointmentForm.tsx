@@ -25,26 +25,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getCounselors } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useAuth } from '@/contexts/AuthContext';
 
 const timeSlots = ['09:00 AM', '10:00 AM', '11:00 AM', '02:00 PM', '03:00 PM', '04:00 PM'];
 
 export function RequestAppointmentForm() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [counselors, setCounselors] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingCounselors, setIsLoadingCounselors] = useState(true);
   const [counselorError, setCounselorError] = useState<string | null>(null);
 
   const fetchCounselors = useCallback(async () => {
+    if (!user) {
+      setCounselorError("Authentication required. Please log in to see available counselors.");
+      setIsLoadingCounselors(false);
+      return;
+    }
+
     setIsLoadingCounselors(true);
     setCounselorError(null);
-    const result = await getCounselors();
+    const result = await getCounselors(user.uid);
     if (result.error) {
       setCounselorError(result.error);
     } else {
-      setCounselors(result);
+      setCounselors(result as any);
     }
     setIsLoadingCounselors(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchCounselors();
@@ -117,16 +125,13 @@ export function RequestAppointmentForm() {
               <p>This error means your Firebase project is blocking the app. Please verify the following in your Firebase Console:</p>
               <ol className="list-decimal list-inside space-y-1 text-xs">
                 <li>
-                  <strong>Collection Name:</strong> Go to Firestore Database. Ensure you have a collection named exactly `users` (all lowercase).
-                </li>
-                <li>
-                  <strong>Published Rules:</strong> Go to the Firestore `Rules` tab. Ensure the rules you've published contain the following block and that you've clicked **Publish**:
+                  <strong>Correct Rules:</strong> Go to the Firestore `Rules` tab. Ensure your rules for the `users` collection look exactly like this and are **Published**:
                   <pre className="mt-1 p-2 bg-zinc-800 rounded-md text-white text-[10px]">
                     {`match /users/{userId} {\n  allow read: if request.auth != null;\n}`}
                   </pre>
                 </li>
                  <li>
-                  <strong>Firestore Index:</strong> Check your server logs or the Firestore `Indexes` tab for any "missing index" errors. If you see one, click the link to create it.
+                  <strong>Firestore Index:</strong> Check your server logs or the Firestore `Indexes` tab for any "missing index" errors related to the `users` collection. If you see one, click the link to create it. It can take a few minutes to build.
                 </li>
               </ol>
                <Button type="button" variant="secondary" size="sm" className="mt-3" onClick={fetchCounselors}>
