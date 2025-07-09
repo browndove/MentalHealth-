@@ -1,3 +1,4 @@
+
 'use server';
 
 import { studentTriageAssistant } from '@/ai/flows/student-triage-assistant';
@@ -5,17 +6,16 @@ import { SummarizeSessionNotesInput, summarizeSessionNotes } from '@/ai/flows/co
 import { z } from 'zod';
 import { AiChatSchema } from './schemas';
 import { db } from './firebase';
-import { collection, getDocs, query, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, orderBy, getDoc, where } from 'firebase/firestore';
 import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai/flows/call-transcript-summary';
 
 export async function getCounselors(): Promise<{ id: string; name: string }[] | { error: string }> {
   try {
-    // Query the new, public 'counselors' collection instead of 'users'
     const counselorsQuery = query(collection(db, 'counselors'));
     const querySnapshot = await getDocs(counselorsQuery);
     
     if (querySnapshot.empty) {
-        return []; // No counselors found, but not an error.
+        return [];
     }
 
     const counselors = querySnapshot.docs.map(doc => ({
@@ -27,13 +27,13 @@ export async function getCounselors(): Promise<{ id: string; name: string }[] | 
 
   } catch (error: any) {
     console.error("Error fetching counselors: ", error);
-    // This error will now likely only trigger on a network issue or if the collection doesn't exist.
     if (error.code === 'permission-denied') {
-        return { error: "Permission Denied: Your security rules are blocking access to the public 'counselors' list. Please check your Firestore rules." };
+        return { error: "Permission Denied: Your security rules are blocking the app from listing the public 'counselors' collection. Please ensure your Firestore rules have a rule like `match /counselors/{counselorId} { allow read: if request.auth != null; }` or, more explicitly, `match /counselors { allow list: if request.auth != null; }`." };
     }
     return { error: "A server error occurred while fetching the list of counselors." };
   }
 }
+
 
 export async function handleAiAssistantChat(input: {
   message: string;
