@@ -42,11 +42,19 @@ export async function getCounselors(userId: string): Promise<{ data: { id: strin
     return { data: counselors };
   } catch (error: any) {
     console.error("Error fetching counselors: ", error);
-     if (error.code === 'permission-denied') {
-       return { error: "CRITICAL: Firestore Permission Denied. Your security rules are blocking this query. Please go to the Firestore 'Rules' tab in your Firebase Console and ensure you have a rule like: 'match /users/{userId} { allow read: if request.auth != null; }'." };
-    }
-    if (error.code === 'failed-precondition') {
-        return { error: "CRITICAL: Firestore index missing. The query requires a composite index. Please check the server logs or Firebase Console for a link to create the required index on the 'users' collection for the 'role' field." };
+    // A 'permission-denied' or 'failed-precondition' error on a query often means a missing Firestore index.
+    if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
+        const errorMessage = `CRITICAL: The query to find counselors was blocked. This is almost always caused by a **MISSING FIRESTORE INDEX**, not your security rules.
+
+**ACTION REQUIRED:**
+1. Open your Firebase Studio **Server Logs**.
+2. Look for an error message that contains a long URL. This is a link to create the required index.
+3. Click that link. It will take you to your Firebase Console.
+4. Click the "Create Index" button in the Firebase Console.
+5. Wait a few minutes for the index to build, then refresh the app.
+
+The required index is on the 'users' collection for the 'role' field. This is a one-time setup.`;
+        return { error: errorMessage };
     }
     return { error: `An unexpected error occurred: ${error.message}` };
   }
