@@ -17,7 +17,8 @@ import {
   arrayUnion, 
   orderBy, 
   getDoc, 
-  where 
+  where,
+  Timestamp
 } from 'firebase/firestore';
 import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai/flows/call-transcript-summary';
 
@@ -79,12 +80,15 @@ export async function requestAppointment(
         }
     }
 
+    // Convert JavaScript Date to Firestore Timestamp
+    const firestoreDate = validatedInput.preferredDate ? Timestamp.fromDate(validatedInput.preferredDate) : null;
+
     await addDoc(collection(db, 'appointments'), {
       studentId: userId,
       studentName: studentName,
       counselorId: validatedInput.counselorId || null,
       counselorName: counselorName,
-      preferredDate: validatedInput.preferredDate,
+      preferredDate: firestoreDate,
       preferredTime: validatedInput.preferredTime,
       communicationMode: validatedInput.communicationMode,
       reason: validatedInput.reason,
@@ -131,7 +135,7 @@ export async function getStudentSessions(userId: string): Promise<{ data: any[] 
       const data = doc.data();
       // Firestore timestamps need to be converted to a serializable format (e.g., ISO string)
       // for client components.
-      const dateValue = data.preferredDate.toDate ? data.preferredDate.toDate() : new Date(data.preferredDate);
+      const dateValue = data.preferredDate && data.preferredDate.toDate ? data.preferredDate.toDate() : new Date();
       
       return {
         id: doc.id,
