@@ -64,8 +64,8 @@ export function AiAssistantChat({ conversationId: initialConversationId, initial
   });
 
   async function onSubmit(values: AiChatInput) {
-    if (!user) {
-      toast({ variant: 'destructive', title: 'Not authenticated' });
+    if (!user || !user.fullName) {
+      toast({ variant: 'destructive', title: 'Not authenticated or name is missing.' });
       return;
     }
 
@@ -78,6 +78,7 @@ export function AiAssistantChat({ conversationId: initialConversationId, initial
       message: values.message,
       conversationId: conversationId,
       userId: user.uid,
+      userName: user.fullName, // Pass the user's name
     });
     
     if (result.error) {

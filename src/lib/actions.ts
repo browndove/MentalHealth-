@@ -167,11 +167,12 @@ export async function handleAiAssistantChat(input: {
   message: string;
   conversationId: string | null;
   userId: string;
+  userName: string;
 }): Promise<{ answer: string; conversationId: string } | { error: string }> {
   try {
     const validatedInput = AiChatSchema.parse({ message: input.message });
-     if (!input.userId) {
-      return { error: 'User not authenticated.' };
+     if (!input.userId || !input.userName) {
+      return { error: 'User not authenticated or user name is missing.' };
     }
 
     let conversationId = input.conversationId;
@@ -180,6 +181,7 @@ export async function handleAiAssistantChat(input: {
     if (!conversationId) {
       const newConversationRef = await addDoc(collection(db, 'conversations'), {
         userId: input.userId,
+        userName: input.userName, // Store the user's name
         title: validatedInput.message.substring(0, 40) + (validatedInput.message.length > 40 ? '...' : ''),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
