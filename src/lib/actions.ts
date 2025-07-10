@@ -178,7 +178,7 @@ export async function handleAiAssistantChat(input: {
 
     // If no conversationId, create a new one.
     if (!conversationId) {
-      const newConversationRef = await addDoc(collection(db, 'ai_conversations'), {
+      const newConversationRef = await addDoc(collection(db, 'conversations'), {
         userId: input.userId,
         title: validatedInput.message.substring(0, 40) + (validatedInput.message.length > 40 ? '...' : ''),
         createdAt: serverTimestamp(),
@@ -188,7 +188,7 @@ export async function handleAiAssistantChat(input: {
       conversationId = newConversationRef.id;
     }
     
-    const conversationRef = doc(db, 'ai_conversations', conversationId);
+    const conversationRef = doc(db, 'conversations', conversationId);
 
     // Add user message to conversation
     await updateDoc(conversationRef, {
@@ -234,7 +234,7 @@ export async function getUserConversations(userId: string): Promise<{ id: string
     if (!userId) return { error: "User not authenticated." };
 
     try {
-        const q = query(collection(db, 'ai_conversations'), where('userId', '==', userId), orderBy('updatedAt', 'desc'));
+        const q = query(collection(db, 'conversations'), where('userId', '==', userId), orderBy('updatedAt', 'desc'));
         const querySnapshot = await getDocs(q);
         const conversations = querySnapshot.docs.map(doc => ({
             id: doc.id,
@@ -251,7 +251,7 @@ export async function getConversationMessages(conversationId: string, userId: st
     if (!userId) return { error: "User not authenticated." };
 
     try {
-        const conversationRef = doc(db, 'ai_conversations', conversationId);
+        const conversationRef = doc(db, 'conversations', conversationId);
         const docSnap = await getDoc(conversationRef);
 
         if (!docSnap.exists() || docSnap.data().userId !== userId) {
