@@ -124,23 +124,24 @@ export async function getStudentSessions(userId: string): Promise<{ data: any[] 
   }
 
   try {
+    // Query without ordering to avoid needing a composite index.
     const q = query(
       collection(db, 'appointments'),
-      where('studentId', '==', userId),
-      orderBy('createdAt', 'desc')
+      where('studentId', '==', userId)
     );
 
     const querySnapshot = await getDocs(q);
     const sessions = querySnapshot.docs.map(doc => {
       const data = doc.data();
-      // Firestore timestamps need to be converted to a serializable format (e.g., ISO string)
-      // for client components.
-      const dateValue = data.preferredDate && data.preferredDate.toDate ? data.preferredDate.toDate() : new Date();
-      
+      // Firestore timestamps need to be converted to a serializable format
+      const dateValue = data.preferredDate?.toDate ? data.preferredDate.toDate() : new Date();
+      const createdAtValue = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+
       return {
         id: doc.id,
         ...data,
         date: dateValue.toISOString(),
+        createdAt: createdAtValue.getTime(), // Get epoch time for sorting
         time: data.preferredTime,
         counselor: data.counselorName || 'Not Assigned',
         type: data.communicationMode.charAt(0).toUpperCase() + data.communicationMode.slice(1) + ' Session',
@@ -150,23 +151,14 @@ export async function getStudentSessions(userId: string): Promise<{ data: any[] 
       };
     });
     
+    // Sort the results in code instead of in the query
+    sessions.sort((a, b) => b.createdAt - a.createdAt);
+
     return { data: sessions };
   } catch (error: any) {
     console.error('Error fetching student sessions:', error);
-    if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
-        const errorMessage = `CRITICAL: The query to find your appointments was blocked. This is often caused by a **MISSING FIRESTORE INDEX**, not your security rules.
-
-**ACTION REQUIRED:**
-1. Open your Firebase Studio **Server Logs**.
-2. Look for an error message that contains a long URL. This is a link to create the required index.
-3. Click that link. It will take you to your Firebase Console.
-4. Click the "Create Index" button in the Firebase Console.
-5. Wait a few minutes for the index to build, then refresh the app.
-
-The required index is on the 'appointments' collection for the 'studentId' and 'createdAt' fields.`;
-        return { error: errorMessage };
-    }
-    return { error: `An unexpected error occurred: ${error.message}` };
+     // This simplified error is now sufficient
+    return { error: `An unexpected error occurred while fetching your sessions: ${error.message}` };
   }
 }
 
