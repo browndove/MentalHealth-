@@ -3,7 +3,7 @@
 import { AiAssistantChat } from "@/components/student/AiAssistantChat";
 import { useAuth } from "@/contexts/AuthContext";
 import { getConversationMessages } from "@/lib/actions";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { Loader2, AlertTriangle } from "lucide-react";
 
 interface Message {
@@ -13,7 +13,7 @@ interface Message {
 }
 
 export default function ConversationPage({ params }: { params: { conversationId: string } }) {
-    const { conversationId } = params;
+    const { conversationId } = use(params);
     const { user } = useAuth();
     const [initialMessages, setInitialMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
