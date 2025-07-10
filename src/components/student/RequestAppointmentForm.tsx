@@ -31,13 +31,17 @@ const timeSlots = ['09:00 AM', '10:00 AM', '11:00 AM', '02:00 PM', '03:00 PM', '
 
 export function RequestAppointmentForm() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth(); // Use auth loading state
   const [counselors, setCounselors] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingCounselors, setIsLoadingCounselors] = useState(true);
   const [counselorError, setCounselorError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchCounselors = useCallback(async () => {
+    // Ensure user is loaded and authenticated before fetching
+    if (authLoading) {
+      return; // Wait for authentication to resolve
+    }
     if (!user) {
       setCounselorError("You must be logged in to see available counselors.");
       setIsLoadingCounselors(false);
@@ -53,7 +57,7 @@ export function RequestAppointmentForm() {
       setCounselors(result.data);
     }
     setIsLoadingCounselors(false);
-  }, [user]);
+  }, [user, authLoading]);
 
   useEffect(() => {
     fetchCounselors();
@@ -69,7 +73,7 @@ export function RequestAppointmentForm() {
   });
 
   async function onSubmit(values: AppointmentRequestInput) {
-    if (!user) {
+    if (!user || !user.fullName) {
       toast({
         variant: 'destructive',
         title: 'Authentication Error',
@@ -96,6 +100,8 @@ export function RequestAppointmentForm() {
     setIsSubmitting(false);
   }
 
+  const isFormDisabled = authLoading || isLoadingCounselors || !!counselorError || !user;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -108,11 +114,12 @@ export function RequestAppointmentForm() {
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
-                disabled={isLoadingCounselors || counselors.length === 0 || !!counselorError}
+                disabled={isFormDisabled}
               >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={
+                      authLoading ? "Verifying user..." :
                       isLoadingCounselors
                         ? "Loading counselors..."
                         : counselorError
@@ -139,8 +146,8 @@ export function RequestAppointmentForm() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Could Not Load Counselors</AlertTitle>
             <AlertDescription className="space-y-2">
-              <p>{counselorError}</p>
-               <Button type="button" variant="secondary" size="sm" className="mt-3" onClick={fetchCounselors}>
+              <p className="whitespace-pre-wrap">{counselorError}</p>
+               <Button type="button" variant="secondary" size="sm" className="mt-3" onClick={fetchCounselors} disabled={authLoading}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Retry
               </Button>
@@ -165,6 +172,7 @@ export function RequestAppointmentForm() {
                           "w-full justify-start text-left font-normal",
                           !field.value && "text-muted-foreground"
                         )}
+                        disabled={isFormDisabled}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
@@ -192,7 +200,7 @@ export function RequestAppointmentForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Preferred Time Slot</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFormDisabled}>
                   <FormControl>
                     <SelectTrigger>
                        <Clock className="mr-2 h-4 w-4" />
@@ -217,7 +225,7 @@ export function RequestAppointmentForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Communication Mode</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFormDisabled}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select how you'd like to communicate" />
@@ -246,6 +254,7 @@ export function RequestAppointmentForm() {
                   className="resize-none"
                   rows={4}
                   {...field}
+                  disabled={isFormDisabled}
                 />
               </FormControl>
               <FormDescription>
@@ -255,7 +264,7 @@ export function RequestAppointmentForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+        <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting || isFormDisabled}>
           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Request Appointment'}
         </Button>
       </form>
