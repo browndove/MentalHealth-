@@ -89,7 +89,7 @@ export function RegisterForm() {
 
 
   return (
-    <Card className="w-full max-w-md shadow-xl">
+    <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border-border/50">
       <CardHeader>
         <CardTitle className="text-3xl font-headline text-primary">Create Account</CardTitle>
         <CardDescription>Join Accra TechMind to access mental wellness resources.</CardDescription>
@@ -223,7 +223,7 @@ export function RegisterForm() {
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link href="/login" className="font-medium text-primary hover:text-primary/80">
+              <Link href="/login" className="font-medium text-primary hover:underline">
                 Login here
               </Link>
             </p>

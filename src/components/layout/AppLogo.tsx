@@ -2,17 +2,18 @@ import Link from 'next/link';
 
 export function AppLogo() {
   return (
-    <Link href="/" className="flex items-center space-x-2.5 group" aria-label="Mental Guide Home">
-      <div className="flex h-8 w-8 items-center justify-center rounded-md overflow-hidden">
-        {/* Simplified two-tone square logo */}
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform group-hover:scale-105">
-          <rect width="32" height="32" rx="6" fill="hsl(var(--primary))"/>
-          <rect x="6" y="6" width="20" height="20" rx="3" fill="hsl(var(--background))" className="opacity-75 group-hover:opacity-100"/>
-           <rect x="10" y="10" width="12" height="12" rx="2" fill="hsl(var(--primary))" className="opacity-50 group-hover:opacity-75"/>
+    <Link href="/" className="flex items-center space-x-3 group" aria-label="Accra TechMind Home">
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden bg-primary shadow-sm">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary-foreground transition-transform group-hover:scale-110">
+            <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2 7L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 22V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M22 7L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M17 4.5L7 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </div>
-      <span className="font-headline text-2xl font-semibold text-foreground group-hover:text-primary transition-colors">
-        Mental Guide
+      <span className="font-headline text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+        Accra TechMind
       </span>
     </Link>
   );

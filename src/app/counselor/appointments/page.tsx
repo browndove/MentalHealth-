@@ -47,7 +47,7 @@ export default function CounselorAppointmentsPage() {
           <CalendarCheck className="h-10 w-10 text-primary" />
           <h1 className="text-4xl font-headline">Manage Appointments</h1>
         </div>
-         <Button disabled className="rounded-md"> {/* Or link to a modal for manual creation */}
+         <Button disabled>
             <PlusCircle className="mr-2 h-4 w-4"/> Schedule New Appointment
         </Button>
       </div>
@@ -56,14 +56,14 @@ export default function CounselorAppointmentsPage() {
       </p>
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 rounded-lg">
-          <TabsTrigger value="pending" className="flex items-center gap-2 rounded-md">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3">
+          <TabsTrigger value="pending" className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4"/> Pending ({pendingAppointments.length})
           </TabsTrigger>
-          <TabsTrigger value="confirmed" className="flex items-center gap-2 rounded-md">
+          <TabsTrigger value="confirmed" className="flex items-center gap-2">
             <CalendarCheck className="h-4 w-4"/> Confirmed ({confirmedAppointments.length})
           </TabsTrigger>
-          <TabsTrigger value="completed" className="flex items-center gap-2 rounded-md">
+          <TabsTrigger value="completed" className="flex items-center gap-2">
             <ListChecks className="h-4 w-4"/> History ({completedAppointments.length})
           </TabsTrigger>
         </TabsList>
@@ -76,9 +76,9 @@ export default function CounselorAppointmentsPage() {
               ))}
             </div>
           ) : (
-            <Card className="rounded-xl shadow-md">
+            <Card>
               <CardContent className="pt-6 text-center">
-                <Image src="https://placehold.co/300x200.png" alt="No pending requests" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty inbox illustration Ghana" />
+                <Image src="https://placehold.co/300x200.png" alt="No pending requests" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty inbox illustration" />
                 <p className="text-muted-foreground">No pending appointment requests at the moment.</p>
               </CardContent>
             </Card>
@@ -93,9 +93,9 @@ export default function CounselorAppointmentsPage() {
               ))}
             </div>
           ) : (
-            <Card className="rounded-xl shadow-md">
+            <Card>
               <CardContent className="pt-6 text-center">
-                 <Image src="https://placehold.co/300x200.png" alt="No confirmed sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="calendar check illustration Ghana" />
+                 <Image src="https://placehold.co/300x200.png" alt="No confirmed sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="calendar check illustration" />
                 <p className="text-muted-foreground">No sessions confirmed yet. Check pending requests.</p>
               </CardContent>
             </Card>
@@ -110,9 +110,9 @@ export default function CounselorAppointmentsPage() {
               ))}
             </div>
           ) : (
-            <Card className="rounded-xl shadow-md">
+            <Card>
               <CardContent className="pt-6 text-center">
-                <Image src="https://placehold.co/300x200.png" alt="No past sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="archive box illustration Ghana" />
+                <Image src="https://placehold.co/300x200.png" alt="No past sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="archive box illustration" />
                 <p className="text-muted-foreground">No completed or cancelled sessions in history yet.</p>
               </CardContent>
             </Card>

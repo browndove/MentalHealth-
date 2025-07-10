@@ -5,101 +5,99 @@
 
 @layer base {
   :root {
-    /* Light Theme - "Mental Guide" Inspired */
-    --background: 45 33% 96%; /* Very light warm beige (e.g., #FAF8F5) */
-    --foreground: 30 10% 25%; /* Dark warm gray for text (e.g., #4D4A47) */
+    /* Light Theme - Accra TechMind */
+    --background: 210 40% 98%; /* Light Grey */
+    --foreground: 215 25% 27%; /* Dark Slate Blue */
 
-    --card: 0 0% 100%; /* White for cards */
-    --card-foreground: 30 10% 25%;
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 215 25% 27%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 30 10% 25%;
+    --popover-foreground: 215 25% 27%;
 
-    --primary: 30 80% 65%; /* Muted Orange (e.g., #F2A66A) */
-    --primary-foreground: 30 10% 15%; /* Dark text for on primary */
+    --primary: 206 90% 50%; /* Soft Blue */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 40 30% 92%; /* Light beige for secondary elements (e.g., #F2EDE8) */
-    --secondary-foreground: 30 10% 25%;
+    --secondary: 210 40% 90%; /* Light Steel Blue */
+    --secondary-foreground: 215 25% 27%;
 
-    --muted: 40 30% 90%; /* Slightly darker beige for muted elements (e.g., #EDEAE4) */
-    --muted-foreground: 30 10% 45%; /* Muted foreground text */
+    --muted: 210 40% 90%;
+    --muted-foreground: 215 20% 45%;
 
-    --accent: 180 40% 45%; /* Teal for alternate buttons (e.g., #4AA8A8) - This is our teal */
-    --accent-foreground: 0 0% 100%; /* White text for on accent */
+    --accent: 173 58% 39%; /* Muted Teal */
+    --accent-foreground: 0 0% 100%;
     
     --destructive: 0 70% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 20% 88%; /* Subtle warm border (e.g., #E6DFD8) */
-    --input: 0 0% 100%; /* White input background */
-    --input-border: 40 20% 85%; /* Slightly darker border for inputs */
-    --ring: 30 80% 65%; /* Muted Orange for focus rings */
+    --border: 210 40% 90%;
+    --input: 210 40% 96%;
+    --ring: 206 90% 50%;
 
-    --radius: 0.75rem; /* Increased default radius for softer corners */
+    --radius: 0.75rem;
     
-    /* Chart colors - can be adjusted */
-    --chart-1: 30 80% 60%;
-    --chart-2: 180 40% 60%;
-    --chart-3: 45 70% 65%;
-    --chart-4: 200 70% 65%;
+    /* Chart colors */
+    --chart-1: 206 90% 50%;
+    --chart-2: 173 58% 45%;
+    --chart-3: 262 80% 60%;
+    --chart-4: 28 90% 60%;
     --chart-5: 0 0% 50%;
     
     /* Sidebar specific colors */
-    --sidebar-background: 45 33% 97%; /* Slightly lighter than main bg (e.g., #FBF9F7) */
-    --sidebar-foreground: 30 10% 30%; 
-    --sidebar-primary: 30 80% 88%; /* Active item background - Light Orange (e.g., #FBE5D4) */
-    --sidebar-primary-foreground: 30 80% 50%; /* Darker Orange text on active item */
-    --sidebar-accent: 45 33% 92%; /* Hover item background - very light beige */
-    --sidebar-accent-foreground: 30 10% 20%; 
-    --sidebar-border: 45 20% 90%; 
-    --sidebar-ring: 30 80% 65%; 
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 27%;
+    --sidebar-primary: 206 90% 94%;
+    --sidebar-primary-foreground: 206 90% 50%;
+    --sidebar-accent: 210 40% 94%;
+    --sidebar-accent-foreground: 215 25% 27%;
+    --sidebar-border: 210 40% 90%;
+    --sidebar-ring: 206 90% 50%;
   }
 
   .dark {
-    /* Dark Theme - Adapt "Mental Guide" warm tones for dark mode */
-    --background: 30 10% 12%; /* Dark warm gray/brown */
-    --foreground: 45 33% 90%; /* Light beige text */
+    /* Dark Theme */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
 
-    --card: 30 10% 15%; 
-    --card-foreground: 45 33% 90%;
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 30 10% 10%;
-    --popover-foreground: 45 33% 90%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 30 80% 65%; 
-    --primary-foreground: 30 10% 15%; 
+    --primary: 206 90% 65%;
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 30 10% 20%; 
-    --secondary-foreground: 45 33% 90%;
+    --secondary: 217 33% 20%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 30 10% 25%;
-    --muted-foreground: 45 33% 70%;
+    --muted: 217 33% 20%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 180 40% 55%; /* Teal accent for dark mode */
-    --accent-foreground: 0 0% 100%;
+    --accent: 173 58% 45%;
+    --accent-foreground: 210 40% 98%;
     
-    --destructive: 0 60% 50%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 63% 50%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 30 10% 25%;
-    --input: 30 10% 18%; 
-    --input-border: 30 10% 30%;
-    --ring: 30 80% 65%;
+    --border: 217 33% 20%;
+    --input: 217 33% 17%;
+    --ring: 206 90% 65%;
     
-    --chart-1: 30 80% 70%;
-    --chart-2: 180 40% 70%;
-    --chart-3: 45 70% 75%;
-    --chart-4: 200 70% 75%;
+    --chart-1: 206 90% 65%;
+    --chart-2: 173 58% 50%;
+    --chart-3: 262 80% 70%;
+    --chart-4: 28 90% 70%;
     --chart-5: 0 0% 70%;
 
-    --sidebar-background: 30 10% 14%; 
-    --sidebar-foreground: 45 33% 85%; 
-    --sidebar-primary: 30 80% 35%; /* Darker orange for active item background */
-    --sidebar-primary-foreground: 30 80% 75%; /* Lighter orange text on active */
-    --sidebar-accent: 30 10% 22%; 
-    --sidebar-accent-foreground: 45 33% 90%; 
-    --sidebar-border: 30 10% 20%; 
-    --sidebar-ring: 30 80% 65%;
+    --sidebar-background: 222 47% 12%; 
+    --sidebar-foreground: 210 40% 98%; 
+    --sidebar-primary: 206 90% 25%;
+    --sidebar-primary-foreground: 206 90% 75%;
+    --sidebar-accent: 217 33% 18%; 
+    --sidebar-accent-foreground: 210 40% 98%; 
+    --sidebar-border: 217 33% 20%; 
+    --sidebar-ring: 206 90% 65%;
   }
 }
 
@@ -109,33 +107,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    @apply font-body; 
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
-  .kente-divider {
-    height: 10px; 
-    background: repeating-linear-gradient(
-      45deg,
-      hsl(var(--foreground)), 
-      hsl(var(--foreground)) 5px,
-      hsl(var(--primary)) 5px, 
-      hsl(var(--primary)) 10px,
-      hsl(30 70% 50%) 10px, 
-      hsl(30 70% 50%) 15px 
-    );
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-  }
-}
-
-/* Pill shaped buttons for general use */
-.btn-pill {
-    @apply rounded-full px-6 py-2.5 text-sm font-medium; /* Adjusted padding for typical pill */
-}
-/* Card action buttons to match primary button style (orange) */
-.btn-card-action {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90;
-}
-/* Card action buttons using the accent color (teal) */
-.btn-card-action-teal {
-    @apply bg-accent text-accent-foreground hover:bg-accent/90;
 }

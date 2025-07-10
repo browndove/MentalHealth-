@@ -12,7 +12,7 @@ export default function RequestAppointmentPage() {
       <p className="text-muted-foreground">
         Fill out the form below to request an appointment with one of our counselors. We'll do our best to accommodate your preferences.
       </p>
-      <Card className="shadow-lg">
+      <Card className="shadow-md">
         <CardHeader>
           <CardTitle>New Appointment Request</CardTitle>
           <CardDescription>Please provide as much detail as possible.</CardDescription>

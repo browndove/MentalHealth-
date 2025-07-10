@@ -20,7 +20,7 @@ export function UpcomingSessionCard({ session }: UpcomingSessionCardProps) {
   const Icon = session.type === 'video' ? Video : session.type === 'chat' ? MessageSquare : PersonIcon;
 
   return (
-    <Card className="hover:shadow-lg transition-all duration-300 rounded-xl border border-border hover:-translate-y-0.5 bg-card">
+    <Card className="hover:shadow-xl transition-all duration-300 border hover:-translate-y-1 bg-card">
       <CardHeader className="p-4">
          <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -35,7 +35,7 @@ export function UpcomingSessionCard({ session }: UpcomingSessionCardProps) {
                 </CardDescription>
                 </div>
             </div>
-            <Button variant="default" size="sm" asChild className="btn-pill !px-4 !py-1.5 bg-primary text-primary-foreground text-xs">
+            <Button variant="default" size="sm" asChild>
                  <Link href={`/session/${session.id}/${session.type === 'video' ? 'video' : 'chat'}`}>Join</Link>
             </Button>
          </div>
@@ -46,10 +46,10 @@ export function UpcomingSessionCard({ session }: UpcomingSessionCardProps) {
         </p>
       </CardContent>
       <CardFooter className="p-4 pt-1 flex justify-end gap-2">
-        <Button variant="outline" size="sm" asChild className="btn-pill !px-3 !py-1.5 text-xs border-input-border text-foreground hover:bg-muted">
+        <Button variant="outline" size="sm" asChild>
           <Link href={`/counselor/students/${session.id}/profile`}>Student Profile</Link>
         </Button>
-        <Button size="sm" asChild className="btn-pill !px-3 !py-1.5 text-xs bg-secondary text-secondary-foreground hover:bg-secondary/80">
+        <Button size="sm" asChild variant="secondary">
           <Link href={`/counselor/sessions/${session.id}/notes`}>Prepare Notes</Link>
         </Button>
       </CardFooter>

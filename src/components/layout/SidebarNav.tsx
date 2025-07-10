@@ -30,7 +30,7 @@ import {
   Settings,
   type LucideIcon
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext'; // For UserNav-like logout
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -76,10 +76,10 @@ export function SidebarNav({ navItems, userRole }: SidebarNavProps) {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" className="border-r bg-sidebar text-sidebar-foreground">
-      <SidebarHeader className="p-4 justify-start h-16 border-b border-sidebar-border">
+      <SidebarHeader className="p-4 flex items-center justify-start h-16 border-b border-sidebar-border">
          { (state === "expanded" || open) && <AppLogo /> }
       </SidebarHeader>
-      <SidebarContent className="p-3">
+      <SidebarContent className="p-2">
         <SidebarMenu>
           {navItems.map((item) => {
             const IconComponent = iconComponents[item.iconName] || Home; 
@@ -108,9 +108,9 @@ export function SidebarNav({ navItems, userRole }: SidebarNavProps) {
           })}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-3 border-t border-sidebar-border mt-auto">
+      <SidebarFooter className="p-2 border-t border-sidebar-border mt-auto">
          {user && (
-          <div className={cn("flex items-center gap-2", (state === "collapsed" && !open) && "justify-center")}>
+          <div className={cn("flex items-center gap-2 p-1", (state === "collapsed" && !open) && "justify-center")}>
               <Avatar className="h-9 w-9">
                  <AvatarImage src={`https://placehold.co/40x40.png`} alt={user.fullName || "User"} data-ai-hint="user avatar" />
                  <AvatarFallback>{userInitials}</AvatarFallback>
@@ -118,9 +118,10 @@ export function SidebarNav({ navItems, userRole }: SidebarNavProps) {
               {(state === "expanded" || open) && (
                 <div className="flex-1 overflow-hidden">
                   <p className="text-sm font-medium text-sidebar-foreground truncate">{user.fullName || "User"}</p>
+                   <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 </div>
               )}
-              <Button variant="ghost" size="icon" className={cn("text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", (state === "expanded" || open) ? "ml-auto" : "")} onClick={handleLogout} 
+              <Button variant="ghost" size="icon" className={cn("text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", (state === "expanded" || open) ? "ml-auto" : "")} onClick={handleLogout} 
                 aria-label="Logout"
                 title={(state === "collapsed" && !open) ? "Logout" : undefined}
               >

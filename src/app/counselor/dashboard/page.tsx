@@ -44,7 +44,7 @@ export default function CounselorDashboardPage() {
 
   return (
     <div className="space-y-10 container mx-auto px-4 py-8">
-      <Card className="bg-gradient-to-br from-primary/10 via-background to-background text-foreground shadow-xl overflow-hidden rounded-xl border-primary/20 border">
+      <Card className="bg-gradient-to-br from-primary/10 via-background to-background text-foreground shadow-lg overflow-hidden border-primary/20 border">
         <CardHeader className="relative z-10 p-6 md:p-8">
            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
@@ -56,15 +56,14 @@ export default function CounselorDashboardPage() {
         </CardHeader>
         <CardContent className="relative z-10 p-6 md:p-8">
           <p className="mb-6 text-muted-foreground">Quickly access pending requests, upcoming sessions, and student profiles.</p>
-           <Button size="lg" asChild className="btn-pill bg-primary text-primary-foreground hover:bg-primary/90 shadow-md">
+           <Button size="lg" asChild>
             <Link href="/counselor/appointments">View Full Schedule</Link>
           </Button>
         </CardContent>
-        {/* <Image src="https://placehold.co/1200x300.png" alt="Serene professional counseling space in Ghana" layout="fill" objectFit="cover" className="opacity-10" data-ai-hint="professional counseling office Ghana" /> */}
       </Card>
 
       <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-1 rounded-xl shadow-lg border">
+        <Card className="xl:col-span-1 shadow-md border">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-xl font-semibold"><AlertTriangle className="text-primary" /> Pending Appointments ({pendingAppointments.length})</CardTitle>
             <CardDescription>Review and respond to new session requests.</CardDescription>
@@ -89,7 +88,7 @@ export default function CounselorDashboardPage() {
            </CardFooter>
         </Card>
 
-        <Card className="xl:col-span-2 rounded-xl shadow-lg border">
+        <Card className="xl:col-span-2 shadow-md border">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-xl font-semibold"><CalendarCheck className="text-primary" /> Upcoming Sessions ({upcomingSessions.length})</CardTitle>
              <CardDescription>Prepare for your scheduled student interactions.</CardDescription>
@@ -114,7 +113,7 @@ export default function CounselorDashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold font-headline flex items-center gap-2"><Users className="text-primary" /> My Assigned Students ({assignedStudents.length})</h2>
-            <Button variant="outline" asChild className="btn-pill border-border hover:bg-muted shadow-sm">
+            <Button variant="outline" asChild className="border-border hover:bg-muted shadow-sm">
                 <Link href="/counselor/students">View All Students</Link>
             </Button>
         </div>
@@ -124,12 +123,12 @@ export default function CounselorDashboardPage() {
           ))}
         </div>
          {assignedStudents.length === 0 && (
-            <Card className="rounded-xl shadow-md border"><CardContent className="p-6 text-center text-muted-foreground">No students currently assigned.</CardContent></Card>
+            <Card className="shadow-md border"><CardContent className="p-6 text-center text-muted-foreground">No students currently assigned.</CardContent></Card>
         )}
       </div>
 
        <div className="grid gap-8 md:grid-cols-2">
-         <Card className="hover:shadow-xl transition-shadow rounded-xl border">
+         <Card className="hover:shadow-xl transition-shadow border">
             <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-xl font-semibold"><MessageCircle className="text-primary"/> Session Note Tools</CardTitle>
             </CardHeader>
@@ -137,12 +136,12 @@ export default function CounselorDashboardPage() {
                 <p className="text-muted-foreground">Efficiently manage and summarize your session notes with AI assistance.</p>
             </CardContent>
             <CardFooter>
-                 <Button asChild className="btn-pill btn-card-action">
+                 <Button asChild>
                     <Link href="/counselor/notes">Access Notes Dashboard</Link>
                  </Button>
             </CardFooter>
         </Card>
-        <Card className="hover:shadow-xl transition-shadow rounded-xl border">
+        <Card className="hover:shadow-xl transition-shadow border">
             <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-xl font-semibold"><BarChart className="text-primary"/> Analytics Overview (Coming Soon)</CardTitle>
             </CardHeader>
@@ -153,7 +152,7 @@ export default function CounselorDashboardPage() {
                 </div>
             </CardContent>
             <CardFooter>
-                <Button asChild className="btn-pill btn-card-action" disabled>
+                <Button asChild disabled>
                     <Link href="#">View Analytics</Link>
                  </Button>
             </CardFooter>

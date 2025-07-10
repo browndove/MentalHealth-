@@ -123,14 +123,14 @@ export function SessionNotesEditor({ sessionId, studentName, initialNotes = '' }
 
   return (
     <Tabs defaultValue="notes" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 rounded-lg mb-6 md:w-1/2">
-        <TabsTrigger value="notes" className="rounded-md">Session Notes</TabsTrigger>
-        <TabsTrigger value="transcript" className="rounded-md">Transcript Tools</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-2 mb-6 md:w-1/2">
+        <TabsTrigger value="notes">Session Notes</TabsTrigger>
+        <TabsTrigger value="transcript">Transcript Tools</TabsTrigger>
       </TabsList>
 
       <TabsContent value="notes">
         <div className="grid md:grid-cols-3 gap-6">
-          <Card className="md:col-span-2 shadow-lg">
+          <Card className="md:col-span-2 shadow-md">
             <CardHeader>
               <CardTitle className="text-2xl font-headline">
                 Session Notes Editor
@@ -180,7 +180,7 @@ export function SessionNotesEditor({ sessionId, studentName, initialNotes = '' }
             </Form>
           </Card>
 
-          <Card className="md:col-span-1 shadow-lg">
+          <Card className="md:col-span-1 shadow-md">
             <CardHeader>
               <CardTitle className="text-xl font-headline flex items-center gap-2">
                 <Wand2 className="text-primary" /> AI Summary (Notes)
@@ -213,7 +213,7 @@ export function SessionNotesEditor({ sessionId, studentName, initialNotes = '' }
 
       <TabsContent value="transcript">
         <div className="grid md:grid-cols-3 gap-6">
-           <Card className="md:col-span-2 shadow-lg">
+           <Card className="md:col-span-2 shadow-md">
             <CardHeader>
               <CardTitle className="text-2xl font-headline">Transcript Summarizer</CardTitle>
               <CardDescription>
@@ -239,7 +239,7 @@ export function SessionNotesEditor({ sessionId, studentName, initialNotes = '' }
             </CardContent>
           </Card>
           
-           <Card className="md:col-span-1 shadow-lg">
+           <Card className="md:col-span-1 shadow-md">
             <CardHeader>
               <CardTitle className="text-xl font-headline flex items-center gap-2">
                 <FileText className="text-primary"/> AI Summary (Transcript)

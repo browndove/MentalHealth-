@@ -4,9 +4,9 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarPlus, Bot, BookOpen, ClipboardList, UserCircle, Activity, Smile } from 'lucide-react'; // Added Smile
+import { CalendarPlus, Bot, BookOpen, ClipboardList, UserCircle, Activity, Smile } from 'lucide-react';
 import Image from 'next/image';
-import { useAuth } from '@/contexts/AuthContext'; // Added useAuth import
+import { useAuth } from '@/contexts/AuthContext';
 
 // Placeholder data - replace with actual data fetching
 const upcomingAppointments = [
@@ -21,12 +21,12 @@ export default function StudentDashboardPage() {
 
   return (
     <div className="space-y-10 container mx-auto px-4 py-8">
-      <Card className="bg-gradient-to-br from-primary/10 via-background to-background text-foreground shadow-xl overflow-hidden rounded-xl border-primary/20 border">
+      <Card className="bg-gradient-to-br from-primary/10 via-background to-background text-foreground shadow-lg overflow-hidden border-primary/20 border">
         <CardHeader className="relative z-10 p-6 md:p-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <CardTitle className="text-3xl md:text-4xl font-bold font-headline">Hello, {user?.fullName || 'Student'}!</CardTitle>
-              <CardDescription className="text-lg text-muted-foreground mt-1">Welcome to your Mental Guide portal.</CardDescription>
+              <CardDescription className="text-lg text-muted-foreground mt-1">Welcome to your Accra TechMind portal.</CardDescription>
             </div>
             <Smile size={52} className="text-primary opacity-70 mt-2 sm:mt-0"/>
           </div>
@@ -34,20 +34,18 @@ export default function StudentDashboardPage() {
         <CardContent className="relative z-10 p-6 md:p-8">
           <p className="mb-6 text-muted-foreground">Here you can manage your appointments, access resources, and connect with support.</p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button size="lg" asChild className="btn-pill bg-primary text-primary-foreground hover:bg-primary/90 shadow-md">
+            <Button size="lg" asChild>
               <Link href="/student/appointments/request"><CalendarPlus className="mr-2"/> Request Appointment</Link>
             </Button>
-            <Button size="lg" asChild variant="outline" className="btn-pill border-border hover:bg-muted shadow-sm">
+            <Button size="lg" asChild variant="secondary">
               <Link href="/student/ai-assistant"><Bot className="mr-2"/> Chat with AI Assistant</Link>
             </Button>
           </div>
         </CardContent>
-         {/* Optional decorative image, ensure it's culturally relevant or abstract */}
-         {/* <Image src="https://placehold.co/1200x300.png" alt="Ghanaian student wellness and university life" layout="fill" objectFit="cover" className="opacity-10" data-ai-hint="Ghana student wellness university life abstract" /> */}
       </Card>
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="hover:shadow-xl transition-shadow rounded-xl border">
+        <Card className="hover:shadow-xl transition-shadow border">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-xl font-semibold"><CalendarPlus className="text-primary" /> Upcoming Appointments</CardTitle>
           </CardHeader>
@@ -68,7 +66,7 @@ export default function StudentDashboardPage() {
           </CardFooter>
         </Card>
 
-        <Card className="hover:shadow-xl transition-shadow rounded-xl border">
+        <Card className="hover:shadow-xl transition-shadow border">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-xl font-semibold"><ClipboardList className="text-primary" /> Recent Session Notes</CardTitle>
           </CardHeader>
@@ -89,7 +87,7 @@ export default function StudentDashboardPage() {
           </CardFooter>
         </Card>
         
-        <Card className="hover:shadow-xl transition-shadow rounded-xl border">
+        <Card className="hover:shadow-xl transition-shadow border">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-xl font-semibold"><BookOpen className="text-primary" /> Mental Health Resources</CardTitle>
           </CardHeader>
@@ -108,7 +106,7 @@ export default function StudentDashboardPage() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
-        <Card className="hover:shadow-xl transition-shadow rounded-xl border">
+        <Card className="hover:shadow-xl transition-shadow border">
             <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-xl font-semibold"><UserCircle className="text-primary"/> My Profile</CardTitle>
             </CardHeader>
@@ -116,12 +114,12 @@ export default function StudentDashboardPage() {
                 <p className="text-muted-foreground">Keep your information up to date for seamless service.</p>
             </CardContent>
             <CardFooter>
-                 <Button asChild className="btn-pill btn-card-action">
+                 <Button asChild>
                     <Link href="/student/profile">Manage Profile</Link>
                  </Button>
             </CardFooter>
         </Card>
-        <Card className="hover:shadow-xl transition-shadow rounded-xl border">
+        <Card className="hover:shadow-xl transition-shadow border">
             <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-xl font-semibold"><Bot className="text-primary" /> AI Quick Help</CardTitle>
             </CardHeader>
@@ -129,13 +127,13 @@ export default function StudentDashboardPage() {
                 <p className="text-muted-foreground">Have a quick question? Ama, our AI assistant, is here to help 24/7.</p>
             </CardContent>
             <CardFooter>
-                <Button asChild className="btn-pill btn-card-action">
+                <Button asChild>
                   <Link href="/student/ai-assistant">Ask Ama</Link>
                 </Button>
             </CardFooter>
         </Card>
       </div>
-       <Card className="mt-6 hover:shadow-xl transition-shadow rounded-xl border">
+       <Card className="mt-6 hover:shadow-xl transition-shadow border">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-xl font-semibold"><Activity className="text-primary" /> Mood Checker (Coming Soon)</CardTitle>
           <CardDescription>Track your mood and gain insights into your emotional well-being.</CardDescription>

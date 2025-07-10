@@ -81,7 +81,7 @@ export function LoginForm() {
 
 
   return (
-    <Card className="w-full max-w-md shadow-xl">
+    <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border-border/50">
       <CardHeader>
         <CardTitle className="text-3xl font-headline text-primary">Welcome Back!</CardTitle>
         <CardDescription>Sign in to access your Accra TechMind portal.</CardDescription>
@@ -132,7 +132,7 @@ export function LoginForm() {
               )}
             />
              <div className="text-sm">
-              <Link href="#" className="font-medium text-primary hover:text-primary/80">
+              <Link href="#" className="font-medium text-primary hover:underline">
                 Forgot your password?
               </Link>
             </div>
@@ -144,7 +144,7 @@ export function LoginForm() {
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}
-              <Link href="/register" className="font-medium text-primary hover:text-primary/80">
+              <Link href="/register" className="font-medium text-primary hover:underline">
                 Register here
               </Link>
             </p>

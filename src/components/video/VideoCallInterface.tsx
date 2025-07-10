@@ -7,11 +7,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Video, Mic, PhoneOff, ScreenShare, MessageSquare, User, MoreHorizontal, ChevronDown, Copy,
-  Settings2, Volume2, Maximize, VideoOff, MicOff, Users, Info, MessageCircle, Hand, ListVideo, SmilePlus, AlertTriangle
+  Video, Mic, PhoneOff, ScreenShare, MessageSquare, MoreHorizontal, ChevronDown, Copy,
+  VideoOff, MicOff, Users, Info, Hand, SmilePlus, AlertTriangle, Settings, Radio
 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
-import { AppLogo } from '../layout/AppLogo'; // Using AppLogo for branding
+import { AppLogo } from '../layout/AppLogo';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -28,9 +28,9 @@ interface Participant {
 }
 
 const mockParticipants: Participant[] = [
+  { id: 'remote1', name: 'Akwasi Mensah (Student)', avatarFallback: 'AM', avatarUrl: 'https://placehold.co/800x600.png?text=Student', isMuted: true, isVideoOff: false, isSpeaking: true },
   { id: 'local', name: 'You (Counselor)', avatarFallback: 'U', isLocal: true, isMuted: false, isVideoOff: false },
-  { id: 'remote1', name: 'Akwasi Mensah (Student)', avatarFallback: 'AM', avatarUrl: 'https://placehold.co/200x200.png?text=Student', isMuted: true, isVideoOff: false, isSpeaking: true },
-  { id: 'remote2', name: 'Dr. Emily Carter (Observer)', avatarFallback: 'EC', avatarUrl: 'https://placehold.co/200x200.png?text=Observer', isMuted: false, isVideoOff: true },
+  { id: 'remote2', name: 'Dr. Emily Carter (Observer)', avatarFallback: 'EC', avatarUrl: 'https://placehold.co/800x600.png?text=Observer', isMuted: false, isVideoOff: true },
 ];
 
 const mockTranscript = [
@@ -48,11 +48,9 @@ export function VideoCallInterface() {
   const { toast } = useToast();
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
 
-
-  const [isChatPanelOpen, setIsChatPanelOpen] = useState(true); // Transcript panel is open by default as in image
+  const [isChatPanelOpen, setIsChatPanelOpen] = useState(true);
   const [currentDate] = useState(new Date());
 
-  // Local media states
   const [isLocalMicMuted, setIsLocalMicMuted] = useState(false);
   const [isLocalVideoOff, setIsLocalVideoOff] = useState(false);
 
@@ -81,7 +79,6 @@ export function VideoCallInterface() {
     return () => {
       localStream?.getTracks().forEach(track => track.stop());
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -108,131 +105,122 @@ export function VideoCallInterface() {
   const handleLeaveCall = () => {
     alert("Leave Call clicked (functionality not implemented). In a real app, this would disconnect from the session.");
     localStream?.getTracks().forEach(track => track.stop());
-    // Add navigation logic here, e.g., router.push('/dashboard')
   };
 
-  const ParticipantVideo = ({ participant }: { participant: Participant }) => {
+  const mainParticipant = participants.find(p => p.isSpeaking) || participants.find(p => !p.isLocal) || participants[0];
+  const otherParticipants = participants.filter(p => p.id !== mainParticipant.id);
+
+  const ParticipantVideo = ({ participant, isMain }: { participant: Participant, isMain: boolean }) => {
     const isLocalAndNoPermission = participant.isLocal && hasCameraPermission === false;
     const showVideo = participant.isLocal ? localStream && !isLocalVideoOff && hasCameraPermission : !participant.isVideoOff;
 
     return (
       <div className={cn(
-        "relative aspect-video bg-zinc-800 rounded-lg overflow-hidden shadow-md flex items-center justify-center group",
-        participant.isSpeaking && !participant.isLocal && "ring-2 ring-blue-500"
+        "relative bg-slate-800 rounded-lg overflow-hidden shadow-lg flex items-center justify-center group w-full h-full",
+        participant.isSpeaking && !participant.isLocal && "ring-4 ring-primary ring-offset-2 ring-offset-slate-900"
       )}>
         {showVideo && !isLocalAndNoPermission ? (
           participant.isLocal && localStream ? (
             <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           ) : (
-            <Image src={participant.avatarUrl || `https://placehold.co/300x225.png`} data-ai-hint="person webcam image" alt={`${participant.name}'s video`} layout="fill" objectFit="cover" />
+            <Image src={participant.avatarUrl || `https://placehold.co/800x600.png`} data-ai-hint="person webcam image" alt={`${participant.name}'s video`} layout="fill" objectFit="cover" />
           )
         ) : (
-          <div className="flex flex-col items-center text-neutral-400">
-            <Avatar className="w-16 h-16 text-2xl mb-2">
+          <div className="flex flex-col items-center text-slate-400">
+            <Avatar className={cn("mb-2", isMain ? "w-24 h-24 text-4xl" : "w-16 h-16 text-2xl")}>
               <AvatarImage src={participant.avatarUrl} alt={participant.name} />
               <AvatarFallback>{participant.avatarFallback}</AvatarFallback>
             </Avatar>
             {isLocalAndNoPermission ? <AlertTriangle className="w-6 h-6 text-destructive mt-1" /> : <VideoOff className="w-6 h-6 mt-1" />}
           </div>
         )}
-        <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5">
-          {participant.isMuted ? <MicOff size={12} className="text-yellow-400" /> : <Mic size={12} />}
+        <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5 backdrop-blur-sm">
+          {participant.isMuted ? <MicOff size={14} className="text-yellow-400" /> : <Mic size={14} />}
           {participant.name}
         </div>
       </div>
     );
   };
   
-  const controlButtonClass = "bg-zinc-700 hover:bg-zinc-600 text-neutral-200 rounded-lg p-2.5 h-auto aspect-square flex flex-col items-center justify-center text-xs gap-1";
-  const destructiveButtonClass = "bg-red-600 hover:bg-red-700 text-white rounded-lg p-2.5 h-auto aspect-square flex flex-col items-center justify-center text-xs gap-1";
+  const controlButtonClass = "bg-slate-700/50 hover:bg-slate-600/80 text-slate-200 rounded-full p-3 h-auto aspect-square flex flex-col items-center justify-center text-xs gap-1 backdrop-blur-md";
+  const destructiveButtonClass = "bg-red-600 hover:bg-red-700 text-white rounded-full p-3 h-auto aspect-square flex flex-col items-center justify-center text-xs gap-1";
 
 
   return (
     <TooltipProvider>
-    <div className="h-screen w-screen flex flex-col bg-zinc-900 text-neutral-100 antialiased overflow-hidden">
-      {/* Top Header */}
-      <header className="px-4 py-2.5 flex items-center justify-between border-b border-zinc-700 shrink-0">
-        <div className="flex items-center gap-3">
-          <AppLogo /> {/* Using Mental Guide logo */}
-          <div className="h-6 w-px bg-zinc-700"></div>
+    <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-100 antialiased overflow-hidden">
+      <header className="px-4 py-2 flex items-center justify-between border-b border-slate-700 shrink-0">
+        <div className="flex items-center gap-4">
+          <AppLogo />
+          <div className="h-6 w-px bg-slate-700"></div>
           <div>
             <h1 className="text-md font-semibold">Counseling Session</h1>
-            <p className="text-xs text-neutral-400">
-              {currentDate.toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })} • {currentDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+            <p className="text-xs text-slate-400">
+              {currentDate.toLocaleDateString('en-US', { month: 'long', day: '2-digit' })} • 1h 30m
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 text-sm">
-           <div className="flex items-center gap-2 text-neutral-300">
+        <div className="flex items-center gap-4 text-sm">
+           <div className="flex items-center gap-2 text-slate-300">
              <Users size={16} />
-             <span>{participants.length} Participants</span>
-             <ChevronDown size={16} className="text-neutral-500" />
+             <span>{participants.length}</span>
            </div>
-           <div className="h-6 w-px bg-zinc-700"></div>
-           <Button variant="outline" size="sm" className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-neutral-300 text-xs h-8">
-             meet.mentalguide.app/session-link
-             <Copy size={14} className="ml-2 text-neutral-400" />
+           <Button variant="outline" size="sm" className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300 text-xs h-8">
+             Session ID
+             <Copy size={14} className="ml-2 text-slate-400" />
            </Button>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 flex overflow-hidden">
-        {/* Video Grid */}
-        <div className="flex-1 p-3 grid grid-cols-1 md:grid-cols-2 gap-3 auto-rows-fr overflow-y-auto">
-          {participants.map(p => <ParticipantVideo key={p.id} participant={p} />)}
-           {hasCameraPermission === false && (
-            <div className="md:col-span-2 flex flex-col items-center justify-center text-center p-4 bg-zinc-800 rounded-lg">
-              <AlertTriangle className="w-12 h-12 text-destructive mb-3" />
-              <h3 className="text-lg font-semibold text-neutral-100">Camera & Microphone Access Required</h3>
-              <p className="text-neutral-400 text-sm">
-                Mental Guide needs access to your camera and microphone for video calls. 
-                Please enable these permissions in your browser settings and refresh the page.
-              </p>
+        <div className="flex-1 flex flex-col p-4 gap-4">
+            <div className="flex-1 relative">
+                <ParticipantVideo participant={mainParticipant} isMain={true} />
             </div>
-          )}
+            <div className="h-32 flex gap-4">
+                {otherParticipants.map(p => (
+                    <div key={p.id} className="w-52 h-full">
+                        <ParticipantVideo participant={p} isMain={false} />
+                    </div>
+                ))}
+            </div>
         </div>
 
-        {/* Transcript Panel */}
         {isChatPanelOpen && (
-          <aside className="w-[340px] bg-white text-zinc-900 flex flex-col border-l border-zinc-700 shrink-0">
-            <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
-              <h2 className="font-semibold text-md">Transcript</h2>
-              <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-zinc-800" onClick={() => setIsChatPanelOpen(false)}>
-                <Info size={18} />
+          <aside className="w-[360px] bg-background text-foreground flex flex-col border-l border-slate-700 shrink-0">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h2 className="font-semibold text-lg">Live Transcript</h2>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => setIsChatPanelOpen(false)}>
+                <Info size={20} />
               </Button>
             </div>
-            <ScrollArea className="flex-1 p-4 space-y-4">
-              {mockTranscript.map(entry => (
-                <div key={entry.id}>
-                  <div className="flex justify-between items-center mb-0.5">
-                    <span className="text-xs font-semibold text-zinc-700">{entry.name}</span>
-                    <span className="text-xs text-zinc-400">{entry.time}</span>
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-6">
+                {mockTranscript.map(entry => (
+                  <div key={entry.id} className="flex gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback>{entry.name.split(" ").map(n=>n[0]).join("")}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center mb-0.5">
+                        <span className="text-sm font-semibold text-foreground">{entry.name}</span>
+                        <span className="text-xs text-muted-foreground">{entry.time}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{entry.text}</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-zinc-600 leading-relaxed">{entry.text}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </ScrollArea>
-             <div className="p-3 border-t border-zinc-200">
-                <p className="text-xs text-zinc-500 text-center">AI summary will be available after the call. (Demo)</p>
+             <div className="p-3 border-t border-border">
+                <p className="text-xs text-muted-foreground text-center">AI summary will be available after the call.</p>
             </div>
           </aside>
         )}
       </main>
 
-      {/* Bottom Control Bar */}
-      <footer className="px-4 py-2.5 bg-zinc-900 border-t border-zinc-700 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2">
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" className={controlButtonClass} disabled>
-                        <Volume2 size={20}/> <span>Record</span>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Start Recording (Disabled)</p></TooltipContent>
-            </Tooltip>
-        </div>
-        <div className="flex items-center gap-2.5">
+      <footer className="px-4 py-3 bg-slate-900/50 border-t border-slate-700 flex items-center justify-center shrink-0 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button 
@@ -241,11 +229,10 @@ export function VideoCallInterface() {
                         onClick={toggleLocalMute}
                         disabled={hasCameraPermission === false}
                     >
-                        {isLocalMicMuted ? <MicOff size={20}/> : <Mic size={20}/>} 
-                        <span>{isLocalMicMuted ? 'Unmute' : 'Mute'}</span>
+                        {isLocalMicMuted ? <MicOff size={22}/> : <Mic size={22}/>} 
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>{isLocalMicMuted ? 'Unmute Microphone' : 'Mute Microphone'}</p></TooltipContent>
+                <TooltipContent><p>{isLocalMicMuted ? 'Unmute' : 'Mute'}</p></TooltipContent>
             </Tooltip>
              <Tooltip>
                 <TooltipTrigger asChild>
@@ -255,8 +242,7 @@ export function VideoCallInterface() {
                         onClick={toggleLocalVideo}
                         disabled={hasCameraPermission === false}
                     >
-                         {isLocalVideoOff ? <VideoOff size={20}/> : <Video size={20}/>} 
-                        <span>{isLocalVideoOff ? 'Start Cam': 'Stop Cam'}</span>
+                         {isLocalVideoOff ? <VideoOff size={22}/> : <Video size={22}/>} 
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>{isLocalVideoOff ? 'Start Camera': 'Stop Camera'}</p></TooltipContent>
@@ -264,68 +250,53 @@ export function VideoCallInterface() {
              <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" className={controlButtonClass} disabled>
-                        <ScreenShare size={20}/> <span>Share</span>
+                        <ScreenShare size={22}/>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>Share Screen (Disabled)</p></TooltipContent>
+                <TooltipContent><p>Share Screen</p></TooltipContent>
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" className={destructiveButtonClass} onClick={handleLeaveCall}>
-                        <PhoneOff size={20}/> <span>Leave</span>
+                    <Button variant="ghost" className={controlButtonClass} disabled>
+                        <Radio size={22}/>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>Leave Call</p></TooltipContent>
+                <TooltipContent><p>Start Recording</p></TooltipContent>
             </Tooltip>
-             <Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className={controlButtonClass} disabled>
+                        <Hand size={22}/>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Raise Hand</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" className={controlButtonClass} onClick={() => setIsChatPanelOpen(prev => !prev)}>
-                        <MessageCircle size={20}/> <span>Chat</span>
+                        <MessageSquare size={22}/>
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>{isChatPanelOpen ? 'Hide' : 'Show'} Transcript</p></TooltipContent>
             </Tooltip>
-            <Tooltip>
+             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" className={controlButtonClass} disabled>
-                        <SmilePlus size={20}/> <span>Sticker</span>
+                        <Settings size={22}/>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>Stickers (Disabled)</p></TooltipContent>
+                <TooltipContent><p>Settings</p></TooltipContent>
             </Tooltip>
+
+            <div className="w-px h-8 bg-slate-700 mx-2"></div>
+
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" className={controlButtonClass} disabled>
-                        <MoreHorizontal size={20}/> <span>More</span>
+                    <Button variant="ghost" className={destructiveButtonClass} onClick={handleLeaveCall}>
+                        <PhoneOff size={22}/>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>More Options (Disabled)</p></TooltipContent>
-            </Tooltip>
-        </div>
-        <div className="flex items-center gap-2">
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" className={controlButtonClass} disabled>
-                        <Hand size={20}/> <span>Raise</span>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Raise Hand (Disabled)</p></TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" className={controlButtonClass} disabled>
-                        <ListVideo size={20}/> <span>Captions</span>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Toggle Captions (Disabled)</p></TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" className={controlButtonClass} disabled>
-                        <Info size={20}/> <span>Detail</span>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Session Details (Disabled)</p></TooltipContent>
+                <TooltipContent><p>Leave Call</p></TooltipContent>
             </Tooltip>
         </div>
       </footer>
