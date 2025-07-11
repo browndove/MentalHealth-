@@ -18,6 +18,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { useWebRTCStore } from '@/stores/webrtc-store';
 import { transcribeAudioChunk } from '@/ai/flows/transcribe-audio-chunk';
+import { AudioVisualizer } from './AudioVisualizer';
 
 interface Participant {
   id: string;
@@ -77,7 +78,7 @@ export function VideoCallInterface() {
             ...prev,
             {
               id: Date.now().toString(),
-              name: 'You (Counselor)', // Assuming local user is always the counselor for now
+              name: 'You (Counselor)', 
               time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               text: result.transcription,
             }
@@ -103,13 +104,15 @@ export function VideoCallInterface() {
                  console.warn(`${options.mimeType} is not supported. Transcription may not work.`);
                  return;
             }
-            mediaRecorderRef.current = new MediaRecorder(stream, options);
-            mediaRecorderRef.current.ondataavailable = (event) => {
+            const recorder = new MediaRecorder(stream, options);
+            mediaRecorderRef.current = recorder;
+
+            recorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     audioChunksRef.current.push(event.data);
                 }
             };
-            mediaRecorderRef.current.onstop = () => {
+            recorder.onstop = () => {
                 if (audioChunksRef.current.length > 0) {
                     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                     handleTranscription(audioBlob);
@@ -118,16 +121,16 @@ export function VideoCallInterface() {
             };
             
             transcriptionIntervalRef.current = setInterval(() => {
-                if(mediaRecorderRef.current?.state === 'recording') {
-                    mediaRecorderRef.current.stop();
+                if(recorder.state === 'recording') {
+                    recorder.stop();
                 }
-                if(mediaRecorderRef.current?.state === 'inactive' && !get().isLocalMicMuted) {
-                    mediaRecorderRef.current.start();
+                if(recorder.state === 'inactive' && !useWebRTCStore.getState().isLocalMicMuted) {
+                    recorder.start();
                 }
-            }, 5000); // Transcribe every 5 seconds
+            }, 5000); 
             
-            if(!get().isLocalMicMuted) {
-                mediaRecorderRef.current.start();
+            if(!useWebRTCStore.getState().isLocalMicMuted) {
+                recorder.start();
             }
         }
 
@@ -149,7 +152,7 @@ export function VideoCallInterface() {
           clearInterval(transcriptionIntervalRef.current);
       }
       mediaRecorderRef.current?.stop();
-      reset(); // Clean up on component unmount
+      reset();
     };
   }, [setLocalStream, toast, reset, handleTranscription]);
   
@@ -158,7 +161,6 @@ export function VideoCallInterface() {
       localVideoRef.current.srcObject = localStream;
     }
     
-    // Handle starting/stopping recorder on mute toggle
     if (mediaRecorderRef.current) {
         if(isLocalMicMuted && mediaRecorderRef.current.state === 'recording') {
             mediaRecorderRef.current.stop();
@@ -219,12 +221,17 @@ export function VideoCallInterface() {
           {participant.isMuted ? <MicOff size={14} className="text-yellow-400" /> : <Mic size={14} className={cn(participant.isSpeaking && "text-primary")}/>}
           {participant.name}
         </div>
+        {participant.isLocal && localStream && (
+          <div className="absolute top-2 left-2">
+            <AudioVisualizer stream={localStream} isMuted={isLocalMicMuted} />
+          </div>
+        )}
       </div>
     );
   };
   
-  const controlButtonClass = "bg-slate-700/80 hover:bg-slate-600/90 text-slate-200 rounded-full w-14 h-14 flex items-center justify-center backdrop-blur-md transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95";
-  const destructiveButtonClass = "bg-red-600 hover:bg-red-700 text-white rounded-full w-14 h-14 flex items-center justify-center transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95";
+  const controlButtonClass = "bg-slate-700/80 hover:bg-slate-600/90 text-slate-200 rounded-full w-14 h-14 flex items-center justify-center backdrop-blur-md transition-all duration-200 ease-in-out transform active:scale-95 hover:scale-105";
+  const destructiveButtonClass = "bg-red-600 hover:bg-red-700 text-white rounded-full w-14 h-14 flex items-center justify-center transition-all duration-200 ease-in-out transform active:scale-95 hover:scale-105";
 
 
   return (
@@ -325,11 +332,10 @@ export function VideoCallInterface() {
                 <TooltipTrigger asChild>
                     <Button 
                         variant="ghost" 
-                        className={cn(controlButtonClass, isLocalMicMuted && "bg-red-600 hover:bg-red-700 text-white")}
+                        className={cn(controlButtonClass, isLocalMicMuted && "bg-red-600/80 hover:bg-red-700 text-white")}
                         onClick={toggleLocalMic}
                     >
-                        <Mic size={24} className={cn(!isLocalMicMuted && "animate-mic-pulse")}/>
-                        {isLocalMicMuted && <MicOff size={24}/>} 
+                        {isLocalMicMuted ? <MicOff size={24}/> : <Mic size={24} className="animate-mic-pulse" />} 
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>{isLocalMicMuted ? 'Unmute' : 'Mute'}</p></TooltipContent>
@@ -338,7 +344,7 @@ export function VideoCallInterface() {
                 <TooltipTrigger asChild>
                     <Button 
                         variant="ghost" 
-                        className={cn(controlButtonClass, isLocalVideoOff && "bg-red-600 hover:bg-red-700 text-white")}
+                        className={cn(controlButtonClass, isLocalVideoOff && "bg-red-600/80 hover:bg-red-700 text-white")}
                         onClick={toggleLocalVideo}
                     >
                          {isLocalVideoOff ? <VideoOff size={24}/> : <Video size={24}/>} 
