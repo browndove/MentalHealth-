@@ -83,7 +83,7 @@ const StatusIcon = {
     Completed: CheckCircle2,
     Pending: Loader2,
     Cancelled: XCircle,
-}
+};
 
 export default function StudentSessionsDashboard() {
   const { user } = useAuth();
@@ -92,15 +92,25 @@ export default function StudentSessionsDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulating data fetching
-    setTimeout(() => {
-        setSessions(mockSessions);
-        setLoading(false);
-    }, 1500);
-    // In a real app, you would use getStudentSessions:
-    // if (user) {
-    //   getStudentSessions(user.uid).then(result => { ... }).finally(...)
-    // }
+    const fetchSessions = async () => {
+        if (user) {
+            // Using mock data for now, but here's how you'd fetch real data
+            // const result = await getStudentSessions(user.uid);
+            // if ('error' in result) {
+            //     setError(result.error);
+            // } else {
+            //     setSessions(result.data as Session[]);
+            // }
+            setTimeout(() => {
+                setSessions(mockSessions);
+                setLoading(false);
+            }, 1500);
+        } else {
+            setLoading(false); // If no user, stop loading.
+        }
+    };
+    
+    fetchSessions();
   }, [user]);
 
   const completedSessions = sessions.filter(s => s.status === 'Completed').length;
@@ -294,8 +304,9 @@ export default function StudentSessionsDashboard() {
           ))
         ) : (
           <Card>
-            <CardContent className="pt-6 text-center text-muted-foreground">
-              No sessions found.
+            <CardContent className="pt-6 text-center">
+              <Image src="https://placehold.co/300x200.png" alt="No sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty calendar illustration" />
+              <p className="text-muted-foreground">You haven't had any sessions yet. Book one to get started!</p>
             </CardContent>
           </Card>
         )}
