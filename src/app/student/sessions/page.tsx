@@ -1,6 +1,6 @@
-
 'use client';
 
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import React, { useState, useEffect } from "react";
 import { getStudentSessions } from "@/lib/actions";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -50,24 +49,68 @@ interface Session {
 
 const mockSessions: Session[] = [
     {
-        id: 'sess1', sessionNumber: 5, date: '2024-08-25T14:00:00.000Z', time: '02:00 PM',
-        counselor: { name: 'Dr. Emily Carter', avatarFallback: 'EC', specialties: ['Anxiety', 'CBT'] },
-        duration: 50, lastContact: '2024-08-18T10:00:00.000Z', type: 'Video Call', status: 'Upcoming', notesAvailable: false
+        id: 'sess1', 
+        sessionNumber: 5, 
+        date: '2024-08-25T14:00:00.000Z', 
+        time: '02:00 PM',
+        counselor: { 
+          name: 'Dr. Emily Carter', 
+          avatarFallback: 'EC', 
+          specialties: ['Anxiety', 'CBT'] 
+        },
+        duration: 50, 
+        lastContact: '2024-08-18T10:00:00.000Z', 
+        type: 'Video Call', 
+        status: 'Upcoming', 
+        notesAvailable: false
     },
     {
-        id: 'sess2', sessionNumber: 4, date: '2024-08-18T10:00:00.000Z', time: '10:00 AM',
-        counselor: { name: 'Dr. Emily Carter', avatarFallback: 'EC', specialties: ['Anxiety', 'CBT'] },
-        duration: 50, lastContact: '2024-08-11T11:00:00.000Z', type: 'Video Call', status: 'Completed', notesAvailable: true
+        id: 'sess2', 
+        sessionNumber: 4, 
+        date: '2024-08-18T10:00:00.000Z', 
+        time: '10:00 AM',
+        counselor: { 
+          name: 'Dr. Emily Carter', 
+          avatarFallback: 'EC', 
+          specialties: ['Anxiety', 'CBT'] 
+        },
+        duration: 50, 
+        lastContact: '2024-08-11T11:00:00.000Z', 
+        type: 'Video Call', 
+        status: 'Completed', 
+        notesAvailable: true
     },
     {
-        id: 'sess3', sessionNumber: 3, date: '2024-08-11T11:00:00.000Z', time: '11:00 AM',
-        counselor: { name: 'Dr. David Chen', avatarFallback: 'DC', specialties: ['Stress Management', 'Academic Pressure'] },
-        duration: 50, lastContact: '2024-08-04T09:30:00.000Z', type: 'Video Call', status: 'Completed', notesAvailable: true
+        id: 'sess3', 
+        sessionNumber: 3, 
+        date: '2024-08-11T11:00:00.000Z', 
+        time: '11:00 AM',
+        counselor: { 
+          name: 'Dr. David Chen', 
+          avatarFallback: 'DC', 
+          specialties: ['Stress Management', 'Academic Pressure'] 
+        },
+        duration: 50, 
+        lastContact: '2024-08-04T09:30:00.000Z', 
+        type: 'Video Call', 
+        status: 'Completed', 
+        notesAvailable: true
     },
-     {
-        id: 'sess4', sessionNumber: 2, date: '2024-07-28T15:00:00.000Z', time: '03:00 PM',
-        counselor: { name: 'Dr. David Chen', avatarFallback: 'DC', specialties: ['Stress Management'] },
-        duration: 50, lastContact: '2024-07-21T10:00:00.000Z', type: 'Chat', status: 'Cancelled', notesAvailable: false
+    {
+        id: 'sess4', 
+        sessionNumber: 2, 
+        date: '2024-07-28T15:00:00.000Z', 
+        time: '03:00 PM',
+        counselor: { 
+          name: 'Dr. David Chen', 
+          avatarFallback: 'DC', 
+          specialties: ['Stress Management'] 
+        },
+        duration: 50, 
+        lastContact: '2024-07-21T10:00:00.000Z', 
+        type: 'Chat', 
+        status: 'Cancelled', 
+        notesAvailable: false
     },
 ];
 
@@ -196,10 +239,10 @@ export default function StudentSessionsDashboard() {
           </CardHeader>
           <CardContent>
             {nextSession ? (
-                <>
+                <React.Fragment>
                  <div className="text-lg font-bold">{format(new Date(nextSession.date), "EEE, MMM dd")}</div>
                  <p className="text-xs text-muted-foreground">{nextSession.time} • {nextSession.type}</p>
-                </>
+                </React.Fragment>
             ) : (
                 <div className="text-lg font-bold">None Scheduled</div>
             )}
@@ -255,57 +298,60 @@ export default function StudentSessionsDashboard() {
       <div className="space-y-6">
         <h2 className="text-2xl font-bold">Session History</h2>
         {sessions.length > 0 ? (
-          sessions.map(session => (
-            <Card key={session.id} className="shadow-sm hover:shadow-xl transition-shadow duration-300">
-              <div className="flex flex-col md:flex-row">
-                <div className="p-5 md:w-2/3 md:border-r">
-                  <div className="flex items-start gap-4">
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage src={session.counselor.avatarUrl} />
-                      <AvatarFallback className="text-lg bg-gradient-to-br from-purple-400 to-blue-500 text-white">{session.counselor.avatarFallback}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle className="text-xl">Session with {session.counselor.name}</CardTitle>
-                      <p className="text-muted-foreground text-sm">{format(new Date(session.date), "EEEE, MMMM d, yyyy")} at {session.time}</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {session.counselor.specialties.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+          sessions.map(session => {
+            const StatusIconComponent = StatusIcon[session.status];
+            return (
+              <Card key={session.id} className="shadow-sm hover:shadow-xl transition-shadow duration-300">
+                <div className="flex flex-col md:flex-row">
+                  <div className="p-5 md:w-2/3 md:border-r">
+                    <div className="flex items-start gap-4">
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={session.counselor.avatarUrl} />
+                        <AvatarFallback className="text-lg bg-gradient-to-br from-purple-400 to-blue-500 text-white">{session.counselor.avatarFallback}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <CardTitle className="text-xl">Session with {session.counselor.name}</CardTitle>
+                        <p className="text-muted-foreground text-sm">{format(new Date(session.date), "EEEE, MMMM d, yyyy")} at {session.time}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {session.counselor.specialties.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                        </div>
                       </div>
                     </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-muted-foreground mt-4 pt-4 border-t">
+                      <p><strong>Duration:</strong> {session.duration} min</p>
+                      <p><strong>Session #:</strong> {session.sessionNumber}</p>
+                      <p><strong>Last Contact:</strong> {format(new Date(session.lastContact), "MMM d")}</p>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-muted-foreground mt-4 pt-4 border-t">
-                    <p><strong>Duration:</strong> {session.duration} min</p>
-                    <p><strong>Session #:</strong> {session.sessionNumber}</p>
-                    <p><strong>Last Contact:</strong> {format(new Date(session.lastContact), "MMM d")}</p>
-                  </div>
-                </div>
 
-                <div className="p-5 md:w-1/3 flex flex-col justify-between items-start md:items-end">
-                  <div className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-full border ${statusStyles[session.status]}`}>
-                    <StatusIcon[session.status] className={`h-4 w-4 ${session.status === 'Pending' ? 'animate-spin' : ''}`} />
-                    {session.status}
-                  </div>
-                  <div className="flex flex-row md:flex-col lg:flex-row gap-2 mt-4 w-full md:w-auto md:items-end">
-                    {session.status === 'Upcoming' && (
-                      <>
-                        <Button asChild className="w-full lg:w-auto flex-1"><Link href={`/session/${session.id}/video`}><Video className="mr-2 h-4 w-4"/>Join Session</Link></Button>
-                        <Button variant="outline" className="w-full lg:w-auto flex-1">Reschedule</Button>
-                      </>
-                    )}
-                    {session.status === 'Completed' && (
-                      <Button variant="outline" className="w-full lg:w-auto"><FileText className="mr-2 h-4 w-4"/>View Notes</Button>
-                    )}
-                     {session.status === 'Cancelled' && (
-                       <Button variant="secondary" className="w-full lg:w-auto">Re-Book</Button>
-                    )}
+                  <div className="p-5 md:w-1/3 flex flex-col justify-between items-start md:items-end">
+                    <div className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-full border ${statusStyles[session.status]}`}>
+                      <StatusIconComponent className={`h-4 w-4 ${session.status === 'Pending' ? 'animate-spin' : ''}`} />
+                      {session.status}
+                    </div>
+                    <div className="flex flex-row md:flex-col lg:flex-row gap-2 mt-4 w-full md:w-auto md:items-end">
+                      {session.status === 'Upcoming' && (
+                        <React.Fragment>
+                          <Button asChild className="w-full lg:w-auto flex-1"><Link href={`/session/${session.id}/video`}><Video className="mr-2 h-4 w-4"/>Join Session</Link></Button>
+                          <Button variant="outline" className="w-full lg:w-auto flex-1">Reschedule</Button>
+                        </React.Fragment>
+                      )}
+                      {session.status === 'Completed' && (
+                        <Button variant="outline" className="w-full lg:w-auto"><FileText className="mr-2 h-4 w-4"/>View Notes</Button>
+                      )}
+                      {session.status === 'Cancelled' && (
+                        <Button variant="secondary" className="w-full lg:w-auto">Re-Book</Button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          ))
+              </Card>
+            );
+          })
         ) : (
           <Card>
             <CardContent className="pt-6 text-center">
-              <Image src="https://placehold.co/300x200.png" alt="No sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty calendar illustration" />
+              <Image src="https://placehold.co/300x200.png" alt="No sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" />
               <p className="text-muted-foreground">You haven't had any sessions yet. Book one to get started!</p>
             </CardContent>
           </Card>

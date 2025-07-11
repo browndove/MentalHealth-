@@ -4,18 +4,23 @@ import { CalendarPlus } from "lucide-react";
 
 export default function RequestAppointmentPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center space-x-3">
-        <CalendarPlus className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-headline">Request a Counseling Session</h1>
+    <div className="space-y-8">
+       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <CalendarPlus className="h-10 w-10 text-primary" />
+          <div>
+            <h1 className="text-4xl font-headline">Request a Session</h1>
+            <p className="text-lg text-muted-foreground mt-1">Find a time that works for you.</p>
+          </div>
+        </div>
       </div>
-      <p className="text-muted-foreground">
-        Fill out the form below to request an appointment with one of our counselors. We'll do our best to accommodate your preferences.
-      </p>
-      <Card className="shadow-md">
+
+      <Card className="shadow-lg border-border/60">
         <CardHeader>
-          <CardTitle>New Appointment Request</CardTitle>
-          <CardDescription>Please provide as much detail as possible.</CardDescription>
+          <CardTitle>New Appointment Details</CardTitle>
+          <CardDescription>
+            Fill out the form below to request a new counseling session. We'll do our best to accommodate your preferences.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <RequestAppointmentForm />
