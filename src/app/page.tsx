@@ -74,19 +74,21 @@ export default function HomePage() {
             </div>
         );
      } else {
-        console.log(`HomePage: User ${user.uid} logged in, but role is '${user.role || 'not set/null'}'. Displaying login issue message.`);
+        // This is the error state for users with an auth record but no valid role in Firestore
+        console.error(`HomePage: User ${user.uid} logged in, but role is '${user.role || 'not set/null'}'. This usually means their document in the 'users' collection is missing or incomplete.`);
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 text-center">
                 <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-                <h1 className="text-2xl font-semibold mb-2 text-destructive-foreground">Login Issue</h1>
-                <p className="text-muted-foreground mb-1">Could not determine your user role.</p>
-                <p className="text-muted-foreground mb-4 text-sm">This might be due to an incomplete profile or a data issue.</p>
+                <h1 className="text-2xl font-semibold mb-2 text-destructive-foreground">Could not determine your user role.</h1>
+                <p className="text-muted-foreground mb-1">This might be due to an incomplete profile or a data issue.</p>
+                <p className="text-muted-foreground mb-4 text-sm max-w-md">
+                   Your account exists, but your user profile document in the database is either missing or does not have a 'role' field.
+                </p>
                 <p className="text-muted-foreground text-xs mb-2">
                   UID: {user.uid}
                 </p>
                 <p className="text-muted-foreground text-xs mb-4">
-                  Please ensure your 'role' (must be 'student' or 'counselor') is correctly set in your user profile in the Firestore 'users' database collection.
-                  Currently detected role: <span className="font-semibold">{user.role || 'Not set'}</span>.
+                  Please ensure a document exists in your Firestore 'users' collection with this ID, and that it has a field named 'role' set to either 'student' or 'counselor'.
                 </p>
                 <Button onClick={() => router.push('/login')}>Try Logging In Again</Button>
             </div>

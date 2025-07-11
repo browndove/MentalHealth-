@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
           const profileData = userDocSnap.data() as Omit<UserProfile, 'uid' | 'email' | 'fullName'>;
-          const loggedInUser = {
+          const loggedInUser: UserProfile = {
             uid: userCredential.user.uid,
             email: userCredential.user.email,
             fullName: userCredential.user.displayName,
@@ -87,9 +87,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           setUser(loggedInUser);
           return loggedInUser;
+        } else {
+            // This is a critical state - user exists in Auth but not in Firestore.
+            // We should not let them proceed.
+            throw new Error("Your user profile could not be found in our database. Please contact support.");
         }
     }
-    return null; // Should not happen if login is successful and profile exists
+    return null; // Should not happen if login is successful
   };
 
   const signup = async (input: RegisterInput): Promise<UserProfile | null> => {
@@ -101,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         displayName: input.fullName,
       });
 
-      const userProfileData = {
+      const userProfileData: UserProfile = {
         uid: firebaseUser.uid,
         email: input.email,
         fullName: input.fullName,
