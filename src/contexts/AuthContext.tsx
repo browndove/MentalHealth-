@@ -3,7 +3,7 @@
 
 import type { User as FirebaseUser } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { auth, db } from '@/lib/firebase';
+import { getAuthInstance, getDbInstance } from '@/lib/firebase';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
@@ -36,6 +36,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const auth = getAuthInstance();
+  const db = getDbInstance();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
@@ -69,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [auth, db]);
 
   const login = async (input: LoginInput): Promise<UserProfile | null> => {
     const userCredential = await signInWithEmailAndPassword(auth, input.email, input.password);

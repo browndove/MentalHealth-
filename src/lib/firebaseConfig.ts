@@ -1,4 +1,3 @@
-
 // src/lib/firebaseConfig.ts
 /**
  * @fileOverview Firebase project configuration.

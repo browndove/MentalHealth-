@@ -5,7 +5,7 @@ import { studentTriageAssistant } from '@/ai/flows/student-triage-assistant';
 import { SummarizeSessionNotesInput, summarizeSessionNotes } from '@/ai/flows/counselor-session-summary';
 import { z } from 'zod';
 import { AiChatSchema, AppointmentRequestSchema, type AppointmentRequestInput } from './schemas';
-import { db } from './firebase';
+import { getDbInstance } from './firebase';
 import { 
   collection, 
   getDocs, 
@@ -39,6 +39,7 @@ export async function getCounselors(userId: string): Promise<{ data: { id: strin
   }
   
   try {
+    const db = getDbInstance();
     const q = query(collection(db, 'users'), where('role', '==', 'counselor'));
     const querySnapshot = await getDocs(q);
     
@@ -83,6 +84,7 @@ export async function requestAppointment(
       return { error: 'You must be logged in to request an appointment.' };
     }
     
+    const db = getDbInstance();
     let counselorName: string | null = null;
     if(validatedInput.counselorId) {
         const counselorDoc = await getDoc(doc(db, 'users', validatedInput.counselorId));
@@ -135,6 +137,7 @@ export async function getStudentSessions(userId: string): Promise<{ data: any[] 
   }
 
   try {
+    const db = getDbInstance();
     // Query without ordering to avoid needing a composite index.
     const q = query(
       collection(db, 'appointments'),
@@ -186,6 +189,7 @@ export async function handleAiAssistantChat(input: {
       return { error: 'User not authenticated or user name is missing.' };
     }
 
+    const db = getDbInstance();
     let conversationId = input.conversationId;
     
     // If no conversationId, create a new one.
@@ -264,6 +268,7 @@ export async function getUserConversations(userId: string): Promise<{ data?: { i
     if (!userId) return { error: "User not authenticated." };
 
     try {
+        const db = getDbInstance();
         // More robust query without orderBy to avoid needing a composite index
         const q = query(collection(db, 'conversations'), where('userId', '==', userId));
         const querySnapshot = await getDocs(q);
@@ -296,6 +301,7 @@ export async function getConversationMessages(conversationId: string, userId: st
     if (!userId) return { error: "User not authenticated." };
 
     try {
+        const db = getDbInstance();
         const conversationRef = doc(db, 'conversations', conversationId);
         const docSnap = await getDoc(conversationRef);
 
