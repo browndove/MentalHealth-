@@ -21,6 +21,17 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai/flows/call-transcript-summary';
+import { transcribeAudioChunk as transcribeAudioChunkFlow, type TranscribeAudioChunkInput } from '@/ai/flows/transcribe-audio-chunk';
+
+export async function transcribeAudioChunk(input: TranscribeAudioChunkInput) {
+    try {
+        const result = await transcribeAudioChunkFlow(input);
+        return result;
+    } catch (e: any) {
+        console.error("Transcription flow error", e);
+        return { transcription: "" }; // Return empty on error to avoid breaking client
+    }
+}
 
 export async function getCounselors(userId: string): Promise<{ data: { id: string; name: string }[] } | { error: string }> {
   if (!userId) {

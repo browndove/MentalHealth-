@@ -9,7 +9,7 @@ import {
   Video, Mic, PhoneOff, ScreenShare, MessageSquare, Copy,
   VideoOff, MicOff, Users, Info, Hand, Settings
 } from 'lucide-react';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { AppLogo } from '../layout/AppLogo';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { useWebRTCStore } from '@/stores/webrtc-store';
+import { transcribeAudioChunk } from '@/ai/flows/transcribe-audio-chunk';
 
 interface Participant {
   id: string;
@@ -30,19 +31,18 @@ interface Participant {
   isSpeaking?: boolean;
 }
 
+interface TranscriptEntry {
+  id: string;
+  name: string;
+  time: string;
+  text: string;
+}
+
 const mockParticipants: Participant[] = [
   { id: 'remote1', name: 'Akwasi Mensah (Student)', avatarFallback: 'AM', avatarUrl: 'https://placehold.co/800x600.png', dataAiHint: "student webcam happy", isMuted: true, isVideoOff: false, isSpeaking: true },
   { id: 'local', name: 'You (Counselor)', avatarFallback: 'U', isLocal: true, isMuted: false, isVideoOff: false },
   { id: 'remote2', name: 'Dr. Emily Carter (Observer)', avatarFallback: 'EC', avatarUrl: 'https://placehold.co/800x600.png', dataAiHint: "professional woman webcam", isMuted: false, isVideoOff: true },
 ];
-
-const mockTranscript = [
-    { id: 't1', name: 'Akwasi Mensah', time: '10:15 AM', text: "Good morning, counselor. Thanks for meeting with me. I've been feeling quite overwhelmed with my coursework lately." },
-    { id: 't2', name: 'You (Counselor)', time: '10:16 AM', text: "Good morning, Akwasi. I'm here to help. Can you tell me a bit more about what's been feeling overwhelming?" },
-    { id: 't3', name: 'Akwasi Mensah', time: '10:17 AM', text: "It's mainly the volume of assignments and the upcoming exams. I feel like I can't keep up, and it's affecting my sleep." },
-    { id: 't4', name: 'You (Counselor)', time: '10:18 AM', text: "That sounds really tough. It's common for students to feel this way. Let's explore some strategies to manage this workload and stress." },
-];
-
 
 export function VideoCallInterface() {
   const { toast } = useToast();
@@ -56,9 +56,38 @@ export function VideoCallInterface() {
     reset,
   } = useWebRTCStore();
 
-  const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
-  const [isChatPanelOpen, setIsChatPanelOpen] = React.useState(true);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [isChatPanelOpen, setIsChatPanelOpen] = useState(true);
   const localVideoRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
+  const transcriptionIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleTranscription = useCallback(async (audioBlob: Blob) => {
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      reader.onloadend = async () => {
+        const base64Audio = reader.result as string;
+        const result = await transcribeAudioChunk({ audioDataUri: base64Audio });
+        if (result.transcription) {
+          setTranscript(prev => [
+            ...prev,
+            {
+              id: Date.now().toString(),
+              name: 'You (Counselor)', // Assuming local user is always the counselor for now
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              text: result.transcription,
+            }
+          ]);
+        }
+      };
+    } catch (error) {
+      console.error("Transcription error:", error);
+      toast({ variant: 'destructive', title: "Transcription Failed", description: "Could not transcribe audio chunk."});
+    }
+  }, [toast]);
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -66,6 +95,34 @@ export function VideoCallInterface() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         setHasCameraPermission(true);
         setLocalStream(stream);
+
+        // Setup MediaRecorder for transcription
+        if (stream.getAudioTracks().length > 0 && typeof MediaRecorder !== 'undefined') {
+            mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            mediaRecorderRef.current.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+            mediaRecorderRef.current.onstop = () => {
+                if (audioChunksRef.current.length > 0) {
+                    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                    handleTranscription(audioBlob);
+                    audioChunksRef.current = [];
+                }
+            };
+            
+            transcriptionIntervalRef.current = setInterval(() => {
+                if(mediaRecorderRef.current?.state === 'recording') {
+                    mediaRecorderRef.current.stop();
+                }
+                if(mediaRecorderRef.current?.state === 'inactive') {
+                    mediaRecorderRef.current.start();
+                }
+            }, 5000); // Transcribe every 5 seconds
+            mediaRecorderRef.current.start();
+        }
+
       } catch (error) {
         console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
@@ -80,9 +137,13 @@ export function VideoCallInterface() {
     getCameraPermission();
 
     return () => {
+      if (transcriptionIntervalRef.current) {
+          clearInterval(transcriptionIntervalRef.current);
+      }
+      mediaRecorderRef.current?.stop();
       reset(); // Clean up on component unmount
     };
-  }, [setLocalStream, toast, reset]);
+  }, [setLocalStream, toast, reset, handleTranscription]);
   
   useEffect(() => {
     if (localStream && localVideoRef.current) {
@@ -95,7 +156,6 @@ export function VideoCallInterface() {
     reset();
   };
 
-  // Replace with real participants from store later
   const participants = mockParticipants.map(p => {
     if (p.isLocal) {
         return { ...p, isMuted: isLocalMicMuted, isVideoOff: isLocalVideoOff };
@@ -204,7 +264,7 @@ export function VideoCallInterface() {
             </div>
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-6">
-                {mockTranscript.map(entry => (
+                {transcript.length > 0 ? transcript.map(entry => (
                   <div key={entry.id} className="flex gap-3">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback>{entry.name.split(" ").map(n=>n[0]).join("")}</AvatarFallback>
@@ -217,7 +277,12 @@ export function VideoCallInterface() {
                       <p className="text-sm text-muted-foreground leading-relaxed">{entry.text}</p>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center text-sm text-muted-foreground py-8">
+                    <Mic size={24} className="mx-auto mb-2"/>
+                    <p>Live transcription will appear here as you speak.</p>
+                  </div>
+                )}
               </div>
             </ScrollArea>
              <div className="p-3 border-t border-border">
