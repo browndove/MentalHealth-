@@ -117,10 +117,14 @@ export default function StudentSessionsDashboard() {
             <div className="h-10 bg-muted rounded-md w-40"></div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (<div key={i} className="h-36 bg-muted rounded-lg animate-pulse"></div>))}
+            {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-36 bg-muted rounded-lg animate-pulse"></div>
+            ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (<div key={i} className="h-24 bg-muted rounded-lg animate-pulse"></div>))}
+            {[...Array(3)].map((_, i) => (
+               <div key={i} className="h-24 bg-muted rounded-lg animate-pulse"></div>
+            ))}
         </div>
         <div className="h-32 bg-muted rounded-lg animate-pulse"></div>
         <div className="h-56 bg-muted rounded-lg animate-pulse"></div>
