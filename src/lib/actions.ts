@@ -176,32 +176,49 @@ export async function handleAiAssistantChat(input: {
     }
 
     let conversationId = input.conversationId;
+    const updates: { [key: string]: any } = {};
 
     // If no conversationId, create a new one.
     if (!conversationId) {
       const newConversationRef = await addDoc(collection(db, 'conversations'), {
         userId: input.userId,
-        userName: input.userName, // Store the user's name
+        userName: input.userName,
         title: validatedInput.message.substring(0, 40) + (validatedInput.message.length > 40 ? '...' : ''),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         messages: [],
       });
       conversationId = newConversationRef.id;
+    } else {
+        // For existing conversations, check if fields are missing and add them.
+        const conversationRef = doc(db, 'conversations', conversationId);
+        const docSnap = await getDoc(conversationRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (!data.title) {
+                updates.title = validatedInput.message.substring(0, 40) + (validatedInput.message.length > 40 ? '...' : '');
+            }
+            if (!data.userId) {
+                updates.userId = input.userId;
+            }
+             if (!data.userName) {
+                updates.userName = input.userName;
+            }
+        }
     }
     
     const conversationRef = doc(db, 'conversations', conversationId);
-
-    // Add user message to conversation
-    await updateDoc(conversationRef, {
-      messages: arrayUnion({
+    
+    updates.updatedAt = serverTimestamp();
+    updates.messages = arrayUnion({
         id: Date.now().toString(),
         text: validatedInput.message,
         sender: 'user',
         createdAt: new Date().toISOString(),
-      }),
-      updatedAt: serverTimestamp(),
-    });
+      });
+
+    // Apply all updates in one go
+    await updateDoc(conversationRef, updates);
 
     const result = await studentTriageAssistant({ question: validatedInput.message });
     if (!result.answer) {
@@ -243,8 +260,21 @@ export async function getUserConversations(userId: string): Promise<{ id: string
             ...doc.data()
         })) as { id: string; title: string; updatedAt: any }[];
         return conversations;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error fetching conversations:", error);
+         if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
+             const errorMessage = `CRITICAL: The query to fetch conversations was blocked. This is almost always caused by a **MISSING FIRESTORE INDEX**, not your security rules.
+
+**ACTION REQUIRED:**
+1. Open your Firebase Studio **Server Logs**.
+2. Look for an error message that contains a long URL. This is a link to create the required index.
+3. Click that link. It will take you to your Firebase Console.
+4. Click the "Create Index" button in the Firebase Console.
+5. Wait a few minutes for the index to build, then refresh the app.
+
+The required index is a composite index on the 'conversations' collection for the 'userId' field (ascending) and 'updatedAt' field (descending).`;
+            return { error: errorMessage };
+        }
         return { error: "Could not fetch conversations." };
     }
 }
@@ -297,3 +327,5 @@ export async function handleSummarizeCallTranscript(
     return { error: 'Failed to summarize the call transcript. Please try again.' };
   }
 }
+
+    
