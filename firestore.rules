@@ -1,0 +1,30 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users can create their own profile, and can only read/update their own profile.
+    match /users/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+    }
+    
+    // Appointments collection rules
+    match /appointments/{appointmentId} {
+      // Authenticated users can create appointments.
+      allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid;
+      
+      // Students can read their own appointments. Counselors can read appointments assigned to them.
+      allow read: if request.auth != null && (request.resource.data.studentId == request.auth.uid || request.resource.data.counselorId == request.auth.uid);
+
+      // Counselors can update the status of appointments assigned to them.
+      allow update: if request.auth != null && request.resource.data.counselorId == request.auth.uid;
+    }
+    
+    // AI Conversations collection rules
+    match /conversations/{conversationId} {
+      // Users can only interact with their own conversations.
+      allow read, create, update, delete: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+  }
+}
