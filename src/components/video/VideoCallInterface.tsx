@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Video, Mic, PhoneOff, ScreenShare, MessageSquare, Copy,
-  VideoOff, MicOff, Users, Info, Hand, Settings
+  VideoOff, MicOff, Users, Info, Hand, Settings, Check
 } from 'lucide-react';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { AppLogo } from '../layout/AppLogo';
@@ -63,6 +63,7 @@ export function VideoCallInterface() {
   const audioChunksRef = useRef<Blob[]>([]);
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const transcriptionIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
 
   const handleTranscription = useCallback(async (audioBlob: Blob) => {
     try {
@@ -71,7 +72,7 @@ export function VideoCallInterface() {
       reader.onloadend = async () => {
         const base64Audio = reader.result as string;
         const result = await transcribeAudioChunk({ audioDataUri: base64Audio });
-        if (result.transcription) {
+        if (result.transcription && result.transcription.trim().length > 0) {
           setTranscript(prev => [
             ...prev,
             {
@@ -96,9 +97,13 @@ export function VideoCallInterface() {
         setHasCameraPermission(true);
         setLocalStream(stream);
 
-        // Setup MediaRecorder for transcription
         if (stream.getAudioTracks().length > 0 && typeof MediaRecorder !== 'undefined') {
-            mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            const options = { mimeType: 'audio/webm' };
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                 console.warn(`${options.mimeType} is not supported. Transcription may not work.`);
+                 return;
+            }
+            mediaRecorderRef.current = new MediaRecorder(stream, options);
             mediaRecorderRef.current.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     audioChunksRef.current.push(event.data);
@@ -116,11 +121,14 @@ export function VideoCallInterface() {
                 if(mediaRecorderRef.current?.state === 'recording') {
                     mediaRecorderRef.current.stop();
                 }
-                if(mediaRecorderRef.current?.state === 'inactive') {
+                if(mediaRecorderRef.current?.state === 'inactive' && !get().isLocalMicMuted) {
                     mediaRecorderRef.current.start();
                 }
             }, 5000); // Transcribe every 5 seconds
-            mediaRecorderRef.current.start();
+            
+            if(!get().isLocalMicMuted) {
+                mediaRecorderRef.current.start();
+            }
         }
 
       } catch (error) {
@@ -149,11 +157,27 @@ export function VideoCallInterface() {
     if (localStream && localVideoRef.current) {
       localVideoRef.current.srcObject = localStream;
     }
-  }, [localStream]);
+    
+    // Handle starting/stopping recorder on mute toggle
+    if (mediaRecorderRef.current) {
+        if(isLocalMicMuted && mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.stop();
+        } else if (!isLocalMicMuted && mediaRecorderRef.current.state === 'inactive') {
+            mediaRecorderRef.current.start();
+        }
+    }
+
+  }, [localStream, isLocalMicMuted]);
 
   const handleLeaveCall = () => {
     alert("Leave Call clicked (functionality not implemented). In a real app, this would disconnect from the session.");
     reset();
+  };
+  
+  const handleCopyId = () => {
+    navigator.clipboard.writeText("SESSION-ID-PLACEHOLDER");
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   const participants = mockParticipants.map(p => {
@@ -172,8 +196,8 @@ export function VideoCallInterface() {
 
     return (
       <div className={cn(
-        "relative bg-slate-800 rounded-lg overflow-hidden shadow-lg flex items-center justify-center group w-full h-full",
-        participant.isSpeaking && !participant.isLocal && "ring-4 ring-primary ring-offset-2 ring-offset-slate-900"
+        "relative bg-slate-800 rounded-lg overflow-hidden shadow-lg flex items-center justify-center group w-full h-full transition-all duration-300",
+        participant.isSpeaking && !participant.isLocal && "animate-speaking-pulse"
       )}>
         {showVideo ? (
           participant.isLocal ? (
@@ -191,21 +215,21 @@ export function VideoCallInterface() {
             {participant.isVideoOff && <VideoOff className="w-6 h-6 mt-1" />}
           </div>
         )}
-        <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5 backdrop-blur-sm">
-          {participant.isMuted ? <MicOff size={14} className="text-yellow-400" /> : <Mic size={14} />}
+        <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100 md:opacity-0">
+          {participant.isMuted ? <MicOff size={14} className="text-yellow-400" /> : <Mic size={14} className={cn(participant.isSpeaking && "text-primary")}/>}
           {participant.name}
         </div>
       </div>
     );
   };
   
-  const controlButtonClass = "bg-slate-700/80 hover:bg-slate-600/90 text-slate-200 rounded-full w-14 h-14 flex items-center justify-center backdrop-blur-md";
-  const destructiveButtonClass = "bg-red-600 hover:bg-red-700 text-white rounded-full w-14 h-14 flex items-center justify-center";
+  const controlButtonClass = "bg-slate-700/80 hover:bg-slate-600/90 text-slate-200 rounded-full w-14 h-14 flex items-center justify-center backdrop-blur-md transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95";
+  const destructiveButtonClass = "bg-red-600 hover:bg-red-700 text-white rounded-full w-14 h-14 flex items-center justify-center transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95";
 
 
   return (
     <TooltipProvider>
-    <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-100 antialiased overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 antialiased overflow-hidden">
       <header className="px-4 py-2 flex items-center justify-between border-b border-slate-700 shrink-0">
         <div className="flex items-center gap-4">
           <AppLogo />
@@ -222,9 +246,9 @@ export function VideoCallInterface() {
              <Users size={16} />
              <span>{participants.length}</span>
            </div>
-           <Button variant="outline" size="sm" className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300 text-xs h-8">
+           <Button variant="outline" size="sm" className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-300 text-xs h-8" onClick={handleCopyId}>
              Session ID
-             <Copy size={14} className="ml-2 text-slate-400" />
+             {isCopied ? <Check size={14} className="ml-2 text-primary" /> : <Copy size={14} className="ml-2 text-slate-400" />}
            </Button>
         </div>
       </header>
@@ -255,7 +279,7 @@ export function VideoCallInterface() {
         </div>
 
         {isChatPanelOpen && (
-          <aside className="w-[360px] bg-background text-foreground flex flex-col border-l border-slate-700 shrink-0">
+          <aside className="w-[360px] bg-background text-foreground flex flex-col border-l border-slate-700 shrink-0 transition-all duration-300 ease-in-out">
             <div className="p-4 border-b border-border flex items-center justify-between">
               <h2 className="font-semibold text-lg">Live Transcript</h2>
               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => setIsChatPanelOpen(false)}>
@@ -301,10 +325,11 @@ export function VideoCallInterface() {
                 <TooltipTrigger asChild>
                     <Button 
                         variant="ghost" 
-                        className={cn(controlButtonClass, isLocalMicMuted && "bg-destructive hover:bg-destructive/90 text-white")}
+                        className={cn(controlButtonClass, isLocalMicMuted && "bg-red-600 hover:bg-red-700 text-white")}
                         onClick={toggleLocalMic}
                     >
-                        {isLocalMicMuted ? <MicOff size={24}/> : <Mic size={24}/>} 
+                        <Mic size={24} className={cn(!isLocalMicMuted && "animate-mic-pulse")}/>
+                        {isLocalMicMuted && <MicOff size={24}/>} 
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>{isLocalMicMuted ? 'Unmute' : 'Mute'}</p></TooltipContent>
@@ -313,7 +338,7 @@ export function VideoCallInterface() {
                 <TooltipTrigger asChild>
                     <Button 
                         variant="ghost" 
-                        className={cn(controlButtonClass, isLocalVideoOff && "bg-destructive hover:bg-destructive/90 text-white")}
+                        className={cn(controlButtonClass, isLocalVideoOff && "bg-red-600 hover:bg-red-700 text-white")}
                         onClick={toggleLocalVideo}
                     >
                          {isLocalVideoOff ? <VideoOff size={24}/> : <Video size={24}/>} 

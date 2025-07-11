@@ -110,3 +110,29 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
+
+@layer utilities {
+  @keyframes speaking-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0px hsl(var(--primary) / 0.7);
+    }
+    50% {
+      box-shadow: 0 0 0 4px hsl(var(--primary) / 0.3);
+    }
+  }
+  .animate-speaking-pulse {
+    animation: speaking-pulse 2s infinite;
+  }
+
+  @keyframes mic-pulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 2px hsl(var(--primary) / 0.6));
+    }
+    50% {
+      filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.9));
+    }
+  }
+  .animate-mic-pulse {
+    animation: mic-pulse 1.5s ease-in-out infinite;
+  }
+}
