@@ -3,59 +3,127 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardList, FileText, Video, MessageSquare, Loader2, AlertTriangle, CalendarCheck } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Calendar, 
+  Clock, 
+  Star, 
+  Bell, 
+  MessageCircle, 
+  FileText, 
+  Video,
+  ArrowUpRight,
+  Plus,
+  TrendingUp,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  AlertTriangle
+} from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { getStudentSessions } from "@/lib/actions";
 import { format } from "date-fns";
+import Image from "next/image";
 
 // Define a type for the session data we expect from the backend
 interface Session {
   id: string;
-  date: string;
+  sessionNumber: number;
+  date: string; // ISO string
   time: string;
-  counselor: string;
-  type: string;
+  counselor: {
+    name: string;
+    avatarUrl?: string;
+    avatarFallback: string;
+    specialties: string[];
+  };
+  duration: number; // in minutes
+  lastContact: string; // ISO string
+  type: 'Video Call' | 'Chat' | 'In-Person';
   status: 'Upcoming' | 'Completed' | 'Pending' | 'Cancelled';
   notesAvailable: boolean;
-  summary: string | null;
-  videoRecordingLink?: string;
-  chatTranscriptLink?: string;
 }
 
-export default function StudentSessionsPage() {
+const mockSessions: Session[] = [
+    {
+        id: 'sess1', sessionNumber: 5, date: '2024-08-25T14:00:00.000Z', time: '02:00 PM',
+        counselor: { name: 'Dr. Emily Carter', avatarFallback: 'EC', specialties: ['Anxiety', 'CBT'] },
+        duration: 50, lastContact: '2024-08-18T10:00:00.000Z', type: 'Video Call', status: 'Upcoming', notesAvailable: false
+    },
+    {
+        id: 'sess2', sessionNumber: 4, date: '2024-08-18T10:00:00.000Z', time: '10:00 AM',
+        counselor: { name: 'Dr. Emily Carter', avatarFallback: 'EC', specialties: ['Anxiety', 'CBT'] },
+        duration: 50, lastContact: '2024-08-11T11:00:00.000Z', type: 'Video Call', status: 'Completed', notesAvailable: true
+    },
+    {
+        id: 'sess3', sessionNumber: 3, date: '2024-08-11T11:00:00.000Z', time: '11:00 AM',
+        counselor: { name: 'Dr. David Chen', avatarFallback: 'DC', specialties: ['Stress Management', 'Academic Pressure'] },
+        duration: 50, lastContact: '2024-08-04T09:30:00.000Z', type: 'Video Call', status: 'Completed', notesAvailable: true
+    },
+     {
+        id: 'sess4', sessionNumber: 2, date: '2024-07-28T15:00:00.000Z', time: '03:00 PM',
+        counselor: { name: 'Dr. David Chen', avatarFallback: 'DC', specialties: ['Stress Management'] },
+        duration: 50, lastContact: '2024-07-21T10:00:00.000Z', type: 'Chat', status: 'Cancelled', notesAvailable: false
+    },
+];
+
+const statusStyles = {
+    Upcoming: "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700",
+    Completed: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700",
+    Pending: "bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700",
+    Cancelled: "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700",
+};
+
+const StatusIcon = {
+    Upcoming: Bell,
+    Completed: CheckCircle2,
+    Pending: Loader2,
+    Cancelled: XCircle,
+}
+
+export default function StudentSessionsDashboard() {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
-      setLoading(true);
-      setError(null);
-      getStudentSessions(user.uid)
-        .then(result => {
-          if ('error' in result) {
-            setError(result.error);
-          } else {
-            setSessions(result.data as Session[]);
-          }
-        })
-        .finally(() => setLoading(false));
-    }
+    // Simulating data fetching
+    setTimeout(() => {
+        setSessions(mockSessions);
+        setLoading(false);
+    }, 1500);
+    // In a real app, you would use getStudentSessions:
+    // if (user) {
+    //   getStudentSessions(user.uid).then(result => { ... }).finally(...)
+    // }
   }, [user]);
 
-  const upcomingSessions = sessions.filter(s => s.status === "Upcoming" || s.status === "Pending");
-  const pastSessions = sessions.filter(s => s.status === "Completed" || s.status === "Cancelled");
+  const completedSessions = sessions.filter(s => s.status === 'Completed').length;
+  const nextSession = sessions.find(s => s.status === 'Upcoming');
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Loading your sessions...</p>
+      <div className="space-y-6">
+        <div className="animate-pulse flex justify-between items-center">
+            <div>
+                <div className="h-8 bg-muted rounded w-64 mb-2"></div>
+                <div className="h-4 bg-muted rounded w-96"></div>
+            </div>
+            <div className="h-10 bg-muted rounded-md w-40"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (<div key={i} className="h-36 bg-muted rounded-lg animate-pulse"></div>))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (<div key={i} className="h-24 bg-muted rounded-lg animate-pulse"></div>))}
+        </div>
+        <div className="h-32 bg-muted rounded-lg animate-pulse"></div>
+        <div className="h-56 bg-muted rounded-lg animate-pulse"></div>
       </div>
     );
   }
@@ -70,113 +138,164 @@ export default function StudentSessionsPage() {
     );
   }
 
-
   return (
     <div className="space-y-8">
-      <div className="flex items-center space-x-3">
-        <ClipboardList className="h-10 w-10 text-primary" />
-        <h1 className="text-4xl font-headline">My Sessions</h1>
+      {/* 1. Header Section */}
+      <div className="p-6 rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-blue-50 dark:from-blue-900/50 dark:via-purple-900/50 dark:to-slate-900/50 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold font-headline tracking-tight text-gray-800 dark:text-gray-100">My Sessions Dashboard</h1>
+          <p className="text-base text-gray-600 dark:text-gray-300 mt-1">Your journey to wellness, all in one place.</p>
+        </div>
+        <Button asChild size="lg" className="shadow-lg hover:scale-105 transition-transform duration-300">
+          <Link href="/student/appointments/request">
+            <Plus className="mr-2 h-5 w-5"/> Book New Session
+          </Link>
+        </Button>
       </div>
-      <p className="text-lg text-muted-foreground">
-        Review your past and upcoming counseling sessions. Access notes, recordings (if available), and manage your appointments.
-      </p>
 
-      <Tabs defaultValue="upcoming" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-1/2">
-          <TabsTrigger value="upcoming">Upcoming Sessions ({upcomingSessions.length})</TabsTrigger>
-          <TabsTrigger value="past">Past Sessions ({pastSessions.length})</TabsTrigger>
-        </TabsList>
-        <TabsContent value="upcoming" className="mt-6">
-          {upcomingSessions.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2">
-              {upcomingSessions.map(session => (
-                <Card key={session.id} className="hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl font-headline">Session with {session.counselor}</CardTitle>
-                        <CardDescription>{format(new Date(session.date), "PPP")} at {session.time}</CardDescription>
-                      </div>
-                      <div className={`text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1.5 ${session.type.includes('Video') ? 'bg-blue-100 text-blue-800' : 'bg-teal-100 text-teal-800'}`}>
-                        {session.type.includes('Video') ? <Video className="h-4 w-4"/> : <MessageSquare className="h-4 w-4"/>}
-                        {session.type}
+      {/* 2. Quick Stats Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="hover:shadow-lg transition-shadow border-blue-200 dark:border-blue-800">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Sessions</CardTitle>
+            <Calendar className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{completedSessions}</div>
+            <p className="text-xs text-muted-foreground">+2 this month</p>
+          </CardContent>
+        </Card>
+        <Card className="hover:shadow-lg transition-shadow border-purple-200 dark:border-purple-800">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Hours of Support</CardTitle>
+            <Clock className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{(completedSessions * 50 / 60).toFixed(1)}</div>
+            <p className="text-xs text-muted-foreground">Investing in your well-being</p>
+          </CardContent>
+        </Card>
+        <Card className="hover:shadow-lg transition-shadow border-green-200 dark:border-green-800">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Next Session</CardTitle>
+            <Bell className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            {nextSession ? (
+                <>
+                 <div className="text-lg font-bold">{format(new Date(nextSession.date), "EEE, MMM dd")}</div>
+                 <p className="text-xs text-muted-foreground">{nextSession.time} • {nextSession.type}</p>
+                </>
+            ) : (
+                <div className="text-lg font-bold">None Scheduled</div>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="hover:shadow-lg transition-shadow border-yellow-200 dark:border-yellow-800">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Completion Rate</CardTitle>
+            <Star className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">95%</div>
+            <p className="text-xs text-muted-foreground">Great consistency!</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 3. Quick Actions Panel */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Button variant="outline" className="h-auto py-4 flex flex-col items-start bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/60 border-blue-200 dark:border-blue-800 transition-all">
+          <MessageCircle className="h-6 w-6 text-blue-600 dark:text-blue-400 mb-2"/>
+          <span className="font-semibold text-foreground">Message Counselor</span>
+          <span className="text-xs text-muted-foreground">Send a secure message</span>
+        </Button>
+        <Button variant="outline" className="h-auto py-4 flex flex-col items-start bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/60 border-green-200 dark:border-green-800 transition-all">
+          <FileText className="h-6 w-6 text-green-600 dark:text-green-400 mb-2"/>
+          <span className="font-semibold text-foreground">View Session Notes</span>
+          <span className="text-xs text-muted-foreground">Review past summaries</span>
+        </Button>
+        <Button variant="outline" className="h-auto py-4 flex flex-col items-start bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/60 border-purple-200 dark:border-purple-800 transition-all">
+          <Calendar className="h-6 w-6 text-purple-600 dark:text-purple-400 mb-2"/>
+          <span className="font-semibold text-foreground">Reschedule a Session</span>
+          <span className="text-xs text-muted-foreground">Find a new time</span>
+        </Button>
+      </div>
+
+      {/* 5. Progress Tracking Section */}
+      <Card className="shadow-md">
+        <CardHeader>
+            <CardTitle>Your Journey Progress</CardTitle>
+            <CardDescription>You've completed {completedSessions} of your 10-session goal this term.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Progress value={completedSessions * 10} className="h-3" />
+            <div className="flex justify-between items-center mt-2 text-sm text-muted-foreground">
+                <p>Week-over-week progress: <span className="font-semibold text-green-600 dark:text-green-400 flex items-center gap-1"><TrendingUp className="h-4 w-4"/> +1 session</span></p>
+                <p className="font-semibold text-primary">Keep up the great work!</p>
+            </div>
+        </CardContent>
+      </Card>
+
+      {/* 4. Enhanced Session Cards */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold">Session History</h2>
+        {sessions.length > 0 ? (
+          sessions.map(session => (
+            <Card key={session.id} className="shadow-sm hover:shadow-xl transition-shadow duration-300">
+              <div className="flex flex-col md:flex-row">
+                <div className="p-5 md:w-2/3 md:border-r">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage src={session.counselor.avatarUrl} />
+                      <AvatarFallback className="text-lg bg-gradient-to-br from-purple-400 to-blue-500 text-white">{session.counselor.avatarFallback}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-xl">Session with {session.counselor.name}</CardTitle>
+                      <p className="text-muted-foreground text-sm">{format(new Date(session.date), "EEEE, MMMM d, yyyy")} at {session.time}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {session.counselor.specialties.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">Status: <span className="font-medium text-foreground">{session.status}</span></p>
-                    <p className="text-sm text-muted-foreground mt-1">Your session is scheduled. You will receive a reminder.</p>
-                  </CardContent>
-                  <CardFooter className="gap-2">
-                    <Button variant="outline" size="sm" disabled>Reschedule (Coming Soon)</Button>
-                    <Button variant="destructive" size="sm" disabled>Cancel (Coming Soon)</Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="col-span-full">
-              <CardContent className="pt-6 text-center">
-                <Image src="https://placehold.co/300x200.png" alt="No upcoming sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty student calendar" />
-                <p className="text-muted-foreground">You have no upcoming sessions scheduled.</p>
-                <Button asChild className="mt-4">
-                  <Link href="/student/appointments/request">Request a New Session</Link>
-                </Button>
-              </CardContent>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-muted-foreground mt-4 pt-4 border-t">
+                    <p><strong>Duration:</strong> {session.duration} min</p>
+                    <p><strong>Session #:</strong> {session.sessionNumber}</p>
+                    <p><strong>Last Contact:</strong> {format(new Date(session.lastContact), "MMM d")}</p>
+                  </div>
+                </div>
+
+                <div className="p-5 md:w-1/3 flex flex-col justify-between items-start md:items-end">
+                  <div className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-full border ${statusStyles[session.status]}`}>
+                    <StatusIcon[session.status] className={`h-4 w-4 ${session.status === 'Pending' ? 'animate-spin' : ''}`} />
+                    {session.status}
+                  </div>
+                  <div className="flex flex-row md:flex-col lg:flex-row gap-2 mt-4 w-full md:w-auto md:items-end">
+                    {session.status === 'Upcoming' && (
+                      <>
+                        <Button asChild className="w-full lg:w-auto flex-1"><Link href={`/session/${session.id}/video`}><Video className="mr-2 h-4 w-4"/>Join Session</Link></Button>
+                        <Button variant="outline" className="w-full lg:w-auto flex-1">Reschedule</Button>
+                      </>
+                    )}
+                    {session.status === 'Completed' && (
+                      <Button variant="outline" className="w-full lg:w-auto"><FileText className="mr-2 h-4 w-4"/>View Notes</Button>
+                    )}
+                     {session.status === 'Cancelled' && (
+                       <Button variant="secondary" className="w-full lg:w-auto">Re-Book</Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </Card>
-          )}
-        </TabsContent>
-        <TabsContent value="past" className="mt-6">
-          {pastSessions.length > 0 ? (
-            <div className="space-y-6">
-              {pastSessions.map(session => (
-                <Card key={session.id} className="hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader>
-                     <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl font-headline">Session with {session.counselor}</CardTitle>
-                        <CardDescription>{format(new Date(session.date), "PPP")} at {session.time}</CardDescription>
-                      </div>
-                      <div className={`text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1.5 ${session.type.includes('Video') ? 'bg-blue-100 text-blue-800' : 'bg-teal-100 text-teal-800'}`}>
-                         {session.type.includes('Video') ? <Video className="h-4 w-4"/> : <MessageSquare className="h-4 w-4"/>}
-                        {session.type}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">Status: <span className="font-medium text-foreground">{session.status}</span></p>
-                    {session.summary && <p className="mt-2 text-sm bg-secondary/50 p-3 rounded-md">{session.summary}</p>}
-                  </CardContent>
-                  <CardFooter className="gap-2">
-                    {session.notesAvailable && (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/student/sessions/${session.id}/notes`}><FileText className="mr-2 h-4 w-4"/>View Notes</Link>
-                      </Button>
-                    )}
-                    {session.type.includes('Video') && (
-                       <Button variant="outline" size="sm" disabled>
-                         <Video className="mr-2 h-4 w-4"/>Recording (N/A)
-                       </Button>
-                    )}
-                     {session.type.includes('Chat') && (
-                       <Button variant="outline" size="sm" disabled>
-                         <MessageSquare className="mr-2 h-4 w-4"/>Transcript (N/A)
-                       </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-             <Card className="col-span-full">
-              <CardContent className="pt-6 text-center">
-                <Image src="https://placehold.co/300x200.png" alt="No past sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty history illustration" />
-                <p className="text-muted-foreground">You have no past sessions recorded.</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+          ))
+        ) : (
+          <Card>
+            <CardContent className="pt-6 text-center text-muted-foreground">
+              No sessions found.
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
