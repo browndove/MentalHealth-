@@ -176,8 +176,7 @@ export async function handleAiAssistantChat(input: {
     }
 
     let conversationId = input.conversationId;
-    const updates: { [key: string]: any } = {};
-
+    
     // If no conversationId, create a new one.
     if (!conversationId) {
       const newConversationRef = await addDoc(collection(db, 'conversations'), {
@@ -189,26 +188,11 @@ export async function handleAiAssistantChat(input: {
         messages: [],
       });
       conversationId = newConversationRef.id;
-    } else {
-        // For existing conversations, check if fields are missing and add them.
-        const conversationRef = doc(db, 'conversations', conversationId);
-        const docSnap = await getDoc(conversationRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            if (!data.title) {
-                updates.title = validatedInput.message.substring(0, 40) + (validatedInput.message.length > 40 ? '...' : '');
-            }
-            if (!data.userId) {
-                updates.userId = input.userId;
-            }
-             if (!data.userName) {
-                updates.userName = input.userName;
-            }
-        }
     }
     
     const conversationRef = doc(db, 'conversations', conversationId);
     
+    const updates: { [key: string]: any } = {};
     updates.updatedAt = serverTimestamp();
     updates.messages = arrayUnion({
         id: Date.now().toString(),
@@ -217,8 +201,24 @@ export async function handleAiAssistantChat(input: {
         createdAt: new Date().toISOString(),
       });
 
+    // For existing conversations, check if fields are missing and add them.
+    const docSnap = await getDoc(conversationRef);
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (!data.title) {
+            updates.title = validatedInput.message.substring(0, 40) + (validatedInput.message.length > 40 ? '...' : '');
+        }
+        if (!data.userId) {
+            updates.userId = input.userId;
+        }
+        if (!data.userName) {
+            updates.userName = input.userName;
+        }
+    }
+
+
     // Apply all updates in one go
-    await updateDoc(conversationRef, updates);
+    await updateDoc(conversationRef, updates, { merge: true });
 
     const result = await studentTriageAssistant({ question: validatedInput.message });
     if (!result.answer) {
@@ -249,7 +249,7 @@ export async function handleAiAssistantChat(input: {
   }
 }
 
-export async function getUserConversations(userId: string): Promise<{ id: string; title: string; updatedAt: any }[] | { error:string }> {
+export async function getUserConversations(userId: string): Promise<{ data?: { id: string; title: string; updatedAt: any }[], error?: string }> {
     if (!userId) return { error: "User not authenticated." };
 
     try {
@@ -259,11 +259,11 @@ export async function getUserConversations(userId: string): Promise<{ id: string
             id: doc.id,
             ...doc.data()
         })) as { id: string; title: string; updatedAt: any }[];
-        return conversations;
+        return { data: conversations };
     } catch (error: any) {
         console.error("Error fetching conversations:", error);
-         if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
-             const errorMessage = `CRITICAL: The query to fetch conversations was blocked. This is almost always caused by a **MISSING FIRESTORE INDEX**, not your security rules.
+        if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
+             const errorMessage = `CRITICAL: The query to fetch conversations was blocked by a **MISSING FIRESTORE INDEX**.
 
 **ACTION REQUIRED:**
 1. Open your Firebase Studio **Server Logs**.
@@ -327,5 +327,3 @@ export async function handleSummarizeCallTranscript(
     return { error: 'Failed to summarize the call transcript. Please try again.' };
   }
 }
-
-    

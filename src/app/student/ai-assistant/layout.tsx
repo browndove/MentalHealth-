@@ -6,11 +6,12 @@ import { useEffect, useState } from "react";
 import { getUserConversations } from "@/lib/actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MessageSquare, Loader2 } from "lucide-react";
+import { PlusCircle, MessageSquare, Loader2, AlertTriangle, Bot } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 interface Conversation {
     id: string;
@@ -22,13 +23,17 @@ export default function AiAssistantLayout({ children }: { children: React.ReactN
     const pathname = usePathname();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (user) {
             setIsLoading(true);
+            setError(null);
             getUserConversations(user.uid).then(result => {
-                if (!('error' in result)) {
-                    setConversations(result as Conversation[]);
+                if (result.error) {
+                    setError(result.error);
+                } else if (result.data) {
+                    setConversations(result.data);
                 }
                 setIsLoading(false);
             });
@@ -57,6 +62,14 @@ export default function AiAssistantLayout({ children }: { children: React.ReactN
                                 <div className="flex justify-center items-center h-full p-4">
                                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                                 </div>
+                            ) : error ? (
+                                <Alert variant="destructive" className="m-2">
+                                    <AlertTriangle className="h-4 w-4" />
+                                    <AlertTitle>Error Fetching Chats</AlertTitle>
+                                    <AlertDescription className="text-xs whitespace-pre-wrap">
+                                        {error}
+                                    </AlertDescription>
+                                </Alert>
                             ) : conversations.length > 0 ? (
                                 conversations.map(convo => (
                                     <Link
