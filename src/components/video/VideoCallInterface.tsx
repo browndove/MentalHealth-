@@ -7,21 +7,22 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Video, Mic, PhoneOff, ScreenShare, MessageSquare, Copy,
-  VideoOff, MicOff, Users, Info, Hand, Settings, Radio
+  VideoOff, MicOff, Users, Info, Hand, Settings
 } from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AppLogo } from '../layout/AppLogo';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
-
+import { useWebRTCStore } from '@/stores/webrtc-store';
 
 interface Participant {
   id: string;
   name: string;
   avatarUrl?: string;
+  dataAiHint?: string;
   avatarFallback: string;
   isLocal?: boolean;
   isMuted?: boolean;
@@ -44,17 +45,20 @@ const mockTranscript = [
 
 
 export function VideoCallInterface() {
-  const [participants, setParticipants] = useState<Participant[]>(mockParticipants);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const localVideoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const {
+    localStream,
+    setLocalStream,
+    isLocalMicMuted,
+    isLocalVideoOff,
+    toggleLocalMic,
+    toggleLocalVideo,
+    reset,
+  } = useWebRTCStore();
 
-  const [isChatPanelOpen, setIsChatPanelOpen] = useState(true);
-  const [currentDate] = useState(new Date());
-
-  const [isLocalMicMuted, setIsLocalMicMuted] = useState(false);
-  const [isLocalVideoOff, setIsLocalVideoOff] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
+  const [isChatPanelOpen, setIsChatPanelOpen] = React.useState(true);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -62,9 +66,6 @@ export function VideoCallInterface() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         setHasCameraPermission(true);
         setLocalStream(stream);
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
       } catch (error) {
         console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
@@ -77,44 +78,36 @@ export function VideoCallInterface() {
     };
 
     getCameraPermission();
-    
+
     return () => {
-      localStream?.getTracks().forEach(track => track.stop());
+      reset(); // Clean up on component unmount
     };
-  }, []);
-
-
-  const toggleLocalMute = () => {
-    if (localStream) {
-      localStream.getAudioTracks().forEach(track => {
-        track.enabled = !track.enabled;
-      });
-      setIsLocalMicMuted(prev => !prev);
-      setParticipants(prev => prev.map(p => p.isLocal ? {...p, isMuted: !p.isMuted} : p));
+  }, [setLocalStream, toast, reset]);
+  
+  useEffect(() => {
+    if (localStream && localVideoRef.current) {
+      localVideoRef.current.srcObject = localStream;
     }
-  };
-
-  const toggleLocalVideo = () => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach(track => {
-        track.enabled = !track.enabled;
-      });
-      setIsLocalVideoOff(prev => !prev);
-       setParticipants(prev => prev.map(p => p.isLocal ? {...p, isVideoOff: !p.isVideoOff} : p));
-    }
-  };
+  }, [localStream]);
 
   const handleLeaveCall = () => {
     alert("Leave Call clicked (functionality not implemented). In a real app, this would disconnect from the session.");
-    localStream?.getTracks().forEach(track => track.stop());
+    reset();
   };
+
+  // Replace with real participants from store later
+  const participants = mockParticipants.map(p => {
+    if (p.isLocal) {
+        return { ...p, isMuted: isLocalMicMuted, isVideoOff: isLocalVideoOff };
+    }
+    return p;
+  });
 
   const mainParticipant = participants.find(p => p.isSpeaking) || participants.find(p => !p.isLocal) || participants[0];
   const otherParticipants = participants.filter(p => p.id !== mainParticipant.id);
 
   const ParticipantVideo = ({ participant, isMain }: { participant: Participant, isMain: boolean }) => {
     const isLocalAndNoPermission = participant.isLocal && hasCameraPermission === false;
-    // Show video if it's the local participant with permission and video is on, or if it's a remote participant with video on.
     const showVideo = (participant.isLocal && localStream && !isLocalVideoOff && hasCameraPermission) || (!participant.isLocal && !participant.isVideoOff);
 
     return (
@@ -160,7 +153,7 @@ export function VideoCallInterface() {
           <div>
             <h1 className="text-md font-semibold">Counseling Session</h1>
             <p className="text-xs text-slate-400">
-              {currentDate.toLocaleDateString('en-US', { month: 'long', day: '2-digit' })} • In Progress
+              {new Date().toLocaleDateString('en-US', { month: 'long', day: '2-digit' })} • In Progress
             </p>
           </div>
         </div>
@@ -244,7 +237,7 @@ export function VideoCallInterface() {
                     <Button 
                         variant="ghost" 
                         className={cn(controlButtonClass, isLocalMicMuted && "bg-destructive hover:bg-destructive/90 text-white")}
-                        onClick={toggleLocalMute}
+                        onClick={toggleLocalMic}
                     >
                         {isLocalMicMuted ? <MicOff size={24}/> : <Mic size={24}/>} 
                     </Button>
