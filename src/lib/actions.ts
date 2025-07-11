@@ -253,29 +253,31 @@ export async function getUserConversations(userId: string): Promise<{ data?: { i
     if (!userId) return { error: "User not authenticated." };
 
     try {
-        const q = query(collection(db, 'conversations'), where('userId', '==', userId), orderBy('updatedAt', 'desc'));
+        // More robust query without orderBy to avoid needing a composite index
+        const q = query(collection(db, 'conversations'), where('userId', '==', userId));
         const querySnapshot = await getDocs(q);
-        const conversations = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        })) as { id: string; title: string; updatedAt: any }[];
+
+        const conversations = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                title: data.title || 'Untitled Chat',
+                updatedAt: data.updatedAt, // Keep as Timestamp for sorting
+            };
+        });
+
+        // Sort in code instead of in the query
+        conversations.sort((a, b) => {
+            const timeA = a.updatedAt?.toMillis() || 0;
+            const timeB = b.updatedAt?.toMillis() || 0;
+            return timeB - timeA;
+        });
+
         return { data: conversations };
     } catch (error: any) {
         console.error("Error fetching conversations:", error);
-        if (error.code === 'permission-denied' || error.code === 'failed-precondition') {
-             const errorMessage = `CRITICAL: The query to fetch conversations was blocked by a **MISSING FIRESTORE INDEX**.
-
-**ACTION REQUIRED:**
-1. Open your Firebase Studio **Server Logs**.
-2. Look for an error message that contains a long URL. This is a link to create the required index.
-3. Click that link. It will take you to your Firebase Console.
-4. Click the "Create Index" button in the Firebase Console.
-5. Wait a few minutes for the index to build, then refresh the app.
-
-The required index is a composite index on the 'conversations' collection for the 'userId' field (ascending) and 'updatedAt' field (descending).`;
-            return { error: errorMessage };
-        }
-        return { error: "Could not fetch conversations." };
+         // Return a generic error to the client, but log the specific one on the server
+        return { error: "An unexpected error occurred while fetching your past conversations." };
     }
 }
 
