@@ -28,6 +28,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Separator } from '../ui/separator';
+import { Label } from '../ui/label';
 
 const allTimeSlots = ['09:00 AM', '10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'];
 
@@ -133,7 +134,7 @@ export function RequestAppointmentForm() {
         {/* Section 1: Scheduling */}
         <div className="space-y-6">
            <h3 className="text-lg font-medium text-foreground flex items-center"><CalendarIcon className="mr-3 h-5 w-5 text-primary" /> When would you like to meet?</h3>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 border rounded-lg bg-secondary/30">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 border rounded-lg bg-card">
               <FormField
                 control={form.control}
                 name="preferredDate"
@@ -191,7 +192,7 @@ export function RequestAppointmentForm() {
                              <FormControl>
                                 <RadioGroupItem value={time} id={time} className="sr-only" />
                              </FormControl>
-                             <Label htmlFor={time} className="flex items-center justify-center gap-2 rounded-md border-2 border-muted bg-popover p-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                             <Label htmlFor={time} className="flex items-center justify-center gap-2 rounded-md border-2 border-muted bg-popover p-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground cursor-pointer peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                <Clock className="h-4 w-4" />
                                {time}
                              </Label>
@@ -214,7 +215,7 @@ export function RequestAppointmentForm() {
         {/* Section 2: Details */}
         <div className="space-y-6">
             <h3 className="text-lg font-medium text-foreground flex items-center"><Users className="mr-3 h-5 w-5 text-primary" /> Session Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 border rounded-lg bg-secondary/30">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 border rounded-lg bg-card">
                 <FormField
                   control={form.control}
                   name="counselorId"
@@ -236,7 +237,7 @@ export function RequestAppointmentForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                           <SelectItem value="">No preference</SelectItem>
+                           <SelectItem value="no-preference">No preference</SelectItem>
                           {counselors.map(c => (
                             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                           ))}
@@ -271,7 +272,7 @@ export function RequestAppointmentForm() {
                 />
             </div>
 
-            <div className="p-6 border rounded-lg bg-secondary/30">
+            <div className="p-6 border rounded-lg bg-card">
                 <FormField
                   control={form.control}
                   name="reason"

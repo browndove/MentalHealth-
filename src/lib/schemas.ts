@@ -27,7 +27,11 @@ export const AppointmentRequestSchema = z.object({
   preferredTime: z.string().min(1, { message: 'Please select a time slot.' }),
   reason: z.string().min(10, { message: 'Please provide a brief reason (min 10 characters).' }).max(500),
   communicationMode: z.enum(['video', 'chat', 'in-person'], { message: 'Please select a communication mode.'}),
+}).refine(data => data.counselorId !== '', {
+  path: ['counselorId'],
+  message: 'This should not be empty.', // This error should not appear if logic is correct
 });
+
 
 export type AppointmentRequestInput = z.infer<typeof AppointmentRequestSchema>;
 
