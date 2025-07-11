@@ -1,3 +1,4 @@
+
 // src/contexts/AuthContext.tsx
 'use client';
 
@@ -9,7 +10,8 @@ import {
   signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  type Auth
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import type { LoginInput, RegisterInput } from '@/lib/schemas';
@@ -36,10 +38,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const auth = getAuthInstance();
-  const db = getDbInstance();
 
   useEffect(() => {
+    // This effect runs only on the client-side
+    const auth = getAuthInstance();
+    const db = getDbInstance();
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         const userDocRef = doc(db, 'users', firebaseUser.uid);
@@ -55,12 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             createdAt: profileData.createdAt,
           });
         } else {
-          // This case might happen if Firestore doc creation failed or for older users
            setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             fullName: firebaseUser.displayName,
-            role: null, // Or a default role / attempt to determine role
+            role: null,
           });
           console.warn("User document not found in Firestore for UID:", firebaseUser.uid)
         }
@@ -71,9 +74,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [auth, db]);
+  }, []);
 
   const login = async (input: LoginInput): Promise<UserProfile | null> => {
+    const auth = getAuthInstance();
+    const db = getDbInstance();
     const userCredential = await signInWithEmailAndPassword(auth, input.email, input.password);
     if (userCredential.user) {
         const userDocRef = doc(db, 'users', userCredential.user.uid);
@@ -87,18 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: profileData.role || null,
             universityId: profileData.universityId,
           };
-          setUser(loggedInUser);
+          // State will be updated by the onAuthStateChanged listener, no need to setUser here
           return loggedInUser;
         } else {
-            // This is a critical state - user exists in Auth but not in Firestore.
-            // We should not let them proceed.
             throw new Error("Your user profile could not be found in our database. Please contact support.");
         }
     }
-    return null; // Should not happen if login is successful
+    return null;
   };
 
   const signup = async (input: RegisterInput): Promise<UserProfile | null> => {
+    const auth = getAuthInstance();
+    const db = getDbInstance();
     const userCredential = await createUserWithEmailAndPassword(auth, input.email, input.password);
     const firebaseUser = userCredential.user;
 
@@ -116,18 +121,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: serverTimestamp(),
       };
 
-      // Create the main user document in the 'users' collection
       await setDoc(doc(db, 'users', firebaseUser.uid), userProfileData);
-
-      setUser(userProfileData); // Update context state
+      
+      // State will be updated by the onAuthStateChanged listener
       return userProfileData;
     }
     return null;
   };
 
   const logout = async () => {
+    const auth = getAuthInstance();
     await signOut(auth);
-    setUser(null);
+    // onAuthStateChanged will set user to null
   };
 
   return (
