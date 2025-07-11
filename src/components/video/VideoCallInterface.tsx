@@ -194,6 +194,7 @@ export function VideoCallInterface() {
 
   const ParticipantVideo = ({ participant, isMain }: { participant: Participant, isMain: boolean }) => {
     const isLocalAndNoPermission = participant.isLocal && hasCameraPermission === false;
+    // Show video if it's the local participant with a stream and video is on, OR it's a remote participant with video on.
     const showVideo = (participant.isLocal && localStream && !isLocalVideoOff && hasCameraPermission) || (!participant.isLocal && !participant.isVideoOff);
 
     return (
@@ -203,6 +204,7 @@ export function VideoCallInterface() {
       )}>
         {showVideo ? (
           participant.isLocal ? (
+            // The local video element is now always rendered but the parent div is what gets displayed based on logic
             <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover transform -scale-x-100" />
           ) : (
             <Image src={participant.avatarUrl || `https://placehold.co/800x600.png`} data-ai-hint={participant.dataAiHint} alt={`${participant.name}'s video`} layout="fill" objectFit="cover" />
