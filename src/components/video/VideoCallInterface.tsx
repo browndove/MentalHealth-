@@ -4,17 +4,19 @@
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Video, Mic, PhoneOff, ScreenShare, MessageSquare, MoreHorizontal, ChevronDown, Copy,
-  VideoOff, MicOff, Users, Info, Hand, SmilePlus, AlertTriangle, Settings, Radio
+  Video, Mic, PhoneOff, ScreenShare, MessageSquare, Copy,
+  VideoOff, MicOff, Users, Info, Hand, Settings, Radio
 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { AppLogo } from '../layout/AppLogo';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
+
 
 interface Participant {
   id: string;
@@ -28,9 +30,9 @@ interface Participant {
 }
 
 const mockParticipants: Participant[] = [
-  { id: 'remote1', name: 'Akwasi Mensah (Student)', avatarFallback: 'AM', avatarUrl: 'https://placehold.co/800x600.png?text=Student', isMuted: true, isVideoOff: false, isSpeaking: true },
+  { id: 'remote1', name: 'Akwasi Mensah (Student)', avatarFallback: 'AM', avatarUrl: 'https://placehold.co/800x600.png', dataAiHint: "student webcam happy", isMuted: true, isVideoOff: false, isSpeaking: true },
   { id: 'local', name: 'You (Counselor)', avatarFallback: 'U', isLocal: true, isMuted: false, isVideoOff: false },
-  { id: 'remote2', name: 'Dr. Emily Carter (Observer)', avatarFallback: 'EC', avatarUrl: 'https://placehold.co/800x600.png?text=Observer', isMuted: false, isVideoOff: true },
+  { id: 'remote2', name: 'Dr. Emily Carter (Observer)', avatarFallback: 'EC', avatarUrl: 'https://placehold.co/800x600.png', dataAiHint: "professional woman webcam", isMuted: false, isVideoOff: true },
 ];
 
 const mockTranscript = [
@@ -112,18 +114,19 @@ export function VideoCallInterface() {
 
   const ParticipantVideo = ({ participant, isMain }: { participant: Participant, isMain: boolean }) => {
     const isLocalAndNoPermission = participant.isLocal && hasCameraPermission === false;
-    const showVideo = participant.isLocal ? localStream && !isLocalVideoOff && hasCameraPermission : !participant.isVideoOff;
+    // Show video if it's the local participant with permission and video is on, or if it's a remote participant with video on.
+    const showVideo = (participant.isLocal && localStream && !isLocalVideoOff && hasCameraPermission) || (!participant.isLocal && !participant.isVideoOff);
 
     return (
       <div className={cn(
         "relative bg-slate-800 rounded-lg overflow-hidden shadow-lg flex items-center justify-center group w-full h-full",
         participant.isSpeaking && !participant.isLocal && "ring-4 ring-primary ring-offset-2 ring-offset-slate-900"
       )}>
-        {showVideo && !isLocalAndNoPermission ? (
-          participant.isLocal && localStream ? (
-            <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+        {showVideo ? (
+          participant.isLocal ? (
+            <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover transform -scale-x-100" />
           ) : (
-            <Image src={participant.avatarUrl || `https://placehold.co/800x600.png`} data-ai-hint="person webcam image" alt={`${participant.name}'s video`} layout="fill" objectFit="cover" />
+            <Image src={participant.avatarUrl || `https://placehold.co/800x600.png`} data-ai-hint={participant.dataAiHint} alt={`${participant.name}'s video`} layout="fill" objectFit="cover" />
           )
         ) : (
           <div className="flex flex-col items-center text-slate-400">
@@ -131,7 +134,8 @@ export function VideoCallInterface() {
               <AvatarImage src={participant.avatarUrl} alt={participant.name} />
               <AvatarFallback>{participant.avatarFallback}</AvatarFallback>
             </Avatar>
-            {isLocalAndNoPermission ? <AlertTriangle className="w-6 h-6 text-destructive mt-1" /> : <VideoOff className="w-6 h-6 mt-1" />}
+            {isLocalAndNoPermission && <AlertTriangle className="w-6 h-6 text-destructive mt-1" />}
+            {participant.isVideoOff && <VideoOff className="w-6 h-6 mt-1" />}
           </div>
         )}
         <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1.5 backdrop-blur-sm">
@@ -142,8 +146,8 @@ export function VideoCallInterface() {
     );
   };
   
-  const controlButtonClass = "bg-slate-700/50 hover:bg-slate-600/80 text-slate-200 rounded-full p-3 h-auto aspect-square flex flex-col items-center justify-center text-xs gap-1 backdrop-blur-md";
-  const destructiveButtonClass = "bg-red-600 hover:bg-red-700 text-white rounded-full p-3 h-auto aspect-square flex flex-col items-center justify-center text-xs gap-1";
+  const controlButtonClass = "bg-slate-700/80 hover:bg-slate-600/90 text-slate-200 rounded-full w-14 h-14 flex items-center justify-center backdrop-blur-md";
+  const destructiveButtonClass = "bg-red-600 hover:bg-red-700 text-white rounded-full w-14 h-14 flex items-center justify-center";
 
 
   return (
@@ -156,7 +160,7 @@ export function VideoCallInterface() {
           <div>
             <h1 className="text-md font-semibold">Counseling Session</h1>
             <p className="text-xs text-slate-400">
-              {currentDate.toLocaleDateString('en-US', { month: 'long', day: '2-digit' })} • 1h 30m
+              {currentDate.toLocaleDateString('en-US', { month: 'long', day: '2-digit' })} • In Progress
             </p>
           </div>
         </div>
@@ -175,7 +179,18 @@ export function VideoCallInterface() {
       <main className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col p-4 gap-4">
             <div className="flex-1 relative">
-                <ParticipantVideo participant={mainParticipant} isMain={true} />
+              { hasCameraPermission === false &&
+                <div className="absolute inset-0 flex items-center justify-center z-20 p-8">
+                    <Alert variant="destructive" className="max-w-md">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Camera and Microphone Access Denied</AlertTitle>
+                        <AlertDescription>
+                            Accra TechMind needs access to your camera and microphone for video sessions. Please update your browser's site permissions to allow access.
+                        </AlertDescription>
+                    </Alert>
+                </div>
+              }
+              <ParticipantVideo participant={mainParticipant} isMain={true} />
             </div>
             <div className="h-32 flex gap-4">
                 {otherParticipants.map(p => (
@@ -219,17 +234,19 @@ export function VideoCallInterface() {
         )}
       </main>
 
-      <footer className="px-4 py-3 bg-slate-900/50 border-t border-slate-700 flex items-center justify-center shrink-0 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
+      <footer className="px-4 py-3 bg-slate-900/50 border-t border-slate-700 flex items-center justify-between shrink-0 backdrop-blur-sm">
+        <div className="w-1/3">
+          {/* Placeholder for left-aligned items */}
+        </div>
+        <div className="w-1/3 flex items-center justify-center gap-3">
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button 
                         variant="ghost" 
-                        className={cn(controlButtonClass, isLocalMicMuted && "bg-red-600 hover:bg-red-700 text-white")}
+                        className={cn(controlButtonClass, isLocalMicMuted && "bg-destructive hover:bg-destructive/90 text-white")}
                         onClick={toggleLocalMute}
-                        disabled={hasCameraPermission === false}
                     >
-                        {isLocalMicMuted ? <MicOff size={22}/> : <Mic size={22}/>} 
+                        {isLocalMicMuted ? <MicOff size={24}/> : <Mic size={24}/>} 
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>{isLocalMicMuted ? 'Unmute' : 'Mute'}</p></TooltipContent>
@@ -238,11 +255,10 @@ export function VideoCallInterface() {
                 <TooltipTrigger asChild>
                     <Button 
                         variant="ghost" 
-                        className={cn(controlButtonClass, isLocalVideoOff && "bg-red-600 hover:bg-red-700 text-white")}
+                        className={cn(controlButtonClass, isLocalVideoOff && "bg-destructive hover:bg-destructive/90 text-white")}
                         onClick={toggleLocalVideo}
-                        disabled={hasCameraPermission === false}
                     >
-                         {isLocalVideoOff ? <VideoOff size={22}/> : <Video size={22}/>} 
+                         {isLocalVideoOff ? <VideoOff size={24}/> : <Video size={24}/>} 
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>{isLocalVideoOff ? 'Start Camera': 'Stop Camera'}</p></TooltipContent>
@@ -250,31 +266,33 @@ export function VideoCallInterface() {
              <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" className={controlButtonClass} disabled>
-                        <ScreenShare size={22}/>
+                        <ScreenShare size={24}/>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>Share Screen</p></TooltipContent>
+                <TooltipContent><p>Share Screen (Coming Soon)</p></TooltipContent>
             </Tooltip>
             <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" className={destructiveButtonClass} onClick={handleLeaveCall}>
+                        <PhoneOff size={24}/>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Leave Call</p></TooltipContent>
+            </Tooltip>
+        </div>
+        <div className="w-1/3 flex items-center justify-end gap-3">
+             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" className={controlButtonClass} disabled>
-                        <Radio size={22}/>
+                        <Hand size={24}/>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>Start Recording</p></TooltipContent>
+                <TooltipContent><p>Raise Hand (Coming Soon)</p></TooltipContent>
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" className={controlButtonClass} disabled>
-                        <Hand size={22}/>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Raise Hand</p></TooltipContent>
-            </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" className={controlButtonClass} onClick={() => setIsChatPanelOpen(prev => !prev)}>
-                        <MessageSquare size={22}/>
+                    <Button variant="ghost" className={cn(controlButtonClass, isChatPanelOpen && 'bg-primary/30 text-primary-foreground')} onClick={() => setIsChatPanelOpen(prev => !prev)}>
+                        <MessageSquare size={24}/>
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent><p>{isChatPanelOpen ? 'Hide' : 'Show'} Transcript</p></TooltipContent>
@@ -282,21 +300,10 @@ export function VideoCallInterface() {
              <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" className={controlButtonClass} disabled>
-                        <Settings size={22}/>
+                        <Settings size={24}/>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>Settings</p></TooltipContent>
-            </Tooltip>
-
-            <div className="w-px h-8 bg-slate-700 mx-2"></div>
-
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" className={destructiveButtonClass} onClick={handleLeaveCall}>
-                        <PhoneOff size={22}/>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Leave Call</p></TooltipContent>
+                <TooltipContent><p>Settings (Coming Soon)</p></TooltipContent>
             </Tooltip>
         </div>
       </footer>
