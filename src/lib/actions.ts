@@ -85,28 +85,37 @@ export async function requestAppointment(
     }
     
     const db = getDbInstance();
-    let counselorName: string | null = null;
-    if(validatedInput.counselorId) {
+    let counselorData: any = null;
+
+    if(validatedInput.counselorId && validatedInput.counselorId !== 'no-preference') {
         const counselorDoc = await getDoc(doc(db, 'users', validatedInput.counselorId));
         if(counselorDoc.exists()) {
-            counselorName = counselorDoc.data().fullName;
+            const data = counselorDoc.data();
+            counselorData = {
+              name: data.fullName || 'Unnamed Counselor',
+              avatarUrl: data.avatarUrl || null,
+              avatarFallback: data.fullName?.split(" ").map((n:string) => n[0]).join("").toUpperCase() || 'C',
+              specialties: data.specializations || [], // Assuming counselor profile has specializations
+            };
         }
     }
 
-    // Convert JavaScript Date to Firestore Timestamp
     const firestoreDate = validatedInput.preferredDate ? Timestamp.fromDate(validatedInput.preferredDate) : null;
 
     await addDoc(collection(db, 'appointments'), {
       studentId: userId,
       studentName: studentName,
-      counselorId: validatedInput.counselorId || null,
-      counselorName: counselorName,
+      counselorId: validatedInput.counselorId === 'no-preference' ? null : validatedInput.counselorId,
+      counselor: counselorData, // Embed counselor details
       preferredDate: firestoreDate,
       preferredTime: validatedInput.preferredTime,
       communicationMode: validatedInput.communicationMode,
       reason: validatedInput.reason,
       status: 'pending',
       createdAt: serverTimestamp(),
+      sessionNumber: null, // To be set when confirmed
+      duration: 50, // Default duration
+      notesAvailable: false,
     });
 
     return { success: true };
@@ -150,17 +159,19 @@ export async function getStudentSessions(userId: string): Promise<{ data: any[] 
       // Firestore timestamps need to be converted to a serializable format
       const dateValue = data.preferredDate?.toDate ? data.preferredDate.toDate() : new Date();
       const createdAtValue = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+      const lastContactValue = data.lastContact?.toDate ? data.lastContact.toDate() : new Date();
 
       return {
         id: doc.id,
         ...data,
         date: dateValue.toISOString(),
+        lastContact: lastContactValue.toISOString(),
         createdAt: createdAtValue.getTime(), // Get epoch time for sorting
         time: data.preferredTime,
-        counselor: data.counselorName || 'Not Assigned',
-        type: data.communicationMode.charAt(0).toUpperCase() + data.communicationMode.slice(1) + ' Session',
-        notesAvailable: data.status === 'completed', // Example logic
-        summary: data.summary || null, // Assuming summary might be added later
+        // The counselor object is now read directly from the appointment doc
+        counselor: data.counselor || { name: 'Not Assigned', avatarFallback: 'N/A', specialties: [] },
+        type: data.communicationMode.charAt(0).toUpperCase() + data.communicationMode.slice(1),
+        notesAvailable: data.status === 'completed',
         status: data.status.charAt(0).toUpperCase() + data.status.slice(1),
       };
     });

@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -14,7 +15,6 @@ import {
   MessageCircle, 
   FileText, 
   Video,
-  ArrowUpRight,
   Plus,
   TrendingUp,
   CheckCircle2,
@@ -25,7 +25,7 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { getStudentSessions } from "@/lib/actions";
-import { format } from "date-fns";
+import { format, formatDistanceToNowStrict } from "date-fns";
 import Image from "next/image";
 
 // Define a type for the session data we expect from the backend
@@ -55,6 +55,7 @@ const mockSessions: Session[] = [
         time: '02:00 PM',
         counselor: { 
           name: 'Dr. Emily Carter', 
+          avatarUrl: 'https://placehold.co/40x40.png',
           avatarFallback: 'EC', 
           specialties: ['Anxiety', 'CBT'] 
         },
@@ -71,6 +72,7 @@ const mockSessions: Session[] = [
         time: '10:00 AM',
         counselor: { 
           name: 'Dr. Emily Carter', 
+          avatarUrl: 'https://placehold.co/40x40.png',
           avatarFallback: 'EC', 
           specialties: ['Anxiety', 'CBT'] 
         },
@@ -87,6 +89,7 @@ const mockSessions: Session[] = [
         time: '11:00 AM',
         counselor: { 
           name: 'Dr. David Chen', 
+          avatarUrl: 'https://placehold.co/40x40.png',
           avatarFallback: 'DC', 
           specialties: ['Stress Management', 'Academic Pressure'] 
         },
@@ -102,7 +105,8 @@ const mockSessions: Session[] = [
         date: '2024-07-28T15:00:00.000Z', 
         time: '03:00 PM',
         counselor: { 
-          name: 'Dr. David Chen', 
+          name: 'Dr. David Chen',
+          avatarUrl: 'https://placehold.co/40x40.png', 
           avatarFallback: 'DC', 
           specialties: ['Stress Management'] 
         },
@@ -134,29 +138,39 @@ export default function StudentSessionsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchSessions = async () => {
-        if (user) {
-            // Using mock data for now, but here's how you'd fetch real data
-            // const result = await getStudentSessions(user.uid);
-            // if ('error' in result) {
-            //     setError(result.error);
-            // } else {
-            //     setSessions(result.data as Session[]);
-            // }
-            setTimeout(() => {
-                setSessions(mockSessions);
-                setLoading(false);
-            }, 1500);
+  const fetchSessions = useCallback(async () => {
+    if (user) {
+        setLoading(true);
+        setError(null);
+        // Using mock data for now, but here's how you'd fetch real data
+        const result = await getStudentSessions(user.uid);
+        if ('error' in result) {
+            setError(result.error);
         } else {
-            setLoading(false); // If no user, stop loading.
+            setSessions(result.data as Session[]);
         }
-    };
-    
-    fetchSessions();
+        setLoading(false);
+    } else {
+        setLoading(false); // If no user, stop loading.
+    }
   }, [user]);
+  
+  useEffect(() => {
+    // To demonstrate with mock data for now
+    setTimeout(() => {
+        setSessions(mockSessions);
+        setLoading(false);
+    }, 1500);
+    // When you're ready to use live data, replace the above with this:
+    // fetchSessions();
+  }, [fetchSessions]);
 
   const completedSessions = sessions.filter(s => s.status === 'Completed').length;
+  const totalDurationMinutes = sessions
+    .filter(s => s.status === 'Completed')
+    .reduce((acc, s) => acc + (s.duration || 0), 0);
+  const totalHours = (totalDurationMinutes / 60).toFixed(1);
+
   const nextSession = sessions.find(s => s.status === 'Upcoming');
 
   if (loading) {
@@ -228,7 +242,7 @@ export default function StudentSessionsDashboard() {
             <Clock className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(completedSessions * 50 / 60).toFixed(1)}</div>
+            <div className="text-2xl font-bold">{totalHours}</div>
             <p className="text-xs text-muted-foreground">Investing in your well-being</p>
           </CardContent>
         </Card>
@@ -239,10 +253,10 @@ export default function StudentSessionsDashboard() {
           </CardHeader>
           <CardContent>
             {nextSession ? (
-                <React.Fragment>
+                <>
                  <div className="text-lg font-bold">{format(new Date(nextSession.date), "EEE, MMM dd")}</div>
                  <p className="text-xs text-muted-foreground">{nextSession.time} • {nextSession.type}</p>
-                </React.Fragment>
+                </>
             ) : (
                 <div className="text-lg font-bold">None Scheduled</div>
             )}
@@ -320,7 +334,7 @@ export default function StudentSessionsDashboard() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-muted-foreground mt-4 pt-4 border-t">
                       <p><strong>Duration:</strong> {session.duration} min</p>
                       <p><strong>Session #:</strong> {session.sessionNumber}</p>
-                      <p><strong>Last Contact:</strong> {format(new Date(session.lastContact), "MMM d")}</p>
+                      <p><strong>Last Contact:</strong> {formatDistanceToNowStrict(new Date(session.lastContact))} ago</p>
                     </div>
                   </div>
 
@@ -351,7 +365,7 @@ export default function StudentSessionsDashboard() {
         ) : (
           <Card>
             <CardContent className="pt-6 text-center">
-              <Image src="https://placehold.co/300x200.png" alt="No sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" />
+              <Image src="https://placehold.co/300x200.png" alt="No sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty calendar illustration" />
               <p className="text-muted-foreground">You haven't had any sessions yet. Book one to get started!</p>
             </CardContent>
           </Card>
