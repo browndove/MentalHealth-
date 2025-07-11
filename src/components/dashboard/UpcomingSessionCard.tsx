@@ -36,7 +36,7 @@ export function UpcomingSessionCard({ session }: UpcomingSessionCardProps) {
                 </div>
             </div>
             <Button variant="default" size="sm" asChild>
-                 <Link href={`/session/${session.id}/${session.type === 'video' ? 'video' : 'chat'}`}>Join</Link>
+                 <Link href={`/session/${session.id}/video`}>Join</Link>
             </Button>
          </div>
       </CardHeader>
