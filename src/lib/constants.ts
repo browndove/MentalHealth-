@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 
 export type NavItem = {
@@ -15,7 +16,7 @@ export const studentNavItems: NavItem[] = [
   { title: 'My Sessions', href: '/student/sessions', iconName: 'ClipboardList' },
   { title: 'AI Assistant', href: '/student/ai-assistant', iconName: 'Bot' },
   { title: 'Resources', href: '/student/resources', iconName: 'BookOpen' },
-  { title: 'Video Call', href: '/session/placeholder-id/video', iconName: 'Video', disabled: true },
+  { title: 'Video Call', href: '/session/placeholder-id/video', iconName: 'Video' },
   { title: 'Profile', href: '/student/profile', iconName: 'UserCircle' },
 ];
 
@@ -24,7 +25,7 @@ export const counselorNavItems: NavItem[] = [
   { title: 'Appointments', href: '/counselor/appointments', iconName: 'CalendarPlus' },
   { title: 'My Students', href: '/counselor/students', iconName: 'Users' },
   { title: 'Session Notes', href: '/counselor/notes', iconName: 'MessageSquare' },
-  { title: 'Video Call', href: '/session/placeholder-id/video', iconName: 'Video', disabled: true },
+  { title: 'Video Call', href: '/session/placeholder-id/video', iconName: 'Video' },
   { title: 'Profile', href: '/counselor/profile', iconName: 'UserCircle' },
 ];
 
