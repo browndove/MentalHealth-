@@ -109,7 +109,7 @@ export default function StudentSessionsDashboard() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="animate-pulse flex justify-between items-center">
+        <div className="flex justify-between items-center animate-pulse">
             <div>
                 <div className="h-8 bg-muted rounded w-64 mb-2"></div>
                 <div className="h-4 bg-muted rounded w-96"></div>
@@ -118,12 +118,12 @@ export default function StudentSessionsDashboard() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-36 bg-muted rounded-lg animate-pulse"></div>
+                <div key={`stat-${i}`} className="h-36 bg-muted rounded-lg animate-pulse"></div>
             ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[...Array(3)].map((_, i) => (
-               <div key={i} className="h-24 bg-muted rounded-lg animate-pulse"></div>
+               <div key={`action-${i}`} className="h-24 bg-muted rounded-lg animate-pulse"></div>
             ))}
         </div>
         <div className="h-32 bg-muted rounded-lg animate-pulse"></div>
