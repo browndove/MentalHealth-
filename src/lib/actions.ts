@@ -397,7 +397,8 @@ export async function getUserConversations(userId: string): Promise<{ data?: { i
 
     try {
         const db = getDbInstance();
-        const q = query(collection(db, 'conversations'), where('userId', '==', userId), orderBy('updatedAt', 'desc'));
+        // The query is simplified to only filter by userId, avoiding the need for a composite index.
+        const q = query(collection(db, 'conversations'), where('userId', '==', userId));
         const querySnapshot = await getDocs(q);
 
         const conversations = querySnapshot.docs.map(doc => {
@@ -405,14 +406,23 @@ export async function getUserConversations(userId: string): Promise<{ data?: { i
             return {
                 id: doc.id,
                 title: data.title || 'Untitled Chat',
+                // Keep the timestamp object for sorting
                 updatedAt: data.updatedAt,
             };
+        });
+
+        // Sort the conversations in code instead of in the query
+        conversations.sort((a, b) => {
+            const dateA = a.updatedAt?.toDate ? a.updatedAt.toDate() : new Date(0);
+            const dateB = b.updatedAt?.toDate ? b.updatedAt.toDate() : new Date(0);
+            return dateB.getTime() - dateA.getTime();
         });
 
         return { data: conversations };
     } catch (error: any) {
         console.error("Error fetching conversations:", error);
          if (error.code === 'failed-precondition') {
+            // This error message is now less likely to be triggered, but is kept for safety.
             return { error: "Query failed due to missing Firestore index. Check server logs for a link to create it." };
          }
         return { error: "An unexpected error occurred while fetching your past conversations." };
@@ -471,3 +481,6 @@ export async function handleSummarizeCallTranscript(
 
 
     
+
+
+      
