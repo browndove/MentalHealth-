@@ -249,26 +249,32 @@ export default function StudentSessionsDashboard() {
         {sessions.length > 0 ? (
           sessions.map(session => {
             const StatusIconComponent = StatusIcon[session.status];
+            // Fallback for counselor data
+            const counselorName = session.counselor?.name || 'Pending Counselor';
+            const counselorFallback = session.counselor?.avatarFallback || 'P';
+            const counselorAvatar = session.counselor?.avatarUrl;
+            const counselorSpecialties = session.counselor?.specialties || [];
+
             return (
               <Card key={session.id} className="shadow-sm hover:shadow-xl transition-shadow duration-300">
                 <div className="flex flex-col md:flex-row">
                   <div className="p-5 md:w-2/3 md:border-r">
                     <div className="flex items-start gap-4">
                       <Avatar className="w-12 h-12">
-                        <AvatarImage src={session.counselor.avatarUrl} />
-                        <AvatarFallback className="text-lg bg-gradient-to-br from-purple-400 to-blue-500 text-white">{session.counselor.avatarFallback}</AvatarFallback>
+                        <AvatarImage src={counselorAvatar} />
+                        <AvatarFallback className="text-lg bg-gradient-to-br from-purple-400 to-blue-500 text-white">{counselorFallback}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle className="text-xl">Session with {session.counselor.name}</CardTitle>
+                        <CardTitle className="text-xl">Session with {counselorName}</CardTitle>
                         <p className="text-muted-foreground text-sm">{format(new Date(session.date), "EEEE, MMMM d, yyyy")} at {session.time}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {session.counselor.specialties?.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                          {counselorSpecialties.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
                         </div>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-muted-foreground mt-4 pt-4 border-t">
-                      <p><strong>Duration:</strong> {session.duration} min</p>
-                      <p><strong>Session #:</strong> {session.sessionNumber}</p>
+                      <p><strong>Duration:</strong> {session.duration || 50} min</p>
+                      <p><strong>Session #:</strong> {session.sessionNumber || '-'}</p>
                       <p><strong>Last Contact:</strong> {formatDistanceToNowStrict(new Date(session.lastContact))} ago</p>
                     </div>
                   </div>
