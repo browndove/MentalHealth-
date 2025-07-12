@@ -93,30 +93,46 @@ export async function requestAppointment(
             const data = counselorDoc.data();
             counselorData = {
               name: data.fullName || 'Unnamed Counselor',
-              avatarUrl: data.avatarUrl || null,
+              avatarUrl: data.avatarUrl || '', // Ensure it's a string, not undefined
               avatarFallback: data.fullName?.split(" ").map((n:string) => n[0]).join("").toUpperCase() || 'C',
-              specialties: data.specializations || [], // Assuming counselor profile has specializations
+              specialties: data.specializations || [],
             };
         }
+    } else {
+        // Handle 'no preference' case
+        counselorData = {
+            name: 'Pending Assignment',
+            avatarUrl: '',
+            avatarFallback: 'P',
+            specialties: [],
+        };
     }
-
-    const firestoreDate = validatedInput.preferredDate ? Timestamp.fromDate(validatedInput.preferredDate) : null;
-
-    await addDoc(collection(db, 'appointments'), {
+    
+    const communicationTypeMap = {
+        'video': 'Video Call',
+        'chat': 'Chat',
+        'in-person': 'In-Person'
+    };
+    
+    const appointmentData = {
       studentId: userId,
       studentName: studentName,
       counselorId: validatedInput.counselorId === 'no-preference' ? null : validatedInput.counselorId,
-      counselor: counselorData, // Embed counselor details
-      preferredDate: firestoreDate,
-      preferredTime: validatedInput.preferredTime,
-      communicationMode: validatedInput.communicationMode,
+      counselor: counselorData, // Embed rich counselor details
+      date: validatedInput.preferredDate.toISOString(), // Store as ISO string
+      time: validatedInput.preferredTime,
       reason: validatedInput.reason,
-      status: 'pending',
+      status: 'Pending', // Set initial status
+      type: communicationTypeMap[validatedInput.communicationMode], // Set type
       createdAt: serverTimestamp(),
+      lastContact: new Date().toISOString(), // Default to creation time
       sessionNumber: null, // To be set when confirmed
       duration: 50, // Default duration
-      notesAvailable: false,
-    });
+      notesAvailable: false, // Default value
+    };
+
+
+    await addDoc(collection(db, 'appointments'), appointmentData);
 
     return { success: true };
   } catch (error) {
@@ -156,23 +172,14 @@ export async function getStudentSessions(userId: string): Promise<{ data: any[] 
     const querySnapshot = await getDocs(q);
     const sessions = querySnapshot.docs.map(doc => {
       const data = doc.data();
-      // Firestore timestamps need to be converted to a serializable format
-      const dateValue = data.preferredDate?.toDate ? data.preferredDate.toDate() : new Date();
-      const createdAtValue = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
-      const lastContactValue = data.lastContact?.toDate ? data.lastContact.toDate() : new Date();
+      // The data should now largely match the Session interface.
+      // We just need to handle the createdAt timestamp for sorting.
+      const createdAtValue = data.createdAt?.toDate ? data.createdAt.toDate().getTime() : new Date().getTime();
 
       return {
         id: doc.id,
         ...data,
-        date: dateValue.toISOString(),
-        lastContact: lastContactValue.toISOString(),
-        createdAt: createdAtValue.getTime(), // Get epoch time for sorting
-        time: data.preferredTime,
-        // The counselor object is now read directly from the appointment doc
-        counselor: data.counselor || { name: 'Not Assigned', avatarFallback: 'N/A', specialties: [] },
-        type: data.communicationMode.charAt(0).toUpperCase() + data.communicationMode.slice(1),
-        notesAvailable: data.status === 'completed',
-        status: data.status.charAt(0).toUpperCase() + data.status.slice(1),
+        createdAt: createdAtValue, // Keep for sorting
       };
     });
     

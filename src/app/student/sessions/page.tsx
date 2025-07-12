@@ -84,11 +84,11 @@ export default function StudentSessionsDashboard() {
         } finally {
             setLoading(false);
         }
-    } else if (!user && !loading) {
+    } else {
         // If there's no user and we are not in the initial loading phase, stop.
         setLoading(false);
     }
-  }, [user, loading]);
+  }, [user]);
   
   useEffect(() => {
     // Only fetch if there is a user.
