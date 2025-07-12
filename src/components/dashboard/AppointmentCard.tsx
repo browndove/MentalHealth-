@@ -2,119 +2,163 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, User, CheckCircle, XCircle, AlertTriangle, MoreHorizontal, Video, MessageSquare, ListVideo } from 'lucide-react';
+import { 
+    Calendar, Clock, User, CheckCircle, XCircle, AlertTriangle, MoreHorizontal, 
+    Video, MessageSquare, ListVideo, PhoneCall, NotebookPen, UserPlus, Info, 
+    Repeat, AlarmClock, MessageCircleWarning
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
 import Link from 'next/link';
+import { format, formatDistanceToNow, parseISO } from 'date-fns';
 
 export interface Appointment {
   id: string;
+  studentId: string;
   studentName: string;
   studentAvatarUrl?: string;
   studentAiHint?: string;
-  date: string;
+  date: string; // ISO string like '2024-07-29'
   time: string;
   reasonPreview: string;
+  reasonForAppointment: string;
   status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
   communicationMode: 'video' | 'chat' | 'in-person';
+  sessionNumber: number | null;
+  notesAvailable: boolean;
+  duration: number; // in minutes
+  lastContact: string; // ISO String
 }
 
 interface AppointmentCardProps {
   appointment: Appointment;
-  onAccept?: (id: string) => void;
-  onCancel?: (id: string) => void;
+  onUpdateStatus?: (id: string, status: 'Confirmed' | 'Cancelled') => void;
 }
 
-export function AppointmentCard({ appointment, onAccept, onCancel }: AppointmentCardProps) {
+export function AppointmentCard({ appointment, onUpdateStatus }: AppointmentCardProps) {
   const initials = appointment.studentName?.split(" ").map(n => n[0]).join("") || 'S';
   const lowerCaseStatus = appointment.status?.toLowerCase() as 'pending' | 'confirmed' | 'cancelled' | 'completed' || 'pending';
   
   const statusStyles = {
-    pending: { border: "border-yellow-500", icon: AlertTriangle, text: "text-yellow-600 dark:text-yellow-400" },
-    confirmed: { border: "border-green-500", icon: CheckCircle, text: "text-green-600 dark:text-green-400" },
-    cancelled: { border: "border-red-500", icon: XCircle, text: "text-red-600 dark:text-red-400" },
-    completed: { border: "border-blue-500", icon: CheckCircle, text: "text-blue-600 dark:text-blue-400" },
+    pending: { border: "border-yellow-500", text: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-500/10" },
+    confirmed: { border: "border-green-500", text: "text-green-600 dark:text-green-400", bg: "bg-green-500/10" },
+    cancelled: { border: "border-red-500", text: "text-red-600 dark:text-red-400", bg: "bg-red-500/10" },
+    completed: { border: "border-blue-500", text: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
   };
 
   const currentStatusStyle = statusStyles[lowerCaseStatus];
-  const StatusIcon = currentStatusStyle.icon;
+  
+  const CommIcon = appointment.communicationMode === 'video' ? Video : appointment.communicationMode === 'chat' ? MessageSquare : PhoneCall;
+  const isInitialSession = appointment.sessionNumber === null || appointment.sessionNumber === 1;
 
-  const CommIcon = {
-    video: Video,
-    chat: MessageSquare,
-    'in-person': User
-  }[appointment.communicationMode || 'video'];
-
+  const lastContactDate = appointment.lastContact ? parseISO(appointment.lastContact) : null;
+  const daysSinceContact = lastContactDate ? formatDistanceToNow(lastContactDate, { addSuffix: true }) : 'N/A';
+  const needsFollowUp = lastContactDate ? (new Date().getTime() - lastContactDate.getTime()) > (14 * 24 * 60 * 60 * 1000) : false; // 14 days
 
   return (
     <Card className={cn(
-        'group hover:shadow-xl transition-shadow duration-300 border-l-4 flex flex-col',
+        'group hover:shadow-xl transition-shadow duration-300 border flex flex-col',
         currentStatusStyle.border
     )}>
       <CardHeader className="p-4 flex flex-row items-start justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border">
-              <AvatarImage src={appointment.studentAvatarUrl || `https://placehold.co/40x40.png`} alt={appointment.studentName} data-ai-hint={appointment.studentAiHint || "student photo"} />
+          <div className="flex items-center gap-3 overflow-hidden">
+            <Avatar className="h-12 w-12 border">
+              <AvatarImage src={appointment.studentAvatarUrl || ''} alt={appointment.studentName} data-ai-hint={appointment.studentAiHint || "student photo"} />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <div>
-              <CardTitle className="text-md font-semibold">{appointment.studentName}</CardTitle>
+            <div className="overflow-hidden">
+              <CardTitle className="text-md font-semibold truncate">{appointment.studentName}</CardTitle>
               <CardDescription className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <CommIcon className="w-3 h-3" />
-                {appointment.communicationMode ? (appointment.communicationMode.charAt(0).toUpperCase() + appointment.communicationMode.slice(1)) : 'Session'} Request
+                {isInitialSession ? 
+                  <><UserPlus className="w-3 h-3 text-green-500"/> Initial Session</> : 
+                  <><Repeat className="w-3 h-3 text-blue-500"/> Session #{appointment.sessionNumber}</>
+                }
               </CardDescription>
             </div>
           </div>
-          <Badge variant="outline" className={cn("capitalize", currentStatusStyle.text, currentStatusStyle.border)}>
-              <StatusIcon className="w-3.5 h-3.5 mr-1.5" />
+          <Badge variant="outline" className={cn("capitalize text-xs font-medium", currentStatusStyle.text, currentStatusStyle.border)}>
               {appointment.status}
           </Badge>
       </CardHeader>
-      <CardContent className="p-4 pt-0 space-y-2 text-sm flex-grow">
-        <div className="flex items-center text-foreground font-medium"><Calendar className="w-4 h-4 mr-2 text-primary/80" /> {new Date(appointment.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-        <div className="flex items-center text-muted-foreground"><Clock className="w-4 h-4 mr-2 text-primary/80" /> {appointment.time}</div>
-        <p className="text-muted-foreground italic line-clamp-2 pt-1">Reason: &quot;{appointment.reasonPreview}&quot;</p>
+
+      <CardContent className="p-4 pt-0 space-y-3 text-sm flex-grow">
+        <div className="flex items-center text-foreground font-semibold">
+          <Calendar className="w-4 h-4 mr-2 text-primary/80" /> 
+          {format(parseISO(appointment.date), 'EEE, MMM dd, yyyy')} at {appointment.time}
+        </div>
+        
+        <div className="flex justify-between items-center text-muted-foreground">
+          <div className="flex items-center"><CommIcon className="w-4 h-4 mr-2 text-primary/80" /> {appointment.communicationMode.charAt(0).toUpperCase() + appointment.communicationMode.slice(1)}</div>
+          <div className="flex items-center"><Clock className="w-4 h-4 mr-2 text-primary/80" /> {appointment.duration} min</div>
+        </div>
+
+        <p className="text-muted-foreground italic line-clamp-2 pt-1 border-t border-dashed mt-2">
+          &quot;{appointment.reasonForAppointment}&quot;
+        </p>
+
+        {needsFollowUp && (
+          <div className="flex items-center text-xs text-red-600 dark:text-red-400 font-medium pt-1">
+            <MessageCircleWarning className="w-3.5 h-3.5 mr-1.5" />Follow-up needed ({daysSinceContact})
+          </div>
+        )}
       </CardContent>
-      {appointment.status === 'Pending' && onAccept && onCancel && (
-        <CardFooter className="p-4 pt-2 flex justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={() => onCancel(appointment.id)}>Decline</Button>
-          <Button size="sm" onClick={() => onAccept(appointment.id)}>
-            <CheckCircle className="mr-2 h-4 w-4" /> Accept
-          </Button>
-        </CardFooter>
-      )}
-       {appointment.status === 'Confirmed' && (
-         <CardFooter className="p-4 pt-2 flex justify-end gap-2">
-            <Button variant="outline" size="sm" asChild>
-                <Link href={`/counselor/sessions/${appointment.id}/notes`}><ListVideo className="mr-2 h-4 w-4"/>Prepare</Link>
+
+      <CardFooter className="p-3 pt-2 bg-muted/50 border-t flex justify-end gap-2">
+        {appointment.status === 'Pending' && onUpdateStatus && (
+          <>
+            <Button variant="ghost" size="sm" onClick={() => onUpdateStatus(appointment.id, 'Cancelled')}>Decline</Button>
+            <Button size="sm" onClick={() => onUpdateStatus(appointment.id, 'Confirmed')}>
+              <CheckCircle className="mr-2 h-4 w-4" /> Accept
             </Button>
-            <Button size="sm" asChild>
-                <Link href={`/session/${appointment.id}/video`}><Video className="mr-2 h-4 w-4"/>Join Call</Link>
-            </Button>
-         </CardFooter>
-       )}
-       {(appointment.status === 'Completed' || appointment.status === 'Cancelled') && (
-         <CardFooter className="p-4 pt-2 flex justify-end">
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:bg-muted px-2">
-                        <MoreHorizontal className="h-5 w-5"/> Options
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem disabled>View Session Details</DropdownMenuItem>
-                    {appointment.status === 'Completed' && <DropdownMenuItem disabled>View Session Notes</DropdownMenuItem>}
-                    {appointment.status === 'Cancelled' && <DropdownMenuItem disabled>Send Follow-up</DropdownMenuItem>}
-                </DropdownMenuContent>
-            </DropdownMenu>
-         </CardFooter>
-       )}
+          </>
+        )}
+        {appointment.status === 'Confirmed' && (
+           <>
+              <Button variant="outline" size="sm" asChild>
+                  <Link href={`/counselor/sessions/${appointment.id}/notes`}><NotebookPen className="mr-2 h-4 w-4"/>Prepare</Link>
+              </Button>
+              <Button size="sm" asChild>
+                  <Link href={`/session/${appointment.id}/video`}><Video className="mr-2 h-4 w-4"/>Join Call</Link>
+              </Button>
+           </>
+        )}
+        {(appointment.status === 'Completed' || appointment.status === 'Cancelled') && (
+           <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:bg-muted px-2">
+                      <MoreHorizontal className="h-5 w-5"/> Options
+                  </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/counselor/students/${appointment.studentId}/profile`}>
+                      <User className="mr-2 h-4 w-4" /> View Student Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {appointment.status === 'Completed' && (
+                    <DropdownMenuItem asChild>
+                      <Link href={`/counselor/sessions/${appointment.id}/notes`}>
+                        <NotebookPen className="mr-2 h-4 w-4" /> View/Edit Note
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {appointment.status === 'Cancelled' && (
+                    <DropdownMenuItem>
+                      <MessageSquare className="mr-2 h-4 w-4" /> Send Follow-up
+                    </DropdownMenuItem>
+                  )}
+              </DropdownMenuContent>
+           </DropdownMenu>
+        )}
+      </CardFooter>
     </Card>
   );
 }
