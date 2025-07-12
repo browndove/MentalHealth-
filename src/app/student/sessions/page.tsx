@@ -32,7 +32,7 @@ import Image from "next/image";
 interface Session {
   id: string;
   sessionNumber: number;
-  date: string; // ISO string
+  date: any; // Can be ISO string or Firestore Timestamp
   time: string;
   counselor: {
     name: string;
@@ -41,7 +41,7 @@ interface Session {
     specialties: string[];
   };
   duration: number; // in minutes
-  lastContact: string; // ISO string
+  lastContact: any; // Can be ISO string or Firestore Timestamp
   type: 'Video Call' | 'Chat' | 'In-Person';
   status: 'Upcoming' | 'Completed' | 'Pending' | 'Cancelled';
   notesAvailable: boolean;
@@ -107,6 +107,16 @@ export default function StudentSessionsDashboard() {
   const totalHours = (totalDurationMinutes / 60).toFixed(1);
 
   const nextSession = sessions.find(s => s.status === 'Upcoming');
+
+  const getFormattedDate = (dateInput: any) => {
+    if (!dateInput) return new Date();
+    // Check if it's a Firestore Timestamp
+    if (dateInput && typeof dateInput.toDate === 'function') {
+      return dateInput.toDate();
+    }
+    // Otherwise, assume it's an ISO string or can be parsed
+    return new Date(dateInput);
+  };
 
   if (loading) {
     return (
@@ -189,7 +199,7 @@ export default function StudentSessionsDashboard() {
           <CardContent>
             {nextSession ? (
                 <>
-                 <div className="text-lg font-bold">{format(new Date(nextSession.date), "EEE, MMM dd")}</div>
+                 <div className="text-lg font-bold">{format(getFormattedDate(nextSession.date), "EEE, MMM dd")}</div>
                  <p className="text-xs text-muted-foreground">{nextSession.time} • {nextSession.type}</p>
                 </>
             ) : (
@@ -254,6 +264,9 @@ export default function StudentSessionsDashboard() {
             const counselorFallback = session.counselor?.avatarFallback || 'P';
             const counselorAvatar = session.counselor?.avatarUrl;
             const counselorSpecialties = session.counselor?.specialties || [];
+            
+            const sessionDate = getFormattedDate(session.date);
+            const lastContactDate = getFormattedDate(session.lastContact);
 
             return (
               <Card key={session.id} className="shadow-sm hover:shadow-xl transition-shadow duration-300">
@@ -266,7 +279,7 @@ export default function StudentSessionsDashboard() {
                       </Avatar>
                       <div>
                         <CardTitle className="text-xl">Session with {counselorName}</CardTitle>
-                        <p className="text-muted-foreground text-sm">{format(new Date(session.date), "EEEE, MMMM d, yyyy")} at {session.time}</p>
+                        <p className="text-muted-foreground text-sm">{format(sessionDate, "EEEE, MMMM d, yyyy")} at {session.time}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {counselorSpecialties.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
                         </div>
@@ -275,7 +288,7 @@ export default function StudentSessionsDashboard() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-muted-foreground mt-4 pt-4 border-t">
                       <p><strong>Duration:</strong> {session.duration || 50} min</p>
                       <p><strong>Session #:</strong> {session.sessionNumber || '-'}</p>
-                      <p><strong>Last Contact:</strong> {formatDistanceToNowStrict(new Date(session.lastContact))} ago</p>
+                      <p><strong>Last Contact:</strong> {formatDistanceToNowStrict(lastContactDate)} ago</p>
                     </div>
                   </div>
 
