@@ -69,6 +69,7 @@ export default function CounselorDashboardPage() {
   const pendingAppointments = appointments.filter(a => a.status === 'Pending');
   const upcomingSessions = appointments.filter(a => a.status === 'Confirmed' && new Date(a.date) >= new Date());
   const nextSession = upcomingSessions.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+  const notesNeededCount = appointments.filter(a => a.status === 'Completed' && !a.notesAvailable).length;
 
   const StatCard = ({ title, value, icon: Icon, change, changeType, href, bgColorClass }: { 
     title: string, 
@@ -82,21 +83,18 @@ export default function CounselorDashboardPage() {
     <Card className={cn("shadow-sm hover:shadow-lg transition-shadow", bgColorClass)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
-          <div className="flex items-center text-muted-foreground hover:text-primary cursor-pointer">
-              <ArrowRight className="h-4 w-4" />
-          </div>
+          <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+          <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-4xl font-bold">{value}</div>
+        <div className="text-2xl font-bold">{value}</div>
         {change && (
           <p className={cn(
-            "text-xs text-muted-foreground mt-2 flex items-center gap-1",
+            "text-xs text-muted-foreground mt-1",
             changeType === 'increase' && 'text-emerald-500',
             changeType === 'decrease' && 'text-red-500'
           )}>
-            <Activity className="h-3 w-3"/>
             {change}
           </p>
         )}
@@ -112,19 +110,19 @@ export default function CounselorDashboardPage() {
             <Skeleton className="h-8 w-48 mb-2" />
             <Skeleton className="h-4 w-64" />
           </div>
-          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-48" />
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
+          <Skeleton className="h-28 rounded-xl" />
         </div>
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
-          <Skeleton className="lg:col-span-2 h-96" />
-          <div className="space-y-4">
-            <Skeleton className="h-48" />
-            <Skeleton className="h-44" />
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-3 auto-rows-fr">
+          <Skeleton className="lg:col-span-2 h-96 rounded-xl" />
+          <div className="space-y-6">
+            <Skeleton className="h-48 rounded-xl" />
+            <Skeleton className="h-42 rounded-xl" />
           </div>
         </div>
       </div>
@@ -141,57 +139,63 @@ export default function CounselorDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Plan, prioritize, and accomplish your tasks with ease.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome, {user?.fullName?.split(' ')[0]}</h1>
+          <p className="text-muted-foreground">Here&apos;s a snapshot of your counseling activities.</p>
         </div>
         <Button asChild>
           <Link href="/counselor/appointments">
-            <Plus className="mr-2 h-4 w-4" /> View All Appointments
+            <Calendar className="mr-2 h-4 w-4" /> Manage All Appointments
           </Link>
         </Button>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard 
           title="Total Students" 
           value={assignedStudents.length} 
           icon={Users} 
           change={`${Math.floor(Math.random() * 5 + 1)} new this month`} 
           changeType="increase" 
-          bgColorClass="bg-primary/10 border-primary/20"
         />
-        <StatCard title="Upcoming Sessions" value={upcomingSessions.length} icon={Calendar} change={`${Math.floor(Math.random() * 3 + 1)} this week`} />
-        <StatCard title="Pending Requests" value={pendingAppointments.length} icon={AlertTriangle} change="On Discuss" changeType="on-discuss" />
-        <StatCard title="Completed This Month" value={appointments.filter(a => a.status === 'Completed').length} icon={CalendarCheck} change="On track" />
+        <StatCard title="Upcoming Sessions" value={upcomingSessions.length} icon={CalendarCheck} change={`${Math.floor(Math.random() * 3 + 1)} this week`} />
+        <StatCard title="Pending Requests" value={pendingAppointments.length} icon={AlertTriangle} change="Review now" changeType="on-discuss" />
+        <StatCard title="Notes to Complete" value={notesNeededCount} icon={MessageCircle} change="On track" />
       </div>
 
       {/* Bento Grid */}
-      <div className="grid auto-rows-fr grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid auto-rows-[20rem] grid-cols-1 lg:grid-cols-3 gap-6">
+        
         {/* Session Analytics Chart */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 flex flex-col">
           <CardHeader>
             <CardTitle>Session Analytics</CardTitle>
+            <CardDescription>A look at your recent session activity.</CardDescription>
           </CardHeader>
-          <CardContent className="pl-2 h-[300px]">
+          <CardContent className="pl-2 flex-1">
             <AppointmentsChart data={appointments} />
           </CardContent>
         </Card>
         
         {/* Next Session Reminder */}
         {nextSession ? (
-          <Card>
+          <Card className="flex flex-col">
             <CardHeader>
-              <CardTitle>Next Session Reminder</CardTitle>
+              <CardTitle>Next Session</CardTitle>
+              <CardDescription>Your next confirmed appointment.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex flex-col justify-center items-center text-center">
+              <Avatar className="w-16 h-16 mb-2">
+                 <AvatarImage src={nextSession.studentAvatarUrl} alt={nextSession.studentName} />
+                 <AvatarFallback>{nextSession.studentName.split(" ").map(n=>n[0]).join("")}</AvatarFallback>
+              </Avatar>
               <p className="text-lg font-semibold">{nextSession.studentName}</p>
               <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                <Calendar className="h-4 w-4" /> {format(parseISO(nextSession.date), 'EEE, MMM dd, yyyy')}
+                <Calendar className="h-4 w-4" /> {format(parseISO(nextSession.date), 'EEE, MMM dd')}
               </div>
               <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                 <Clock className="h-4 w-4" /> {nextSession.time}
@@ -204,25 +208,33 @@ export default function CounselorDashboardPage() {
             </CardFooter>
           </Card>
         ) : (
-          <Card>
+          <Card className="flex flex-col items-center justify-center text-center">
             <CardHeader><CardTitle>No Upcoming Sessions</CardTitle></CardHeader>
-            <CardContent className="text-center text-muted-foreground py-10 flex flex-col items-center justify-center">
-              <CalendarCheck className="h-10 w-10 mx-auto mb-2"/>
-              <p>Your schedule is clear!</p>
+            <CardContent className="text-muted-foreground">
+              <CalendarCheck className="h-12 w-12 mx-auto mb-2 text-primary"/>
+              <p>Your schedule is clear. Enjoy the break!</p>
             </CardContent>
+            <CardFooter>
+                <Button asChild variant="secondary" className="w-full">
+                    <Link href="/counselor/appointments">View Full Schedule</Link>
+                </Button>
+            </CardFooter>
           </Card>
         )}
 
         {/* Assigned Students List */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-3 flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Assigned Students</CardTitle>
-            <Button variant="outline" size="sm" asChild><Link href="/counselor/students"><Plus className="mr-2 h-4 w-4"/>View All</Link></Button>
+            <div >
+                <CardTitle>Assigned Students</CardTitle>
+                <CardDescription>An overview of students you are currently assisting.</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" asChild><Link href="/counselor/students"><Users className="mr-2 h-4 w-4"/>View All</Link></Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1">
             <div className="space-y-4">
               {assignedStudents.slice(0, 4).map(student => (
-                <div key={student.id} className="flex items-center gap-4">
+                <div key={student.id} className="flex items-center gap-4 p-2 rounded-lg hover:bg-secondary transition-colors">
                   <Avatar>
                     <AvatarImage src={student.avatarUrl} alt={student.name} data-ai-hint={student.aiHint} />
                     <AvatarFallback>{student.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
@@ -232,7 +244,7 @@ export default function CounselorDashboardPage() {
                     <p className="text-sm text-muted-foreground">ID: {student.universityId}</p>
                   </div>
                   <Button variant="ghost" size="sm" asChild>
-                     <Link href={`/counselor/students/${student.id}/profile`}>View</Link>
+                     <Link href={`/counselor/students/${student.id}/profile`}>View Profile</Link>
                   </Button>
                 </div>
               ))}
@@ -241,27 +253,6 @@ export default function CounselorDashboardPage() {
               )}
             </div>
           </CardContent>
-        </Card>
-        
-        {/* Notes Completion Donut Chart */}
-        <Card className="flex flex-col items-center justify-center text-center">
-            <CardHeader><CardTitle>Notes Completion</CardTitle></CardHeader>
-            <CardContent>
-                <div className="relative h-40 w-40">
-                    <svg className="transform -rotate-90" width="100%" height="100%" viewBox="0 0 120 120">
-                        <circle cx="60" cy="60" r="54" fill="none" stroke="hsl(var(--muted))" strokeWidth="12" />
-                        <circle cx="60" cy="60" r="54" fill="none" stroke="hsl(var(--primary))" strokeWidth="12" strokeDasharray="339.292" strokeDashoffset={339.292 * (1 - 0.41)} strokeLinecap="round" />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-4xl font-bold">41%</span>
-                        <span className="text-sm text-muted-foreground">Completed</span>
-                    </div>
-                </div>
-            </CardContent>
-            <CardFooter className="flex flex-col items-center space-y-2">
-                 <p className="text-xs text-muted-foreground">12 of 29 session notes completed.</p>
-                 <Button variant="secondary" size="sm" asChild><Link href="/counselor/notes">Manage Notes</Link></Button>
-            </CardFooter>
         </Card>
       </div>
     </div>

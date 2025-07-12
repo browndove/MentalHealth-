@@ -5,99 +5,99 @@
 
 @layer base {
   :root {
-    /* Light Theme - Donezo Inspired */
-    --background: 220 20% 98%; /* Lighter Grey */
-    --foreground: 220 10% 20%; /* Dark Cool Grey */
+    /* Light Theme - Accra TechMind V2 */
+    --background: 220 20% 98%; /* Warm Gray */
+    --foreground: 215 25% 27%; /* Deep Forest Green (Text) */
 
     --card: 0 0% 100%; /* White */
-    --card-foreground: 220 10% 20%;
+    --card-foreground: 215 25% 27%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 10% 20%;
+    --popover-foreground: 215 25% 27%;
 
-    --primary: 150 70% 35%; /* Deep Green */
+    --primary: 158 52% 34%; /* Deep Forest Green */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 94%; /* Light Grey Blue */
-    --secondary-foreground: 220 10% 25%;
+    --secondary: 220 15% 96%; /* Warm Gray (Lighter) */
+    --secondary-foreground: 215 25% 27%;
 
     --muted: 220 15% 94%;
     --muted-foreground: 220 10% 45%;
 
-    --accent: 150 60% 45%; /* Bright Green */
+    --accent: 145 63% 49%; /* Bright Green */
     --accent-foreground: 0 0% 100%;
     
-    --destructive: 0 70% 60%;
+    --destructive: 0 84% 60%; /* Red */
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 15% 90%;
     --input: 220 15% 96%;
-    --ring: 150 70% 40%;
+    --ring: 158 52% 34%;
 
     --radius: 0.75rem;
     
     /* Chart colors */
-    --chart-1: 150 70% 35%; /* primary */
-    --chart-2: 150 60% 45%; /* accent */
-    --chart-3: 220 80% 60%; /* A muted blue */
-    --chart-4: 45 90% 55%; /* A warm yellow/orange */
+    --chart-1: 158 52% 34%; /* primary */
+    --chart-2: 145 63% 49%; /* accent */
+    --chart-3: 212 84% 62%; /* Blue status */
+    --chart-4: 45 85% 55%; /* Yellow status */
     --chart-5: 220 10% 50%; /* A neutral grey */
     
     /* Sidebar specific colors */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 10% 20%;
-    --sidebar-primary: 150 70% 95%; /* Light Green */
-    --sidebar-primary-foreground: 150 70% 30%; /* Dark Green */
+    --sidebar-foreground: 215 25% 27%;
+    --sidebar-primary: 158 52% 95%; /* Light Green */
+    --sidebar-primary-foreground: 158 52% 30%; /* Dark Green */
     --sidebar-accent: 220 15% 94%;
-    --sidebar-accent-foreground: 220 10% 20%;
+    --sidebar-accent-foreground: 215 25% 27%;
     --sidebar-border: 220 15% 90%;
-    --sidebar-ring: 150 70% 40%;
+    --sidebar-ring: 158 52% 34%;
   }
 
   .dark {
-    /* Dark Theme - Donezo Inspired */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    /* Dark Theme - Accra TechMind V2 */
+    --background: 220 13% 11%;
+    --foreground: 210 20% 98%;
 
-    --card: 222 47% 14%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 13% 15%;
+    --card-foreground: 210 20% 98%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 13% 11%;
+    --popover-foreground: 210 20% 98%;
 
-    --primary: 150 80% 55%; /* Brighter Green */
-    --primary-foreground: 222 47% 11%;
+    --primary: 158 41% 51%; /* Brighter Deep Forest Green */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 33% 20%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 13% 18%;
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 217 33% 20%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 220 13% 18%;
+    --muted-foreground: 215 15% 65%;
 
-    --accent: 150 70% 45%; /* Bright Green */
-    --accent-foreground: 210 40% 98%;
+    --accent: 145 56% 59%; /* Bright Green */
+    --accent-foreground: 220 13% 11%;
     
-    --destructive: 0 63% 50%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 217 33% 20%;
-    --input: 217 33% 17%;
-    --ring: 150 80% 65%;
+    --border: 220 13% 20%;
+    --input: 220 13% 16%;
+    --ring: 158 41% 51%;
     
-    --chart-1: 150 80% 55%;
-    --chart-2: 150 70% 45%;
-    --chart-3: 220 80% 70%;
+    --chart-1: 158 41% 51%;
+    --chart-2: 145 56% 59%;
+    --chart-3: 212 84% 72%;
     --chart-4: 45 90% 65%;
-    --chart-5: 0 0% 70%;
+    --chart-5: 210 20% 70%;
 
-    --sidebar-background: 222 47% 12%; 
-    --sidebar-foreground: 210 40% 98%; 
-    --sidebar-primary: 150 80% 20%;
-    --sidebar-primary-foreground: 150 80% 75%;
+    --sidebar-background: 220 13% 12%; 
+    --sidebar-foreground: 210 20% 98%; 
+    --sidebar-primary: 158 80% 15%;
+    --sidebar-primary-foreground: 158 80% 75%;
     --sidebar-accent: 217 33% 18%; 
-    --sidebar-accent-foreground: 210 40% 98%; 
+    --sidebar-accent-foreground: 210 20% 98%; 
     --sidebar-border: 217 33% 20%; 
-    --sidebar-ring: 150 80% 65%;
+    --sidebar-ring: 158 41% 51%;
   }
 }
 
