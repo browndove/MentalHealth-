@@ -43,22 +43,24 @@ interface Session {
   duration: number; // in minutes
   lastContact: any; // Can be ISO string or Firestore Timestamp
   type: 'Video Call' | 'Chat' | 'In-Person';
-  status: 'Upcoming' | 'Completed' | 'Pending' | 'Cancelled';
+  status: 'Upcoming' | 'Completed' | 'Pending' | 'Cancelled' | 'Confirmed';
   notesAvailable: boolean;
 }
 
-const statusStyles = {
+const statusStyles: { [key: string]: string } = {
     Upcoming: "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700",
     Completed: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700",
     Pending: "bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700",
     Cancelled: "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700",
+    Confirmed: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700", // Same as completed for now
 };
 
-const StatusIcon = {
+const StatusIcon: { [key: string]: React.ElementType } = {
     Upcoming: Bell,
     Completed: CheckCircle2,
     Pending: Loader2,
     Cancelled: XCircle,
+    Confirmed: CheckCircle2,
 };
 
 export default function StudentSessionsDashboard() {
@@ -106,7 +108,7 @@ export default function StudentSessionsDashboard() {
     .reduce((acc, s) => acc + (s.duration || 0), 0);
   const totalHours = (totalDurationMinutes / 60).toFixed(1);
 
-  const nextSession = sessions.find(s => s.status === 'Upcoming');
+  const nextSession = sessions.find(s => s.status === 'Upcoming' || s.status === 'Confirmed');
 
   const getFormattedDate = (dateInput: any) => {
     if (!dateInput) return new Date();
@@ -116,6 +118,12 @@ export default function StudentSessionsDashboard() {
     }
     // Otherwise, assume it's an ISO string or can be parsed
     return new Date(dateInput);
+  };
+
+  const getNormalizedStatus = (status: string): keyof typeof statusStyles => {
+    if (!status) return 'Pending';
+    const capitalized = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    return statusStyles[capitalized] ? capitalized : 'Pending';
   };
 
   if (loading) {
@@ -258,15 +266,16 @@ export default function StudentSessionsDashboard() {
         <h2 className="text-2xl font-bold">Session History</h2>
         {sessions.length > 0 ? (
           sessions.map(session => {
-            const StatusIconComponent = StatusIcon[session.status];
-            // Fallback for counselor data
+            const normalizedStatus = getNormalizedStatus(session.status);
+            const StatusIconComponent = StatusIcon[normalizedStatus];
+
             const counselorName = session.counselor?.name || 'Pending Counselor';
             const counselorFallback = session.counselor?.avatarFallback || 'P';
             const counselorAvatar = session.counselor?.avatarUrl;
             const counselorSpecialties = session.counselor?.specialties || [];
             
             const sessionDate = getFormattedDate(session.date);
-            const lastContactDate = getFormattedDate(session.lastContact);
+            const lastContactDate = session.lastContact ? getFormattedDate(session.lastContact) : new Date();
 
             return (
               <Card key={session.id} className="shadow-sm hover:shadow-xl transition-shadow duration-300">
@@ -293,21 +302,21 @@ export default function StudentSessionsDashboard() {
                   </div>
 
                   <div className="p-5 md:w-1/3 flex flex-col justify-between items-start md:items-end">
-                    <div className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-full border ${statusStyles[session.status]}`}>
-                      <StatusIconComponent className={`h-4 w-4 ${session.status === 'Pending' ? 'animate-spin' : ''}`} />
-                      {session.status}
+                    <div className={`flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-full border ${statusStyles[normalizedStatus]}`}>
+                      <StatusIconComponent className={`h-4 w-4 ${normalizedStatus === 'Pending' ? 'animate-spin' : ''}`} />
+                      {normalizedStatus}
                     </div>
                     <div className="flex flex-row md:flex-col lg:flex-row gap-2 mt-4 w-full md:w-auto md:items-end">
-                      {session.status === 'Upcoming' && (
+                      {(normalizedStatus === 'Upcoming' || normalizedStatus === 'Confirmed') && (
                         <React.Fragment>
                           <Button asChild className="w-full lg:w-auto flex-1"><Link href={`/session/${session.id}/video`}><Video className="mr-2 h-4 w-4"/>Join Session</Link></Button>
                           <Button variant="outline" className="w-full lg:w-auto flex-1">Reschedule</Button>
                         </React.Fragment>
                       )}
-                      {session.status === 'Completed' && (
+                      {normalizedStatus === 'Completed' && (
                         <Button variant="outline" className="w-full lg:w-auto"><FileText className="mr-2 h-4 w-4"/>View Notes</Button>
                       )}
-                      {session.status === 'Cancelled' && (
+                      {normalizedStatus === 'Cancelled' && (
                         <Button variant="secondary" className="w-full lg:w-auto">Re-Book</Button>
                       )}
                     </div>
