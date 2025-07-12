@@ -46,7 +46,7 @@ export function AppointmentCard({ appointment, onUpdateStatus }: AppointmentCard
   const lowerCaseStatus = appointment.status?.toLowerCase() as 'pending' | 'confirmed' | 'cancelled' | 'completed' || 'pending';
   
   const statusStyles = {
-    pending: { border: "border-amber-500", text: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
+    pending: { border: "border-yellow-500", text: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-500/10" },
     confirmed: { border: "border-green-500", text: "text-green-600 dark:text-green-400", bg: "bg-green-500/10" },
     cancelled: { border: "border-red-500", text: "text-red-600 dark:text-red-400", bg: "bg-red-500/10" },
     completed: { border: "border-blue-500", text: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
@@ -64,7 +64,7 @@ export function AppointmentCard({ appointment, onUpdateStatus }: AppointmentCard
   return (
     <Card className={cn(
         'group hover:shadow-xl transition-shadow duration-300 border flex flex-col',
-        currentStatusStyle.border
+        currentStatusStyle.border, 'bg-card shadow-lg'
     )}>
       <CardHeader className="p-4 flex flex-row items-start justify-between">
           <div className="flex items-center gap-3 overflow-hidden">
@@ -76,8 +76,8 @@ export function AppointmentCard({ appointment, onUpdateStatus }: AppointmentCard
               <CardTitle className="text-md font-semibold truncate">{appointment.studentName}</CardTitle>
               <CardDescription className="text-xs text-muted-foreground flex items-center gap-1.5">
                 {isInitialSession ? 
-                  <><UserPlus className="w-3 h-3 text-green-500"/> Initial Session</> : 
-                  <><Repeat className="w-3 h-3 text-blue-500"/> Session #{appointment.sessionNumber}</>
+                  <><UserPlus className="w-3 h-3 text-accent"/> Initial Session</> : 
+                  <><Repeat className="w-3 h-3 text-primary"/> Session #{appointment.sessionNumber}</>
                 }
               </CardDescription>
             </div>
@@ -109,7 +109,7 @@ export function AppointmentCard({ appointment, onUpdateStatus }: AppointmentCard
               </div>
             )}
             {appointment.status === 'Completed' && !appointment.notesAvailable && (
-                 <div className="flex items-center text-xs text-amber-600 dark:text-amber-400 font-medium">
+                 <div className="flex items-center text-xs text-yellow-600 dark:text-yellow-400 font-medium">
                     <NotebookPen className="w-3.5 h-3.5 mr-1.5" /> Notes Pending
                  </div>
             )}
@@ -145,7 +145,7 @@ export function AppointmentCard({ appointment, onUpdateStatus }: AppointmentCard
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link href={`/counselor/students/${appointment.studentId}`}>
+                    <Link href={`/counselor/students/${appointment.studentId}/profile`}>
                       <User className="mr-2 h-4 w-4" /> View Student Profile
                     </Link>
                   </DropdownMenuItem>

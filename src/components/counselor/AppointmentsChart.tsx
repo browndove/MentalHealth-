@@ -32,8 +32,8 @@ export function AppointmentsChart({ data }: AppointmentsChartProps) {
 
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+      <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
         <XAxis
           dataKey="date"
           stroke="hsl(var(--muted-foreground))"
@@ -47,19 +47,21 @@ export function AppointmentsChart({ data }: AppointmentsChartProps) {
           tickLine={false}
           axisLine={false}
           allowDecimals={false}
+          width={30}
         />
         <Tooltip
             contentStyle={{
-                backgroundColor: 'hsl(var(--background))',
+                backgroundColor: 'hsl(var(--card))',
                 borderColor: 'hsl(var(--border))',
                 borderRadius: 'var(--radius)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             }}
             cursor={{ fill: 'hsl(var(--muted))' }}
         />
-        <Legend iconType="circle" />
-        <Bar dataKey="Pending" stackId="a" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="Confirmed" stackId="a" fill="hsl(var(--chart-1))" />
-        <Bar dataKey="Completed" stackId="a" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}/>
+        <Legend wrapperStyle={{ fontSize: '14px', paddingTop: '20px' }} iconType="circle" />
+        <Bar dataKey="Pending" stackId="a" fill="hsl(var(--chart-4))" radius={[8, 8, 0, 0]} barSize={30} />
+        <Bar dataKey="Confirmed" stackId="a" fill="hsl(var(--chart-1))" barSize={30} />
+        <Bar dataKey="Completed" stackId="a" fill="hsl(var(--chart-3))" radius={[8, 8, 0, 0]} barSize={30}/>
       </BarChart>
     </ResponsiveContainer>
   );

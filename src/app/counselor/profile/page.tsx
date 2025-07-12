@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserCircle, Edit3, BadgeCheck, Mail, Phone, Briefcase, Loader2, Award, Star } from 'lucide-react';
 import React from 'react';
-import { useAuth, type UserProfile } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CounselorProfilePage() {
   const { user, loading } = useAuth();
@@ -25,7 +26,21 @@ export default function CounselorProfilePage() {
   };
   
   if (loading) {
-    return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+    return (
+        <div className="space-y-8">
+            <div className="flex items-center justify-between">
+                <Skeleton className="h-10 w-64"/>
+                <Skeleton className="h-10 w-32"/>
+            </div>
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <Skeleton className="h-96 rounded-xl lg:col-span-2"/>
+                <div className="space-y-8">
+                    <Skeleton className="h-48 rounded-xl"/>
+                    <Skeleton className="h-48 rounded-xl"/>
+                </div>
+            </div>
+        </div>
+    );
   }
 
   return (
@@ -52,17 +67,17 @@ export default function CounselorProfilePage() {
                     <div className="text-center md:text-left">
                         <h2 className="text-2xl font-bold">{counselorProfile.fullName}</h2>
                         <p className="text-muted-foreground">{counselorProfile.qualifications}</p>
-                        <div className="mt-2 text-sm text-primary flex items-center justify-center md:justify-start">
-                            <BadgeCheck className="h-4 w-4 mr-1.5"/> Verified Counselor
+                        <div className="mt-2 text-sm text-primary font-semibold flex items-center justify-center md:justify-start">
+                            <BadgeCheck className="h-5 w-5 mr-1.5"/> Verified Counselor
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent className="p-8 space-y-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground flex items-center mb-2"><Briefcase className="w-5 h-5 mr-3 text-primary" /> Specializations</h3>
+                    <h3 className="text-lg font-semibold text-foreground flex items-center mb-3"><Briefcase className="w-5 h-5 mr-3 text-primary" /> Specializations</h3>
                     <div className="flex flex-wrap gap-2">
                       {counselorProfile.specializations.map(spec => (
-                        <Badge key={spec} variant="secondary">{spec}</Badge>
+                        <Badge key={spec} variant="secondary" className="text-sm py-1 px-3">{spec}</Badge>
                       ))}
                     </div>
                   </div>
@@ -72,7 +87,7 @@ export default function CounselorProfilePage() {
                     <p className="text-muted-foreground mt-1 leading-relaxed">{counselorProfile.bio}</p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t">
                       <div>
                           <h4 className="font-semibold flex items-center"><Mail className="w-4 h-4 mr-2 text-primary" /> Email Address</h4>
                           <p className="text-muted-foreground mt-1">{counselorProfile.email}</p>
@@ -86,7 +101,7 @@ export default function CounselorProfilePage() {
             </Card>
         </div>
         <div className="space-y-8">
-            <Card>
+            <Card className="shadow-lg">
                 <CardHeader>
                     <CardTitle>Contact Info</CardTitle>
                     <CardDescription>University contact details.</CardDescription>
@@ -102,14 +117,14 @@ export default function CounselorProfilePage() {
                     </div>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-lg">
                 <CardHeader>
                     <CardTitle>Qualifications</CardTitle>
                     <CardDescription>Professional credentials.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
-                   <p className="flex items-start gap-2 text-muted-foreground"><Award className="h-4 w-4 mt-1 text-primary shrink-0"/> {counselorProfile.qualifications}</p>
-                   <p className="flex items-start gap-2 text-muted-foreground"><Star className="h-4 w-4 mt-1 text-primary shrink-0"/> {counselorProfile.specializations.join(', ')}</p>
+                   <p className="flex items-start gap-3"><Award className="h-5 w-5 mt-0.5 text-primary shrink-0"/> {counselorProfile.qualifications}</p>
+                   <p className="flex items-start gap-3"><Star className="h-5 w-5 mt-0.5 text-primary shrink-0"/> {counselorProfile.specializations.join(', ')}</p>
                 </CardContent>
             </Card>
         </div>

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { 
   BarChart, Users, CalendarCheck, MessageCircle, Activity, AlertTriangle, 
-  Settings, Loader2, Plus, Calendar, Clock, ArrowRight
+  Settings, Loader2, Plus, Calendar, Clock, ArrowRight, BookOpen, NotebookPen
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -71,34 +71,18 @@ export default function CounselorDashboardPage() {
   const nextSession = upcomingSessions.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
   const notesNeededCount = appointments.filter(a => a.status === 'Completed' && !a.notesAvailable).length;
 
-  const StatCard = ({ title, value, icon: Icon, change, changeType, href, bgColorClass }: { 
+  const StatCard = ({ title, value, icon: Icon }: { 
     title: string, 
     value: string | number, 
-    icon: React.ElementType, 
-    change?: string, 
-    changeType?: 'increase' | 'decrease' | 'on-discuss',
-    href?: string,
-    bgColorClass?: string
+    icon: React.ElementType
   }) => (
-    <Card className={cn("shadow-sm hover:shadow-lg transition-shadow", bgColorClass)}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-          <Icon className="h-4 w-4 text-muted-foreground" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {change && (
-          <p className={cn(
-            "text-xs text-muted-foreground mt-1",
-            changeType === 'increase' && 'text-emerald-500',
-            changeType === 'decrease' && 'text-red-500'
-          )}>
-            {change}
-          </p>
-        )}
-      </CardContent>
+    <Card className="shadow-sm hover:shadow-lg transition-shadow">
+        <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <div className="text-4xl font-bold">{value}</div>
+        </CardContent>
     </Card>
   );
   
@@ -159,19 +143,17 @@ export default function CounselorDashboardPage() {
           title="Total Students" 
           value={assignedStudents.length} 
           icon={Users} 
-          change={`${Math.floor(Math.random() * 5 + 1)} new this month`} 
-          changeType="increase" 
         />
-        <StatCard title="Upcoming Sessions" value={upcomingSessions.length} icon={CalendarCheck} change={`${Math.floor(Math.random() * 3 + 1)} this week`} />
-        <StatCard title="Pending Requests" value={pendingAppointments.length} icon={AlertTriangle} change="Review now" changeType="on-discuss" />
-        <StatCard title="Notes to Complete" value={notesNeededCount} icon={MessageCircle} change="On track" />
+        <StatCard title="Upcoming Sessions" value={upcomingSessions.length} icon={CalendarCheck} />
+        <StatCard title="Pending Requests" value={pendingAppointments.length} icon={AlertTriangle} />
+        <StatCard title="Notes to Complete" value={notesNeededCount} icon={MessageCircle} />
       </div>
 
       {/* Bento Grid */}
-      <div className="grid auto-rows-[20rem] grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid auto-rows-[22rem] grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Session Analytics Chart */}
-        <Card className="lg:col-span-2 flex flex-col">
+        <Card className="lg:col-span-2 flex flex-col shadow-lg">
           <CardHeader>
             <CardTitle>Session Analytics</CardTitle>
             <CardDescription>A look at your recent session activity.</CardDescription>
@@ -183,35 +165,35 @@ export default function CounselorDashboardPage() {
         
         {/* Next Session Reminder */}
         {nextSession ? (
-          <Card className="flex flex-col">
+          <Card className="flex flex-col shadow-lg">
             <CardHeader>
               <CardTitle>Next Session</CardTitle>
               <CardDescription>Your next confirmed appointment.</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-center items-center text-center">
-              <Avatar className="w-16 h-16 mb-2">
+              <Avatar className="w-20 h-20 mb-4 border-4 border-primary/20">
                  <AvatarImage src={nextSession.studentAvatarUrl} alt={nextSession.studentName} />
-                 <AvatarFallback>{nextSession.studentName.split(" ").map(n=>n[0]).join("")}</AvatarFallback>
+                 <AvatarFallback className="text-3xl">{nextSession.studentName.split(" ").map(n=>n[0]).join("")}</AvatarFallback>
               </Avatar>
-              <p className="text-lg font-semibold">{nextSession.studentName}</p>
-              <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+              <p className="text-xl font-semibold">{nextSession.studentName}</p>
+              <div className="text-md text-muted-foreground flex items-center gap-2 mt-2">
                 <Calendar className="h-4 w-4" /> {format(parseISO(nextSession.date), 'EEE, MMM dd')}
               </div>
-              <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+              <div className="text-md text-muted-foreground flex items-center gap-2 mt-1">
                 <Clock className="h-4 w-4" /> {nextSession.time}
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" asChild>
+              <Button className="w-full" asChild size="lg">
                 <Link href={`/session/${nextSession.id}/video`}>Start Meeting</Link>
               </Button>
             </CardFooter>
           </Card>
         ) : (
-          <Card className="flex flex-col items-center justify-center text-center">
+          <Card className="flex flex-col items-center justify-center text-center shadow-lg">
             <CardHeader><CardTitle>No Upcoming Sessions</CardTitle></CardHeader>
             <CardContent className="text-muted-foreground">
-              <CalendarCheck className="h-12 w-12 mx-auto mb-2 text-primary"/>
+              <CalendarCheck className="h-16 w-16 mx-auto mb-4 text-primary"/>
               <p>Your schedule is clear. Enjoy the break!</p>
             </CardContent>
             <CardFooter>
@@ -223,28 +205,28 @@ export default function CounselorDashboardPage() {
         )}
 
         {/* Assigned Students List */}
-        <Card className="lg:col-span-3 flex flex-col">
+        <Card className="lg:col-span-3 flex flex-col shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between">
             <div >
                 <CardTitle>Assigned Students</CardTitle>
                 <CardDescription>An overview of students you are currently assisting.</CardDescription>
             </div>
-            <Button variant="outline" size="sm" asChild><Link href="/counselor/students"><Users className="mr-2 h-4 w-4"/>View All</Link></Button>
+            <Button variant="outline" size="sm" asChild><Link href="/counselor/students"><Users className="mr-2 h-4 w-4"/>View All Students</Link></Button>
           </CardHeader>
           <CardContent className="flex-1">
             <div className="space-y-4">
               {assignedStudents.slice(0, 4).map(student => (
-                <div key={student.id} className="flex items-center gap-4 p-2 rounded-lg hover:bg-secondary transition-colors">
-                  <Avatar>
+                <div key={student.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-secondary transition-colors">
+                  <Avatar className="h-12 w-12">
                     <AvatarImage src={student.avatarUrl} alt={student.name} data-ai-hint={student.aiHint} />
-                    <AvatarFallback>{student.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+                    <AvatarFallback className="text-lg">{student.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <p className="font-semibold">{student.name}</p>
+                    <p className="font-semibold text-lg">{student.name}</p>
                     <p className="text-sm text-muted-foreground">ID: {student.universityId}</p>
                   </div>
                   <Button variant="ghost" size="sm" asChild>
-                     <Link href={`/counselor/students/${student.id}/profile`}>View Profile</Link>
+                     <Link href={`/counselor/students/${student.id}/profile`}>View Profile <ArrowRight className="w-4 h-4 ml-2"/></Link>
                   </Button>
                 </div>
               ))}

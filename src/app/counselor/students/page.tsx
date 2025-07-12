@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Users, Search, UserPlus, Loader2, AlertTriangle } from "lucide-react";
@@ -11,6 +11,7 @@ import { getAssignedStudents } from "@/lib/actions";
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Student = {
   id: string;
@@ -55,21 +56,39 @@ export default function CounselorStudentsPage() {
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.universityId.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  const renderSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {[...Array(8)].map((_, i) => (
+            <Card key={i} className="shadow-lg">
+                <CardHeader className="flex flex-row items-center gap-4 p-5">
+                    <Skeleton className="h-14 w-14 rounded-full" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                    </div>
+                </CardHeader>
+                <CardContent className="p-5 pt-0 space-y-2">
+                    <Skeleton className="h-4 w-4/5" />
+                    <Skeleton className="h-4 w-3/5" />
+                </CardContent>
+                <CardContent className="p-4 pt-2 border-t">
+                    <Skeleton className="h-9 w-full rounded-md" />
+                </CardContent>
+            </Card>
+        ))}
+    </div>
+  );
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center space-x-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <Users className="h-8 w-8" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">My Students</h1>
-            <p className="text-muted-foreground">Manage profiles and notes for your assigned students.</p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Students</h1>
+          <p className="text-muted-foreground">Manage profiles and notes for your assigned students.</p>
         </div>
-        <div className="flex gap-2 items-center">
-          <div className="relative w-full md:w-auto max-w-sm">
+        <div className="flex gap-2 items-center w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
             <Input 
               type="search" 
               placeholder="Search students..." 
@@ -86,9 +105,7 @@ export default function CounselorStudentsPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => <Card key={i} className="h-48 animate-pulse bg-muted" />)}
-        </div>
+        renderSkeleton()
       ) : error ? (
         <Card className="bg-destructive/10 border-destructive col-span-full">
           <CardContent className="p-6 text-center text-destructive-foreground">
@@ -98,15 +115,17 @@ export default function CounselorStudentsPage() {
           </CardContent>
         </Card>
       ) : filteredStudents.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredStudents.map(student => (
             <StudentOverviewCard key={student.id} student={student} />
           ))}
         </div>
       ) : (
-        <Card className="col-span-full border-dashed">
-          <CardContent className="pt-10 pb-8 text-center">
-            <Image src="https://placehold.co/200x150.png" alt="No results" width={150} height={112} className="mx-auto mb-6 rounded-lg" data-ai-hint="magnifying glass empty results" />
+        <Card className="col-span-full shadow-lg">
+          <CardContent className="py-12 text-center flex flex-col items-center justify-center">
+             <div className="bg-secondary p-6 rounded-full mb-6">
+                <Users className="h-12 w-12 text-muted-foreground" />
+            </div>
             <h3 className="text-xl font-semibold mb-2">No Students Found</h3>
             <p className="text-muted-foreground max-w-md mx-auto">
               No students match your search, or no students have been assigned yet.

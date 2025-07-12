@@ -20,7 +20,7 @@ interface StudentOverviewCardProps {
 export function StudentOverviewCard({ student }: StudentOverviewCardProps) {
   const initials = student.name.split(" ").map(n => n[0]).join("");
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 border hover:-translate-y-1 bg-card flex flex-col">
+    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-card flex flex-col shadow-lg">
       <CardHeader className="p-5 flex flex-row items-center gap-4">
         <Avatar className="h-14 w-14 border-2 border-primary/30">
           <AvatarImage src={student.avatarUrl || `https://placehold.co/64x64.png`} alt={student.name} data-ai-hint={student.aiHint || "student portrait Ghana"} />
@@ -36,13 +36,13 @@ export function StudentOverviewCard({ student }: StudentOverviewCardProps) {
           <p className="text-muted-foreground flex items-center"><Calendar className="w-4 h-4 mr-2 text-primary/80" /> Last: {student.lastSession}</p>
         )}
         {student.nextSession && (
-          <p className="text-muted-foreground flex items-center"><Calendar className="w-4 h-4 mr-2 text-green-500/80" /> Next: {student.nextSession}</p>
+          <p className="text-muted-foreground flex items-center"><Calendar className="w-4 h-4 mr-2 text-accent/80" /> Next: {student.nextSession}</p>
         )}
         {!student.lastSession && !student.nextSession && (
             <p className="text-muted-foreground py-1">No recent session activity.</p>
         )}
       </CardContent>
-      <CardFooter className="p-4 pt-2 border-t bg-muted/30">
+      <CardFooter className="p-4 pt-2 border-t bg-muted/50">
         <Button size="sm" asChild className="w-full">
           <Link href={`/counselor/students/${student.id}/profile`}>View Profile <ArrowRight className="w-4 h-4 ml-2"/></Link>
         </Button>

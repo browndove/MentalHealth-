@@ -5,99 +5,99 @@
 
 @layer base {
   :root {
-    /* Light Theme - Accra TechMind V2 */
-    --background: 220 20% 98%; /* Warm Gray */
-    --foreground: 215 25% 27%; /* Deep Forest Green (Text) */
+    /* Light Theme - Donezo Aesthetic */
+    --background: 210 40% 98%; /* #f8fafc */
+    --foreground: 215 25% 27%; /* #1e293b */
 
-    --card: 0 0% 100%; /* White */
-    --card-foreground: 215 25% 27%;
+    --card: 0 0% 100%; /* #ffffff */
+    --card-foreground: 215 25% 27%; /* #1e293b */
 
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 27%;
 
-    --primary: 158 52% 34%; /* Deep Forest Green */
+    --primary: 158 52% 20%; /* #1a4d3a */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 96%; /* Warm Gray (Lighter) */
+    --secondary: 220 13% 91%; /* #e2e8f0 */
     --secondary-foreground: 215 25% 27%;
 
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 220 16% 96%; /* #f1f5f9 */
+    --muted-foreground: 215 14% 53%; /* #64748b */
 
-    --accent: 145 63% 49%; /* Bright Green */
-    --accent-foreground: 0 0% 100%;
+    --accent: 160 68% 51%; /* #34d399 */
+    --accent-foreground: 215 25% 27%;
     
-    --destructive: 0 84% 60%; /* Red */
+    --destructive: 0 84% 60%; /* #ef4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 90%;
-    --input: 220 15% 96%;
-    --ring: 158 52% 34%;
+    --border: 220 13% 91%; /* #e2e8f0 */
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%; /* #3b82f6 */
 
-    --radius: 0.75rem;
+    --radius: 1rem; /* 16px */
     
     /* Chart colors */
-    --chart-1: 158 52% 34%; /* primary */
-    --chart-2: 145 63% 49%; /* accent */
-    --chart-3: 212 84% 62%; /* Blue status */
-    --chart-4: 45 85% 55%; /* Yellow status */
-    --chart-5: 220 10% 50%; /* A neutral grey */
+    --chart-1: 158 52% 20%; /* primary */
+    --chart-2: 160 68% 51%; /* accent */
+    --chart-3: 217 91% 60%; /* Blue status */
+    --chart-4: 39 91% 55%; /* Yellow status */
+    --chart-5: 215 14% 53%; /* A neutral grey */
     
     /* Sidebar specific colors */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 215 25% 27%;
-    --sidebar-primary: 158 52% 95%; /* Light Green */
-    --sidebar-primary-foreground: 158 52% 30%; /* Dark Green */
-    --sidebar-accent: 220 15% 94%;
+    --sidebar-primary: 220 16% 96%; 
+    --sidebar-primary-foreground: 158 52% 20%;
+    --sidebar-accent: 220 13% 91%;
     --sidebar-accent-foreground: 215 25% 27%;
-    --sidebar-border: 220 15% 90%;
-    --sidebar-ring: 158 52% 34%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 60%;
   }
 
   .dark {
-    /* Dark Theme - Accra TechMind V2 */
-    --background: 220 13% 11%;
-    --foreground: 210 20% 98%;
+    /* Dark Theme - Donezo Aesthetic */
+    --background: 222 47% 11%; /* #111827 */
+    --foreground: 210 40% 98%; /* #e5e7eb */
 
-    --card: 220 13% 15%;
-    --card-foreground: 210 20% 98%;
+    --card: 222 47% 14%; /* #182134 */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 220 13% 11%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 158 41% 51%; /* Brighter Deep Forest Green */
-    --primary-foreground: 0 0% 100%;
+    --primary: 160 68% 51%; /* #34d399 */
+    --primary-foreground: 158 52% 20%;
 
-    --secondary: 220 13% 18%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 217 33% 17%; /* #1f2937 */
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 13% 18%;
-    --muted-foreground: 215 15% 65%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 145 56% 59%; /* Bright Green */
-    --accent-foreground: 220 13% 11%;
+    --accent: 160 68% 51%;
+    --accent-foreground: 158 52% 20%;
     
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 63% 51%; /* #ef4444 */
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 20%;
-    --input: 220 13% 16%;
-    --ring: 158 41% 51%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
     
-    --chart-1: 158 41% 51%;
-    --chart-2: 145 56% 59%;
-    --chart-3: 212 84% 72%;
-    --chart-4: 45 90% 65%;
-    --chart-5: 210 20% 70%;
+    --chart-1: 160 68% 51%;
+    --chart-2: 158 52% 20%;
+    --chart-3: 217 91% 60%;
+    --chart-4: 39 91% 55%;
+    --chart-5: 215 20% 65%;
 
-    --sidebar-background: 220 13% 12%; 
-    --sidebar-foreground: 210 20% 98%; 
-    --sidebar-primary: 158 80% 15%;
-    --sidebar-primary-foreground: 158 80% 75%;
-    --sidebar-accent: 217 33% 18%; 
-    --sidebar-accent-foreground: 210 20% 98%; 
-    --sidebar-border: 217 33% 20%; 
-    --sidebar-ring: 158 41% 51%;
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 33% 17%;
+    --sidebar-primary-foreground: 160 68% 51%;
+    --sidebar-accent: 217 33% 20%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 

@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getStudentSessions } from "@/lib/actions";
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Note {
   id: string;
@@ -43,9 +44,9 @@ export default function CounselorNotesPage() {
         id: session.id,
         sessionId: session.id,
         studentName: session.studentName || 'Unknown Student',
-        sessionDate: format(new Date(session.date), 'yyyy-MM-dd'),
+        sessionDate: format(new Date(session.date), 'PPP'),
         summaryPreview: session.reasonPreview || "No preview available.",
-        lastUpdated: session.updatedAt ? format(new Date(session.updatedAt.toDate()), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+        lastUpdated: session.updatedAt ? format(new Date(session.updatedAt.toDate()), 'PPp') : format(new Date(), 'PPp'),
       }));
       setNotes(formattedNotes);
 
@@ -62,26 +63,42 @@ export default function CounselorNotesPage() {
 
   const filteredNotes = notes.filter(note =>
     note.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    note.sessionDate.includes(searchTerm)
+    note.sessionDate.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const renderSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[...Array(6)].map((_, i) => (
+         <Card key={i} className="flex flex-col">
+            <CardHeader>
+                <Skeleton className="h-5 w-3/5" />
+                <Skeleton className="h-3 w-2/5" />
+            </CardHeader>
+            <CardContent className="flex-grow space-y-2">
+                 <Skeleton className="h-4 w-full" />
+                 <Skeleton className="h-4 w-full" />
+                 <Skeleton className="h-4 w-4/5" />
+            </CardContent>
+            <CardFooter>
+                 <Skeleton className="h-10 w-full" />
+            </CardFooter>
+         </Card>
+      ))}
+    </div>
   );
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center space-x-3">
-          <div className="p-3 bg-primary/10 rounded-lg text-primary">
-            <MessageSquare className="h-8 w-8" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Session Notes</h1>
-            <p className="text-muted-foreground">Access and manage your confidential session notes.</p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Session Notes</h1>
+          <p className="text-muted-foreground">Access and manage your confidential session notes.</p>
         </div>
-        <div className="flex gap-2 items-center">
-          <div className="relative w-full md:w-auto max-w-sm">
+        <div className="flex gap-2 items-center w-full md:w-auto">
+          <div className="relative flex-1 md:flex-initial md:w-64">
             <Input 
               type="search" 
-              placeholder="Search notes..." 
+              placeholder="Search by student or date..." 
               className="pl-10" 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
@@ -97,7 +114,7 @@ export default function CounselorNotesPage() {
       </div>
       
       {error && (
-        <Card className="bg-destructive/10 border-destructive">
+        <Card className="bg-destructive/10 border-destructive shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive"><AlertTriangle/> Error</CardTitle>
           </CardHeader>
@@ -106,34 +123,35 @@ export default function CounselorNotesPage() {
       )}
 
       {loading ? (
-        <div className="text-center p-8"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></div>
+        renderSkeleton()
       ) : filteredNotes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNotes.map(note => (
-            <Card key={note.id} className="hover:shadow-lg transition-shadow duration-300 flex flex-col">
+            <Card key={note.id} className="hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
               <CardHeader>
                 <CardTitle>{note.studentName}</CardTitle>
-                <CardDescription>Session Date: {note.sessionDate}</CardDescription>
+                <CardDescription>Session: {note.sessionDate}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
-                <p className="text-sm text-muted-foreground line-clamp-3">{note.summaryPreview}</p>
+                <p className="text-sm text-muted-foreground line-clamp-3 italic">&quot;{note.summaryPreview}&quot;</p>
               </CardContent>
-              <CardFooter className="border-t pt-4">
+              <CardFooter className="border-t pt-4 flex flex-col items-start gap-2">
                 <Button asChild className="w-full">
                   <Link href={`/counselor/sessions/${note.sessionId}/notes`}>
                     <FileText className="mr-2 h-4 w-4" /> View/Edit Note
                   </Link>
                 </Button>
+                 <p className="text-xs text-muted-foreground w-full text-right">Last updated: {note.lastUpdated}</p>
               </CardFooter>
             </Card>
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="pt-6 text-center">
+        <Card className="shadow-lg">
+          <CardContent className="pt-6 text-center flex flex-col items-center justify-center p-12">
             <Image src="https://placehold.co/300x200.png" alt="No notes found" width={300} height={200} className="mx-auto mb-4 rounded-xl" data-ai-hint="empty notebook illustration" />
             <h3 className="text-xl font-semibold">No Notes Found</h3>
-            <p className="text-muted-foreground mt-2">Create a new note from the student list to get started.</p>
+            <p className="text-muted-foreground mt-2 max-w-sm">Create a new note for a completed session via the student list to get started.</p>
           </CardContent>
         </Card>
       )}

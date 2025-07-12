@@ -13,16 +13,15 @@ import {
   Users, 
   Clock,
   NotebookPen,
-  FileText
+  FileText,
+  Filter
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { getCounselorAppointments, updateAppointmentStatus } from "@/lib/actions";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppointmentsChart } from "@/components/counselor/AppointmentsChart";
 import { Badge } from "@/components/ui/badge";
 
 export default function CounselorAppointmentsPage() {
@@ -93,7 +92,7 @@ export default function CounselorAppointmentsPage() {
   const renderSkeleton = () => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {[...Array(6)].map((_, i) => (
-            <Card key={i} className="flex flex-col shadow-sm border-dashed">
+            <Card key={i} className="flex flex-col shadow-sm">
                 <CardHeader className="p-4">
                     <div className="flex items-center gap-3">
                         <Skeleton className="h-12 w-12 rounded-full" />
@@ -117,7 +116,7 @@ export default function CounselorAppointmentsPage() {
   );
   
   const renderEmptyState = (title: string, description: string) => (
-      <Card className="col-span-full border-dashed mt-6">
+      <Card className="col-span-full mt-6 shadow-lg">
         <CardContent className="py-12 text-center flex flex-col items-center justify-center">
             <div className="bg-secondary p-6 rounded-full mb-6">
                 <FileText className="h-12 w-12 text-muted-foreground" />
@@ -157,30 +156,42 @@ export default function CounselorAppointmentsPage() {
 
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Today's Sessions</CardTitle><Clock className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? '...' : stats.todaysAppointments}</div></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Pending Requests</CardTitle><AlertTriangle className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? '...' : stats.pendingAppointments}</div></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Confirmed Sessions</CardTitle><CalendarCheck className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? '...' : stats.confirmedAppointments}</div></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Needs Notes</CardTitle><NotebookPen className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? '...' : stats.needsNotesCount}</div></CardContent></Card>
+        <Card className="shadow-lg"><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Today's Sessions</CardTitle><Clock className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? <Loader2 className="h-5 w-5 animate-spin"/> : stats.todaysAppointments}</div></CardContent></Card>
+        <Card className="shadow-lg"><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Pending Requests</CardTitle><AlertTriangle className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? <Loader2 className="h-5 w-5 animate-spin"/> : stats.pendingAppointments}</div></CardContent></Card>
+        <Card className="shadow-lg"><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Confirmed Sessions</CardTitle><CalendarCheck className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? <Loader2 className="h-5 w-5 animate-spin"/> : stats.confirmedAppointments}</div></CardContent></Card>
+        <Card className="shadow-lg"><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Needs Notes</CardTitle><NotebookPen className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? <Loader2 className="h-5 w-5 animate-spin"/> : stats.needsNotesCount}</div></CardContent></Card>
       </div>
 
-      <div className="flex items-center gap-2">
-          {(['All', 'Pending', 'Confirmed', 'History'] as const).map(f => (
-              <Button key={f} variant={filter === f ? 'default' : 'outline'} onClick={() => setFilter(f)}>
-                  {f}
-                  {f === 'Pending' && <Badge variant="secondary" className="ml-2">{stats.pendingAppointments}</Badge>}
-              </Button>
-          ))}
-      </div>
-      
-      {loading ? renderSkeleton() : filteredAppointments.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {filteredAppointments.map(apt => (
-            <AppointmentCard key={apt.id} appointment={apt} onUpdateStatus={handleUpdateStatus}/>
-          ))}
-        </div>
-      ) : (
-        !error && renderEmptyState("No Appointments Found", `There are no appointments matching the "${filter}" filter.`)
-      )}
+      <Card className="shadow-lg">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>All Appointments</CardTitle>
+              <CardDescription>Filter and manage all scheduled sessions.</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                {(['All', 'Pending', 'Confirmed', 'History'] as const).map(f => (
+                    <Button key={f} variant={filter === f ? 'default' : 'outline'} size="sm" onClick={() => setFilter(f)}>
+                        {f}
+                        {f === 'Pending' && stats.pendingAppointments > 0 && <Badge variant="secondary" className="ml-2">{stats.pendingAppointments}</Badge>}
+                    </Button>
+                ))}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? renderSkeleton() : filteredAppointments.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {filteredAppointments.map(apt => (
+                <AppointmentCard key={apt.id} appointment={apt} onUpdateStatus={handleUpdateStatus}/>
+              ))}
+            </div>
+          ) : (
+            !error && renderEmptyState("No Appointments Found", `There are no appointments matching the "${filter}" filter.`)
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
