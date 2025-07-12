@@ -18,6 +18,7 @@ import { format, parseISO } from 'date-fns';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { AppointmentsChart } from '@/components/counselor/AppointmentsChart';
+import { cn } from '@/lib/utils';
 
 type Student = {
   id: string;
@@ -60,8 +61,10 @@ export default function CounselorDashboardPage() {
   }, [user, toast]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (user) {
+      fetchData();
+    }
+  }, [user, fetchData]);
 
   const pendingAppointments = appointments.filter(a => a.status === 'Pending');
   const upcomingSessions = appointments.filter(a => a.status === 'Confirmed' && new Date(a.date) >= new Date());
@@ -168,8 +171,8 @@ export default function CounselorDashboardPage() {
       </div>
 
       {/* Bento Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Project Analytics */}
+      <div className="grid auto-rows-fr grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Session Analytics Chart */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Session Analytics</CardTitle>
@@ -179,7 +182,7 @@ export default function CounselorDashboardPage() {
           </CardContent>
         </Card>
         
-        {/* Reminders */}
+        {/* Next Session Reminder */}
         {nextSession ? (
           <Card>
             <CardHeader>
@@ -203,14 +206,14 @@ export default function CounselorDashboardPage() {
         ) : (
           <Card>
             <CardHeader><CardTitle>No Upcoming Sessions</CardTitle></CardHeader>
-            <CardContent className="text-center text-muted-foreground py-10">
+            <CardContent className="text-center text-muted-foreground py-10 flex flex-col items-center justify-center">
               <CalendarCheck className="h-10 w-10 mx-auto mb-2"/>
               <p>Your schedule is clear!</p>
             </CardContent>
           </Card>
         )}
 
-        {/* Team Collaboration */}
+        {/* Assigned Students List */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Assigned Students</CardTitle>
@@ -233,11 +236,14 @@ export default function CounselorDashboardPage() {
                   </Button>
                 </div>
               ))}
+              {assignedStudents.length === 0 && (
+                <p className="text-center text-muted-foreground py-4">No students assigned yet.</p>
+              )}
             </div>
           </CardContent>
         </Card>
         
-        {/* Project Progress */}
+        {/* Notes Completion Donut Chart */}
         <Card className="flex flex-col items-center justify-center text-center">
             <CardHeader><CardTitle>Notes Completion</CardTitle></CardHeader>
             <CardContent>
