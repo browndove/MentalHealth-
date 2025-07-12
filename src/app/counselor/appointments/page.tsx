@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getCounselorAppointments, updateAppointmentStatus } from "@/lib/actions";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from 'next/navigation';
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CounselorAppointmentsPage() {
   const { toast } = useToast();
@@ -30,7 +31,8 @@ export default function CounselorAppointmentsPage() {
     try {
       const result = await getCounselorAppointments(user.uid);
       if (result.error) throw new Error(result.error);
-      setAllAppointments(result.data?.map(a => ({ ...a, id: a.id! })) as Appointment[] || []);
+      const appointments = result.data?.map(a => ({ ...a, id: a.id! })) as Appointment[] || [];
+      setAllAppointments(appointments);
     } catch (err: any) {
       setError(err.message);
       toast({ variant: "destructive", title: "Failed to load appointments", description: err.message });
@@ -46,117 +48,153 @@ export default function CounselorAppointmentsPage() {
   }, [user, fetchData]);
 
   const handleAccept = async (id: string) => {
+    const originalAppointments = [...allAppointments];
+    setAllAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Confirmed' } : a));
     const result = await updateAppointmentStatus(id, 'confirmed');
     if (result.success) {
-      toast({ title: "Accepted", description: `Appointment ${id} confirmed.` });
+      toast({ title: "Accepted", description: `Appointment has been confirmed.` });
       fetchData(); // Refresh data
     } else {
       toast({ title: "Error", description: result.error, variant: 'destructive' });
+      setAllAppointments(originalAppointments);
     }
   };
   
-  const handleReschedule = (id: string) => {
-    toast({ title: "Reschedule", description: `Initiate reschedule for ${id}. (Not implemented)` });
-  };
-  
   const handleCancel = async (id: string) => {
+     const originalAppointments = [...allAppointments];
+    setAllAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' } : a));
     const result = await updateAppointmentStatus(id, 'cancelled');
     if (result.success) {
-      toast({ title: "Declined", description: `Appointment ${id} declined.`, variant: "destructive" });
+      toast({ title: "Declined", description: `Appointment has been cancelled.`, variant: "destructive" });
       fetchData(); // Refresh data
     } else {
       toast({ title: "Error", description: result.error, variant: 'destructive' });
+      setAllAppointments(originalAppointments);
     }
   };
   
   const pendingAppointments = allAppointments.filter(a => a.status === 'Pending');
   const confirmedAppointments = allAppointments.filter(a => a.status === 'Confirmed');
-  const completedAppointments = allAppointments.filter(a => a.status === 'Completed' || a.status === 'Cancelled');
+  const historyAppointments = allAppointments.filter(a => a.status === 'Completed' || a.status === 'Cancelled');
 
-  if (loading) {
-    return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  }
+  const renderSkeleton = () => (
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {[...Array(3)].map((_, i) => (
+            <Card key={i} className="flex flex-col">
+                <CardHeader className="p-4">
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <div className="space-y-1">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-20" />
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 space-y-2 flex-grow">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-8 w-full mt-2" />
+                </CardContent>
+                <CardFooter className="p-4 pt-2 flex justify-end gap-2">
+                    <Skeleton className="h-9 w-20 rounded-md" />
+                    <Skeleton className="h-9 w-24 rounded-md" />
+                </CardFooter>
+            </Card>
+        ))}
+    </div>
+  );
   
-  if (error) {
-    return <div className="text-destructive text-center">{error}</div>;
-  }
-  
+  const renderEmptyState = (title: string, description: string, imageHint: string) => (
+      <Card>
+        <CardContent className="pt-8 text-center flex flex-col items-center justify-center">
+            <Image 
+                src={`https://placehold.co/300x200.png`} 
+                alt={title} 
+                width={250} 
+                height={167} 
+                className="mx-auto mb-6 rounded-lg shadow-sm" 
+                data-ai-hint={imageHint} 
+            />
+            <h3 className="text-xl font-semibold mb-1">{title}</h3>
+            <p className="text-muted-foreground max-w-sm mx-auto">{description}</p>
+        </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center space-x-3">
           <CalendarCheck className="h-10 w-10 text-primary" />
-          <h1 className="text-4xl font-headline">Manage Appointments</h1>
+          <div>
+            <h1 className="text-4xl font-headline">Manage Appointments</h1>
+             <p className="text-lg text-muted-foreground">
+                Review, confirm, and track all your student sessions.
+            </p>
+          </div>
         </div>
          <Button disabled>
-            <PlusCircle className="mr-2 h-4 w-4"/> Schedule New Appointment
+            <PlusCircle className="mr-2 h-4 w-4"/> Schedule New
         </Button>
       </div>
-      <p className="text-lg text-muted-foreground">
-        View, accept, reschedule, or cancel student appointment requests. Keep track of your upcoming and past sessions.
-      </p>
+      
+      {error && (
+         <Card className="bg-destructive/10 border-destructive">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive"><AlertTriangle/> Error Loading Data</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-destructive-foreground">{error}</p>
+            </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="pending" className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-3">
           <TabsTrigger value="pending" className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4"/> Pending ({pendingAppointments.length})
+            <AlertTriangle className="h-4 w-4"/> Pending ({loading ? '...' : pendingAppointments.length})
           </TabsTrigger>
           <TabsTrigger value="confirmed" className="flex items-center gap-2">
-            <CalendarCheck className="h-4 w-4"/> Confirmed ({confirmedAppointments.length})
+            <CalendarCheck className="h-4 w-4"/> Confirmed ({loading ? '...' : confirmedAppointments.length})
           </TabsTrigger>
-          <TabsTrigger value="completed" className="flex items-center gap-2">
-            <ListChecks className="h-4 w-4"/> History ({completedAppointments.length})
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <ListChecks className="h-4 w-4"/> History ({loading ? '...' : historyAppointments.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending" className="mt-6">
-          {pendingAppointments.length > 0 ? (
+          {loading ? renderSkeleton() : pendingAppointments.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {pendingAppointments.map(apt => (
-                <AppointmentCard key={apt.id} appointment={apt} onAccept={handleAccept} onReschedule={handleReschedule} onCancel={handleCancel}/>
+                <AppointmentCard key={apt.id} appointment={apt} onAccept={handleAccept} onCancel={handleCancel}/>
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Image src="https://placehold.co/300x200.png" alt="No pending requests" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="empty inbox illustration" />
-                <p className="text-muted-foreground">No pending appointment requests at the moment.</p>
-              </CardContent>
-            </Card>
+            renderEmptyState("All Caught Up!", "There are no pending appointment requests at the moment. Good job!", "empty inbox illustration")
           )}
         </TabsContent>
 
         <TabsContent value="confirmed" className="mt-6">
-          {confirmedAppointments.length > 0 ? (
+           {loading ? renderSkeleton() : confirmedAppointments.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {confirmedAppointments.map(apt => (
                 <AppointmentCard key={apt.id} appointment={apt} />
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="pt-6 text-center">
-                 <Image src="https://placehold.co/300x200.png" alt="No confirmed sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="calendar check illustration" />
-                <p className="text-muted-foreground">No sessions confirmed yet. Check pending requests.</p>
-              </CardContent>
-            </Card>
+            renderEmptyState("No Confirmed Sessions", "Once you accept a pending request, it will appear here.", "calendar check illustration")
           )}
         </TabsContent>
 
-        <TabsContent value="completed" className="mt-6">
-          {completedAppointments.length > 0 ? (
+        <TabsContent value="history" className="mt-6">
+           {loading ? renderSkeleton() : historyAppointments.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {completedAppointments.map(apt => (
+              {historyAppointments.map(apt => (
                 <AppointmentCard key={apt.id} appointment={apt} />
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Image src="https://placehold.co/300x200.png" alt="No past sessions" width={300} height={200} className="mx-auto mb-4 rounded-md" data-ai-hint="archive box illustration" />
-                <p className="text-muted-foreground">No completed or cancelled sessions in history yet.</p>
-              </CardContent>
-            </Card>
+            renderEmptyState("No Session History", "Completed and cancelled appointments will be logged here for your records.", "archive box illustration")
           )}
         </TabsContent>
       </Tabs>
