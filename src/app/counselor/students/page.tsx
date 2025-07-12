@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Users, Search, UserPlus, Loader2, AlertTriangle, MessageSquare, Download, Filter, TrendingUp, UserCheck, AlertCircle, Clock } from "lucide-react";
