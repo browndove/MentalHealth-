@@ -1,10 +1,10 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Users, Search, UserPlus, Loader2, AlertTriangle, MessageSquare, Download, Filter } from "lucide-react";
+import { Users, Search, UserPlus, Loader2, AlertTriangle, MessageSquare, Download, Filter, TrendingUp, UserCheck, AlertCircle, Clock } from "lucide-react";
 import { StudentOverviewCard } from "@/components/dashboard/StudentOverviewCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAssignedStudents } from "@/lib/actions";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AnimatePresence, motion } from "framer-motion";
+import { differenceInHours, parseISO } from "date-fns";
 
 type Student = {
   id: string;
@@ -95,6 +96,16 @@ export default function CounselorStudentsPage() {
         });
   }, [allStudents, searchTerm, selectedStatus, sortOrder]);
   
+  const stats = useMemo(() => {
+    const now = new Date();
+    return {
+      activeStudents: allStudents.filter(s => s.status === 'Active').length,
+      newStudents: allStudents.filter(s => s.status === 'New').length,
+      sessionsIn24h: allStudents.filter(s => s.nextSession && differenceInHours(parseISO(s.nextSession), now) <= 24 && differenceInHours(parseISO(s.nextSession), now) > 0).length,
+      needsFollowUp: allStudents.filter(s => s.status === 'Needs Follow-up').length,
+    }
+  }, [allStudents]);
+
   const handleSelectStudent = (studentId: string, isSelected: boolean) => {
     setSelectedStudents(prev => {
       const newSet = new Set(prev);
@@ -129,6 +140,18 @@ export default function CounselorStudentsPage() {
         ))}
     </div>
   );
+  
+  const StatCard = ({ title, value, icon: Icon, colorClass }: { title: string, value: string | number, icon: React.ElementType, colorClass: string }) => (
+    <Card className="shadow-sm hover:shadow-lg transition-shadow">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <Icon className={`h-4 w-4 text-muted-foreground ${colorClass}`} />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{loading ? <Loader2 className="h-5 w-5 animate-spin"/> : value}</div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-8">
@@ -141,6 +164,14 @@ export default function CounselorStudentsPage() {
         <Button variant="outline" disabled>
             <UserPlus className="mr-2 h-4 w-4" /> Add Student
         </Button>
+      </div>
+      
+      {/* KPI Tiles */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Active Students" value={stats.activeStudents} icon={UserCheck} colorClass="text-green-500" />
+        <StatCard title="New This Week" value={stats.newStudents} icon={TrendingUp} colorClass="text-blue-500" />
+        <StatCard title="Upcoming Sessions (24h)" value={stats.sessionsIn24h} icon={Clock} colorClass="text-purple-500" />
+        <StatCard title="At-Risk / Flagged" value={stats.needsFollowUp} icon={AlertCircle} colorClass="text-red-500" />
       </div>
 
       {/* Filters and Search */}
