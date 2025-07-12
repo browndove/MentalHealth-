@@ -5,57 +5,57 @@
 
 @layer base {
   :root {
-    /* Light Theme - Accra TechMind */
-    --background: 210 40% 98%; /* Light Grey */
-    --foreground: 215 25% 27%; /* Dark Slate Blue */
+    /* Light Theme - Donezo Inspired */
+    --background: 220 20% 98%; /* Lighter Grey */
+    --foreground: 220 10% 20%; /* Dark Cool Grey */
 
     --card: 0 0% 100%; /* White */
-    --card-foreground: 215 25% 27%;
+    --card-foreground: 220 10% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
+    --popover-foreground: 220 10% 20%;
 
-    --primary: 206 90% 50%; /* Soft Blue */
-    --primary-foreground: 210 40% 98%;
+    --primary: 150 70% 35%; /* Deep Green */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 90%; /* Light Steel Blue */
-    --secondary-foreground: 215 25% 27%;
+    --secondary: 220 15% 94%; /* Light Grey Blue */
+    --secondary-foreground: 220 10% 25%;
 
-    --muted: 210 40% 90%;
-    --muted-foreground: 215 20% 45%;
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 10% 45%;
 
-    --accent: 173 58% 39%; /* Muted Teal */
+    --accent: 150 60% 45%; /* Bright Green */
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 70% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 40% 90%;
-    --input: 210 40% 96%;
-    --ring: 206 90% 50%;
+    --border: 220 15% 90%;
+    --input: 220 15% 96%;
+    --ring: 150 70% 40%;
 
     --radius: 0.75rem;
     
     /* Chart colors */
-    --chart-1: 206 90% 50%;
-    --chart-2: 173 58% 45%;
-    --chart-3: 262 80% 60%;
-    --chart-4: 28 90% 60%;
-    --chart-5: 0 0% 50%;
+    --chart-1: 150 70% 35%; /* primary */
+    --chart-2: 150 60% 45%; /* accent */
+    --chart-3: 220 80% 60%; /* A muted blue */
+    --chart-4: 45 90% 55%; /* A warm yellow/orange */
+    --chart-5: 220 10% 50%; /* A neutral grey */
     
     /* Sidebar specific colors */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 25% 27%;
-    --sidebar-primary: 206 90% 94%;
-    --sidebar-primary-foreground: 206 90% 50%;
-    --sidebar-accent: 210 40% 94%;
-    --sidebar-accent-foreground: 215 25% 27%;
-    --sidebar-border: 210 40% 90%;
-    --sidebar-ring: 206 90% 50%;
+    --sidebar-foreground: 220 10% 20%;
+    --sidebar-primary: 150 70% 95%; /* Light Green */
+    --sidebar-primary-foreground: 150 70% 30%; /* Dark Green */
+    --sidebar-accent: 220 15% 94%;
+    --sidebar-accent-foreground: 220 10% 20%;
+    --sidebar-border: 220 15% 90%;
+    --sidebar-ring: 150 70% 40%;
   }
 
   .dark {
-    /* Dark Theme */
+    /* Dark Theme - Donezo Inspired */
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
 
@@ -65,7 +65,7 @@
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 206 90% 65%;
+    --primary: 150 80% 55%; /* Brighter Green */
     --primary-foreground: 222 47% 11%;
 
     --secondary: 217 33% 20%;
@@ -74,7 +74,7 @@
     --muted: 217 33% 20%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 173 58% 45%;
+    --accent: 150 70% 45%; /* Bright Green */
     --accent-foreground: 210 40% 98%;
     
     --destructive: 0 63% 50%;
@@ -82,22 +82,22 @@
 
     --border: 217 33% 20%;
     --input: 217 33% 17%;
-    --ring: 206 90% 65%;
+    --ring: 150 80% 65%;
     
-    --chart-1: 206 90% 65%;
-    --chart-2: 173 58% 50%;
-    --chart-3: 262 80% 70%;
-    --chart-4: 28 90% 70%;
+    --chart-1: 150 80% 55%;
+    --chart-2: 150 70% 45%;
+    --chart-3: 220 80% 70%;
+    --chart-4: 45 90% 65%;
     --chart-5: 0 0% 70%;
 
     --sidebar-background: 222 47% 12%; 
     --sidebar-foreground: 210 40% 98%; 
-    --sidebar-primary: 206 90% 25%;
-    --sidebar-primary-foreground: 206 90% 75%;
+    --sidebar-primary: 150 80% 20%;
+    --sidebar-primary-foreground: 150 80% 75%;
     --sidebar-accent: 217 33% 18%; 
     --sidebar-accent-foreground: 210 40% 98%; 
     --sidebar-border: 217 33% 20%; 
-    --sidebar-ring: 206 90% 65%;
+    --sidebar-ring: 150 80% 65%;
   }
 }
 
