@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Users, Search, UserPlus, Loader2, AlertTriangle, MessageSquare, Download, Filter, TrendingUp, UserCheck, AlertCircle, Clock } from "lucide-react";
@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AnimatePresence, motion } from "framer-motion";
 import { differenceInHours, parseISO } from "date-fns";
+import { CardFooter } from "@/components/ui/card";
 
 type Student = {
   id: string;
@@ -48,16 +49,20 @@ export default function CounselorStudentsPage() {
       
       const studentsWithStatus = (result.data || []).map(s => {
         let status: Student['status'] = 'New';
-        if (s.nextSession) status = 'Active';
-        else if (s.lastSession) {
+        if (s.nextSession) {
+            status = 'Active';
+        } else if (s.lastSession) {
            const lastSessionDate = new Date(s.lastSession);
            const daysSince = (new Date().getTime() - lastSessionDate.getTime()) / (1000 * 3600 * 24);
-           if(daysSince > 30) status = 'Needs Follow-up';
-           else status = 'Inactive';
+           if(daysSince > 30) {
+            status = 'Needs Follow-up';
+           } else {
+            status = 'Inactive';
+           }
         }
         return { ...s, status };
       });
-      setAllStudents(studentsWithStatus);
+      setAllStudents(studentsWithStatus as Student[]);
 
     } catch (err: any) {
       setError(err.message);
@@ -86,7 +91,6 @@ export default function CounselorStudentsPage() {
                 case 'name-desc':
                     return b.name.localeCompare(a.name);
                 case 'last-session':
-                    // Students with no last session date are sorted to the end.
                     if (!a.lastSession) return 1;
                     if (!b.lastSession) return -1;
                     return new Date(b.lastSession).getTime() - new Date(a.lastSession).getTime();

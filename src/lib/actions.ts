@@ -81,22 +81,20 @@ export async function getCounselorAppointments(counselorId: string) {
     
     try {
         const db = getDbInstance();
-        // Simplified query to avoid needing a composite index. We will sort in code.
         const q = query(collection(db, 'appointments'), where('counselorId', '==', counselorId));
         const querySnapshot = await getDocs(q);
         
         const appointments = querySnapshot.docs.map(doc => {
             const data = doc.data();
+            const dateVal = data.date?.toDate ? data.date.toDate() : new Date(data.date);
             return {
                 id: doc.id, 
                 ...data,
-                date: data.date ? format(new Date(data.date), 'yyyy-MM-dd') : '',
-                // Add a sortable date field
-                sortableDate: data.date ? new Date(data.date).getTime() : 0,
+                date: format(dateVal, 'yyyy-MM-dd'),
+                sortableDate: dateVal.getTime(),
             }
         });
-
-        // Sort the results in the action instead of in the query
+        
         appointments.sort((a, b) => b.sortableDate - a.sortableDate);
         
         return { data: appointments };
@@ -112,7 +110,7 @@ export async function getAssignedStudents(counselorId: string) {
     
     try {
         const db = getDbInstance();
-        // First, find all appointments for the counselor to get unique student IDs
+        // Step 1: Get all appointments for the counselor
         const appointmentsQuery = query(collection(db, 'appointments'), where('counselorId', '==', counselorId));
         const appointmentsSnapshot = await getDocs(appointmentsQuery);
         
@@ -120,24 +118,46 @@ export async function getAssignedStudents(counselorId: string) {
             return { data: [] };
         }
         
-        const studentIds = [...new Set(appointmentsSnapshot.docs.map(doc => doc.data().studentId))];
+        const allAppointments = appointmentsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        const studentIds = [...new Set(allAppointments.map(doc => doc.studentId))];
 
         if (studentIds.length === 0) {
             return { data: [] };
         }
         
-        // Now, fetch the user documents for these students
-        // Firestore 'in' query supports up to 30 items
+        // Step 2: Fetch the user documents for these students
         const studentsQuery = query(collection(db, 'users'), where(documentId(), 'in', studentIds));
         const studentsSnapshot = await getDocs(studentsQuery);
         
+        // Step 3: Process and enrich student data with session info
         const students = studentsSnapshot.docs.map(doc => {
-             const data = doc.data();
+             const studentData = doc.data();
+             const studentId = doc.id;
+             
+             // Filter appointments for the current student
+             const studentAppointments = allAppointments.filter(a => a.studentId === studentId);
+             
+             const now = new Date();
+             const upcomingSessions = studentAppointments
+                .filter(a => a.date && new Date(a.date) >= now && a.status === 'Confirmed')
+                .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+             const pastSessions = studentAppointments
+                .filter(a => a.date && new Date(a.date) < now && a.status === 'Completed')
+                .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
              return {
-                id: doc.id,
-                name: data.fullName,
-                universityId: data.universityId,
-                avatarUrl: data.avatarUrl || `https://placehold.co/64x64.png`, // Provide a fallback
+                id: studentId,
+                name: studentData.fullName,
+                universityId: studentData.universityId,
+                avatarUrl: studentData.avatarUrl || `https://placehold.co/64x64.png`,
+                aiHint: studentData.aiHint || 'student photo',
+                lastSession: pastSessions.length > 0 ? format(new Date(pastSessions[0].date), 'yyyy-MM-dd') : undefined,
+                nextSession: upcomingSessions.length > 0 ? format(new Date(upcomingSessions[0].date), 'yyyy-MM-dd') : undefined,
              }
         });
 
@@ -247,7 +267,6 @@ export async function getStudentSessions(userId: string, isCounselor: boolean = 
 
   try {
     const db = getDbInstance();
-    // Simplified query to only filter by the user's ID to avoid needing a composite index.
     const q = query(
       collection(db, 'appointments'),
       where(fieldToQuery, '==', userId)
@@ -260,14 +279,12 @@ export async function getStudentSessions(userId: string, isCounselor: boolean = 
       return {
         id: doc.id,
         ...data,
-        date: dateVal, // Keep as Date object for sorting
+        date: dateVal,
       };
     });
-
-    // Sort by date in the action itself after fetching
+    
     sessions.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    // Format the date to string after sorting is done
     const formattedSessions = sessions.map(session => ({
         ...session,
         date: session.date.toISOString().split('T')[0],
@@ -299,7 +316,6 @@ export async function handleAiAssistantChat(input: {
     const db = getDbInstance();
     let conversationId = input.conversationId;
     
-    // If no conversationId, create a new one.
     if (!conversationId) {
       const newConversationRef = await addDoc(collection(db, 'conversations'), {
         userId: input.userId,
@@ -323,7 +339,6 @@ export async function handleAiAssistantChat(input: {
         createdAt: new Date().toISOString(),
       });
 
-    // For existing conversations, check if fields are missing and add them.
     const docSnap = await getDoc(conversationRef);
     if (docSnap.exists()) {
         const data = docSnap.data();
@@ -338,8 +353,6 @@ export async function handleAiAssistantChat(input: {
         }
     }
 
-
-    // Apply all updates in one go
     await updateDoc(conversationRef, updates, { merge: true });
 
     const result = await studentTriageAssistant({ question: validatedInput.message });
@@ -347,7 +360,6 @@ export async function handleAiAssistantChat(input: {
         throw new Error('Failed to get response from AI assistant.');
     }
 
-    // Add AI response to conversation
     await updateDoc(conversationRef, {
       messages: arrayUnion({
         id: (Date.now() + 1).toString(),
