@@ -4,7 +4,7 @@
 import { studentTriageAssistant } from '@/ai/flows/student-triage-assistant';
 import { SummarizeSessionNotesInput, summarizeSessionNotes } from '@/ai/flows/counselor-session-summary';
 import { z } from 'zod';
-import { AppointmentRequestSchema, type AppointmentRequestInput } from './schemas';
+import { AppointmentRequestSchema, type AppointmentRequestInput, AiChatSchema } from './schemas';
 import { getDbInstance } from './firebase';
 import { 
   collection, 
@@ -118,10 +118,14 @@ export async function getAssignedStudents(counselorId: string) {
             return { data: [] };
         }
         
-        const allAppointments = appointmentsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        const allAppointments = appointmentsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                date: data.date?.toDate ? data.date.toDate().toISOString() : data.date,
+            }
+        });
 
         const studentIds = [...new Set(allAppointments.map(doc => doc.studentId))];
 
@@ -156,8 +160,8 @@ export async function getAssignedStudents(counselorId: string) {
                 universityId: studentData.universityId,
                 avatarUrl: studentData.avatarUrl || `https://placehold.co/64x64.png`,
                 aiHint: studentData.aiHint || 'student photo',
-                lastSession: pastSessions.length > 0 ? format(new Date(pastSessions[0].date), 'yyyy-MM-dd') : undefined,
-                nextSession: upcomingSessions.length > 0 ? format(new Date(upcomingSessions[0].date), 'yyyy-MM-dd') : undefined,
+                lastSession: pastSessions.length > 0 ? pastSessions[0].date : undefined,
+                nextSession: upcomingSessions.length > 0 ? upcomingSessions[0].date : undefined,
              }
         });
 
@@ -259,17 +263,19 @@ match /appointments/{appointmentId} {
 
 export async function getStudentSessions(userId: string, isCounselor: boolean = false): Promise<{ data: any[] } | { error: string }> {
   let fieldToQuery: 'studentId' | 'counselorId';
+
   if (!userId) {
     return { error: 'Authentication required.' };
   }
   
-  fieldToQuery = isCounselor ? 'counselorId' : 'studentId';
-
   try {
+    fieldToQuery = isCounselor ? 'counselorId' : 'studentId';
+
     const db = getDbInstance();
     const q = query(
       collection(db, 'appointments'),
-      where(fieldToQuery, '==', userId)
+      where(fieldToQuery, '==', userId),
+      // orderBy('date', 'desc') // This requires a composite index. Remove for now.
     );
 
     const querySnapshot = await getDocs(q);
@@ -279,12 +285,14 @@ export async function getStudentSessions(userId: string, isCounselor: boolean = 
       return {
         id: doc.id,
         ...data,
-        date: dateVal,
+        date: dateVal, // Keep as Date object for sorting
       };
     });
     
+    // Sort in code to avoid needing a composite index
     sessions.sort((a, b) => b.date.getTime() - a.date.getTime());
 
+    // Now format the date to a string after sorting
     const formattedSessions = sessions.map(session => ({
         ...session,
         date: session.date.toISOString().split('T')[0],
@@ -294,7 +302,8 @@ export async function getStudentSessions(userId: string, isCounselor: boolean = 
   } catch (error: any) {
     console.error('Error fetching sessions:', error);
     if (error.code === 'failed-precondition') {
-      return { error: `Query failed. This is likely due to a missing Firestore index. Please check server logs for a link to create the required index on the 'appointments' collection for the '${fieldToQuery}' and 'date' fields.` };
+      const definedFieldToQuery = isCounselor ? 'counselorId' : 'studentId';
+      return { error: `Query failed. This is likely due to a missing Firestore index. Please check server logs for a link to create the required index on the 'appointments' collection for the '${definedFieldToQuery}' and 'date' fields.` };
     }
     return { error: `An unexpected error occurred while fetching your sessions: ${error.message}` };
   }
