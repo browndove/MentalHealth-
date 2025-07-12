@@ -52,6 +52,7 @@ export async function getCounselors(userId: string): Promise<{ data: { id: strin
     const counselors = querySnapshot.docs.map(doc => ({
       id: doc.id,
       name: doc.data().fullName || 'Unnamed Counselor',
+      specialties: doc.data().specializations || [],
     }));
     
     return { data: counselors };
@@ -79,15 +80,27 @@ export async function getCounselorAppointments(counselorId: string) {
     
     try {
         const db = getDbInstance();
-        const q = query(collection(db, 'appointments'), where('counselorId', '==', counselorId), orderBy('date', 'desc'));
+        // Simplified query to avoid needing a composite index. We will sort in code.
+        const q = query(collection(db, 'appointments'), where('counselorId', '==', counselorId));
         const querySnapshot = await getDocs(q);
-        const appointments = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        const appointments = querySnapshot.docs.map(doc => ({ 
+            id: doc.id, 
+            ...doc.data(),
+            // Ensure date is a comparable value for sorting
+            sortableDate: doc.data().date ? new Date(doc.data().date).getTime() : 0,
+        }));
+
+        // Sort the results in the action instead of in the query
+        appointments.sort((a, b) => b.sortableDate - a.sortableDate);
+        
         return { data: appointments };
     } catch (error: any) {
         console.error("Error fetching counselor appointments:", error);
-        return { error: "Could not fetch appointments. This might be a permission issue or a missing Firestore index. Please check server logs." };
+        return { error: "Could not fetch appointments. This might be a permission issue or an unexpected problem. Please check server logs." };
     }
 }
+
 
 export async function getAssignedStudents(counselorId: string) {
     if (!counselorId) return { error: 'A counselor ID is required.' };
@@ -161,21 +174,23 @@ export async function requestAppointment(
     let counselorData: any = null;
     let counselorId: string | null = null;
 
-
     if(validatedInput.preferredCounselorId && validatedInput.preferredCounselorId !== 'no-preference') {
         counselorId = validatedInput.preferredCounselorId;
-        const counselorDoc = await getDoc(doc(db, 'users', counselorId));
+        const counselorDocRef = doc(db, 'users', counselorId);
+        const counselorDoc = await getDoc(counselorDocRef);
         if(counselorDoc.exists()) {
             const data = counselorDoc.data();
             counselorData = {
               name: data.fullName || 'Unnamed Counselor',
-              avatarUrl: data.avatarUrl || '', // Ensure it's a string, not undefined
+              avatarUrl: data.avatarUrl || '',
               avatarFallback: data.fullName?.split(" ").map((n:string) => n[0]).join("").toUpperCase() || 'C',
               specialties: data.specializations || [],
             };
+        } else {
+           return { error: 'The selected counselor could not be found.' };
         }
     } else {
-        // Handle 'no preference' case
+        counselorId = null; // No preference
         counselorData = {
             name: 'Pending Assignment',
             avatarUrl: '',
@@ -184,7 +199,7 @@ export async function requestAppointment(
         };
     }
     
-    const communicationTypeMap = {
+    const communicationTypeMap: { [key: string]: 'video' | 'chat' | 'in-person' } = {
         'Video Call': 'video',
         'Chat': 'chat',
         'In-Person': 'in-person'
@@ -193,23 +208,23 @@ export async function requestAppointment(
     const appointmentData = {
       studentId: userId,
       studentName: studentName,
-      studentAvatarUrl: '', // Add student avatar if available in user profile
+      studentAvatarUrl: '',
       studentAiHint: 'student photo',
       counselorId: counselorId,
-      counselor: counselorData, // Embed rich counselor details
-      date: format(validatedInput.preferredDate, 'yyyy-MM-dd'),
+      counselor: counselorData,
+      date: validatedInput.preferredDate.toISOString(),
       time: validatedInput.preferredTimeSlot,
       reasonPreview: validatedInput.reasonForAppointment.substring(0, 100) + '...',
       reasonForAppointment: validatedInput.reasonForAppointment,
-      status: 'Pending', // Set initial status
-      communicationMode: communicationTypeMap[validatedInput.sessionType], // Set type
+      status: 'Pending',
+      communicationMode: communicationTypeMap[validatedInput.sessionType],
+      type: validatedInput.sessionType,
       createdAt: serverTimestamp(),
-      lastContact: new Date().toISOString(), // Default to creation time
-      sessionNumber: null, // To be set when confirmed
+      lastContact: new Date().toISOString(),
+      sessionNumber: null,
       duration: validatedInput.duration,
-      notesAvailable: false, // Default value
+      notesAvailable: false,
     };
-
 
     await addDoc(collection(db, 'appointments'), appointmentData);
 
@@ -253,7 +268,8 @@ export async function getStudentSessions(userId: string): Promise<{ data: any[] 
       const data = doc.data();
       // The data should now largely match the Session interface.
       // We just need to handle the createdAt timestamp for sorting.
-      const createdAtValue = data.createdAt?.toDate ? data.createdAt.toDate().getTime() : new Date().getTime();
+      const createdAtValue = data.createdAt?.toDate ? data.createdAt.toDate().getTime() : (data.createdAt ? new Date(data.createdAt).getTime() : 0);
+
 
       return {
         id: doc.id,
@@ -443,3 +459,6 @@ export async function handleSummarizeCallTranscript(
     return { error: 'Failed to summarize the call transcript. Please try again.' };
   }
 }
+
+
+    
