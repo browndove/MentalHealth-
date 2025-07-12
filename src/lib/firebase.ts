@@ -5,6 +5,7 @@
  */
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
+import { getDatabase, type Database } from 'firebase/database';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import firebaseConfig from './firebaseConfig';
 
@@ -44,4 +45,9 @@ export function getAuthInstance(): Auth {
 export function getDbInstance(): Firestore {
   if (!app) initializeFirebase();
   return getFirestore(app);
+}
+
+export function getRealtimeDbInstance(): Database {
+    if (!app) initializeFirebase();
+    return getDatabase(app);
 }

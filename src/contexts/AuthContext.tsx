@@ -4,16 +4,16 @@
 
 import type { User as FirebaseUser } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { getAuthInstance, getDbInstance } from '@/lib/firebase';
+import { getAuthInstance, getDbInstance, getRealtimeDbInstance } from '@/lib/firebase';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
   updateProfile,
-  type Auth
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, set, onDisconnect, serverTimestamp as rtdbServerTimestamp } from 'firebase/database';
+import { doc, setDoc, getDoc, serverTimestamp as firestoreServerTimestamp } from 'firebase/firestore';
 import type { LoginInput, RegisterInput } from '@/lib/schemas';
 
 export interface UserProfile {
@@ -46,9 +46,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // This effect runs only on the client-side
     const auth = getAuthInstance();
     const db = getDbInstance();
+    const rtdb = getRealtimeDbInstance();
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
+        // --- Real-time Presence Logic ---
+        const userStatusRef = ref(rtdb, `status/${firebaseUser.uid}`);
+        
+        // Use onDisconnect to set offline status when client disconnects
+        onDisconnect(userStatusRef).set({
+            isOnline: false,
+            last_changed: rtdbServerTimestamp(),
+        });
+        
+        // Set online status when client connects
+        set(userStatusRef, {
+            isOnline: true,
+            last_changed: rtdbServerTimestamp(),
+        });
+        // --- End Presence Logic ---
+
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
@@ -116,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fullName: input.fullName,
         universityId: input.universityId,
         role: input.role,
-        createdAt: serverTimestamp(),
+        createdAt: firestoreServerTimestamp(),
       };
 
       await setDoc(doc(db, 'users', firebaseUser.uid), userProfileData);
@@ -128,6 +145,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     const auth = getAuthInstance();
+    const rtdb = getRealtimeDbInstance();
+    const uid = auth.currentUser?.uid;
+    
+    if (uid) {
+        const userStatusRef = ref(rtdb, `status/${uid}`);
+        await set(userStatusRef, {
+            isOnline: false,
+            last_changed: rtdbServerTimestamp(),
+        });
+    }
+
     await signOut(auth);
   };
 
