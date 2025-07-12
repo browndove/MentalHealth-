@@ -1,30 +1,46 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Users can create their own profile, and can only read/update their own profile.
-    match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
+    // Helper function to check if a user has a specific role
+    function isRole(role) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
     }
     
-    // Appointments collection rules
-    match /appointments/{appointmentId} {
-      // Authenticated users can create appointments.
-      allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid;
-      
-      // Students can read their own appointments. Counselors can read appointments assigned to them.
-      allow read: if request.auth != null && (request.resource.data.studentId == request.auth.uid || request.resource.data.counselorId == request.auth.uid);
+    // Helper function to check ownership of a document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
 
-      // Counselors can update the status of appointments assigned to them.
-      allow update: if request.auth != null && request.resource.data.counselorId == request.auth.uid;
+    // Users can read their own profile, counselors can read student profiles.
+    match /users/{userId} {
+      allow read: if request.auth != null && (isOwner(userId) || isRole('counselor'));
+      allow create: if request.auth.uid == userId;
+      allow update: if isOwner(userId);
     }
     
-    // AI Conversations collection rules
+    // Students can create appointments. Counselors can read/update their assigned appointments.
+    match /appointments/{appointmentId} {
+        allow read: if request.auth != null && 
+                    (isOwner(resource.data.studentId) || 
+                     (isRole('counselor') && resource.data.counselorId == request.auth.uid));
+        
+        allow create: if request.auth != null && isOwner(request.resource.data.studentId);
+        
+        allow update: if request.auth != null && 
+                      (isRole('counselor') && resource.data.counselorId == request.auth.uid);
+    }
+
+    // Conversations are private to the user who created them.
     match /conversations/{conversationId} {
-      // Users can only interact with their own conversations.
-      allow read, create, update, delete: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read, create, update, delete: if request.auth != null && isOwner(resource.data.userId);
+    }
+
+    // Deny all other operations by default
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

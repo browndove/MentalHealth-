@@ -1,31 +1,31 @@
-'use client'; // Keep this for potential client-side interactions like editing
+
+'use client';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle, Edit3, BadgeCheck, Mail, Phone, Briefcase } from 'lucide-react';
-import React from 'react'; // Needed if we add client-side state for editing
-
-// This page can be mostly server-rendered if profile data is fetched server-side.
-// For simplicity with the current setup, it's a client component that would fetch or receive data.
-
-// Placeholder data - in a real app, this would come from an API or session
-const counselorProfile = {
-  fullName: 'Dr. Emily Carter',
-  email: 'emily.carter@university.ac.uk',
-  universityId: 'COUNS001EC',
-  phoneNumber: '02012345678',
-  bio: 'Experienced counselor specializing in cognitive behavioral therapy (CBT) and stress management. Dedicated to supporting student well-being and academic success.',
-  avatarUrl: 'https://placehold.co/128x128.png',
-  specializations: ['CBT', 'Stress Management', 'Anxiety Disorders', 'Student Mental Health'],
-  qualifications: 'PhD in Clinical Psychology, Licensed Professional Counselor (LPC)',
-  yearsOfExperience: 10,
-};
+import { UserCircle, Edit3, BadgeCheck, Mail, Phone, Briefcase, Loader2 } from 'lucide-react';
+import React from 'react';
+import { useAuth, type UserProfile } from '@/contexts/AuthContext';
 
 export default function CounselorProfilePage() {
-  // const [isEditing, setIsEditing] = React.useState(false); // Uncomment for edit functionality
-
-  // Form handling logic (similar to student profile) would go here if editing is implemented
+  const { user, loading } = useAuth();
+  // Placeholder data - in a real app, this would come from an API or session
+  const counselorProfile = {
+    fullName: user?.fullName || 'Counselor Name',
+    email: user?.email || 'counselor@university.ac.uk',
+    universityId: user?.universityId || 'COUNS0000',
+    phoneNumber: '02012345678', // This would also come from DB
+    bio: 'Experienced counselor specializing in cognitive behavioral therapy (CBT) and stress management. Dedicated to supporting student well-being and academic success.',
+    avatarUrl: 'https://placehold.co/128x128.png',
+    specializations: ['CBT', 'Stress Management', 'Anxiety Disorders', 'Student Mental Health'], // This would come from DB
+    qualifications: 'PhD in Clinical Psychology, Licensed Professional Counselor (LPC)',
+    yearsOfExperience: 10,
+  };
+  
+  if (loading) {
+    return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -34,10 +34,6 @@ export default function CounselorProfilePage() {
           <UserCircle className="h-10 w-10 text-primary" />
           <h1 className="text-4xl font-headline">Counselor Profile</h1>
         </div>
-        {/* <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
-          <Edit3 className="mr-2 h-4 w-4" />
-          {isEditing ? 'Cancel Edit' : 'Edit Profile'}
-        </Button> */}
          <Button variant="outline" disabled> {/* Editing disabled for this example */}
           <Edit3 className="mr-2 h-4 w-4" />
           Edit Profile (Coming Soon)
@@ -94,13 +90,6 @@ export default function CounselorProfilePage() {
                 </div>
               </div>
             </div>
-             {/* {isEditing && (
-              <CardFooter className="border-t pt-6 mt-6 px-0 pb-0">
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </CardFooter>
-            )} */}
           </div>
         </div>
       </Card>

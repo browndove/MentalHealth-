@@ -6,41 +6,85 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { StudentOverviewCard } from '@/components/dashboard/StudentOverviewCard';
 import { AppointmentCard, type Appointment } from '@/components/dashboard/AppointmentCard';
 import { UpcomingSessionCard } from '@/components/dashboard/UpcomingSessionCard';
-import { BarChart, Users, CalendarCheck, MessageCircle, Activity, AlertTriangle, Settings } from 'lucide-react';
+import { BarChart, Users, CalendarCheck, MessageCircle, Activity, AlertTriangle, Settings, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { getCounselorAppointments, getAssignedStudents } from '@/lib/actions';
+import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 
-// Placeholder data
-const assignedStudents = [
-  { id: 's1', name: 'Aisha Bello', universityId: 'ATU005678', lastSession: '2024-07-28', nextSession: '2024-08-10', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "female student Ghana profile" },
-  { id: 's2', name: 'Kwame Annan', universityId: 'ATU001234', lastSession: '2024-07-25', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "male student Ghana confident"  },
-  { id: 's3', name: 'Fatima Ibrahim', universityId: 'ATU009012', nextSession: '2024-08-12', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "Ghanaian student smiling library" },
-];
-
-const pendingAppointments: Appointment[] = [
-  { id: 'a1', studentName: 'Chinedu Okoro', date: '2024-08-09', time: '03:00 PM', reasonPreview: 'Feeling overwhelmed with coursework and need to talk about stress management.', status: 'pending', communicationMode: 'video', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "male student thinking serious Ghana" },
-  { id: 'a2', studentName: 'Amina Yusuf', date: '2024-08-10', time: '11:00 AM', reasonPreview: 'Want to discuss some personal issues affecting my studies.', status: 'pending', communicationMode: 'chat', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "female student glasses thoughtful Ghana" },
-];
-
-const upcomingSessions = [
-  { id: 'sess1', studentName: 'Aisha Bello', dateTime: 'Tomorrow, 10:00 AM', type: 'video' as const, studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "female student profile formal Ghana" },
-  { id: 'sess2', studentName: 'John Mensah', dateTime: 'Aug 18, 2:30 PM', type: 'chat' as const, studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "male student laptop outdoors Ghana" },
-];
+type Student = {
+  id: string;
+  name: string;
+  universityId: string;
+  lastSession?: string;
+  nextSession?: string;
+  avatarUrl?: string;
+  aiHint?: string;
+};
 
 export default function CounselorDashboardPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  
+  const [assignedStudents, setAssignedStudents] = useState<Student[]>([]);
+  const [pendingAppointments, setPendingAppointments] = useState<Appointment[]>([]);
+  const [upcomingSessions, setUpcomingSessions] = useState<any[]>([]); // Using any for simplicity from appointment data
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const [appointmentsResult, studentsResult] = await Promise.all([
+        getCounselorAppointments(user.uid),
+        getAssignedStudents(user.uid)
+      ]);
+
+      if (appointmentsResult.error) throw new Error(appointmentsResult.error);
+      if (studentsResult.error) throw new Error(studentsResult.error);
+
+      const allAppointments = appointmentsResult.data || [];
+      const students = studentsResult.data || [];
+      
+      setAssignedStudents(students);
+      setPendingAppointments(allAppointments.filter(a => a.status === 'Pending').map(a => ({...a, id: a.id! })) as Appointment[]);
+      setUpcomingSessions(allAppointments.filter(a => a.status === 'Confirmed'));
+
+    } catch (err: any) {
+      setError(err.message);
+      toast({ variant: 'destructive', title: "Failed to load dashboard", description: err.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [user, toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleAcceptAppointment = (id: string) => {
     toast({ title: "Appointment Accepted", description: `Appointment ${id} has been confirmed.` });
+    fetchData(); // Refresh data
   };
   const handleRescheduleAppointment = (id: string) => {
      toast({ title: "Reschedule Requested", description: `Reschedule options for ${id} initiated.` });
   };
   const handleCancelAppointment = (id: string) => {
      toast({ title: "Appointment Declined", description: `Appointment ${id} has been declined.`, variant: "destructive" });
+     fetchData(); // Refresh data
   };
 
+  if (loading) {
+    return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+  
+  if (error) {
+    return <div className="text-destructive text-center">{error}</div>;
+  }
 
   return (
     <div className="space-y-10 container mx-auto px-4 py-8">
@@ -48,7 +92,7 @@ export default function CounselorDashboardPage() {
         <CardHeader className="relative z-10 p-6 md:p-8">
            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-3xl md:text-4xl font-bold font-headline">Welcome, Counselor Name!</CardTitle> {/* Replace with actual counselor name */}
+              <CardTitle className="text-3xl md:text-4xl font-bold font-headline">Welcome, {user?.fullName || 'Counselor'}!</CardTitle>
               <CardDescription className="text-lg text-muted-foreground mt-1">Your central hub for managing student sessions at Accra TechMind.</CardDescription>
             </div>
             <Activity size={52} className="text-primary opacity-70 mt-2 sm:mt-0"/>
@@ -97,7 +141,13 @@ export default function CounselorDashboardPage() {
             {upcomingSessions.length > 0 ? (
                <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
                 {upcomingSessions.map(session => (
-                    <UpcomingSessionCard key={session.id} session={session} />
+                    <UpcomingSessionCard key={session.id} session={{
+                      id: session.id,
+                      studentName: session.studentName,
+                      dateTime: `${new Date(session.date).toLocaleDateString()} at ${session.time}`,
+                      type: session.communicationMode,
+                      studentAvatarUrl: session.studentAvatarUrl
+                    }} />
                 ))}
               </div>
             ) : (

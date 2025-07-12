@@ -5,40 +5,79 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppointmentCard, type Appointment } from "@/components/dashboard/AppointmentCard";
-import { CalendarCheck, AlertTriangle, ListChecks, PlusCircle } from "lucide-react";
+import { CalendarCheck, AlertTriangle, ListChecks, PlusCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
-
-const allAppointments: Appointment[] = [
-  { id: 'a1', studentName: 'Chinedu Okoro', date: '2024-08-09', time: '03:00 PM', reasonPreview: 'Feeling overwhelmed...', status: 'pending', communicationMode: 'video', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "student photo Ghana" },
-  { id: 'a2', studentName: 'Amina Yusuf', date: '2024-08-10', time: '11:00 AM', reasonPreview: 'Personal issues...', status: 'pending', communicationMode: 'chat', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "student picture Ghana" },
-  { id: 'a3', studentName: 'Aisha Bello', date: '2024-08-10', time: '10:00 AM', reasonPreview: 'Follow-up session.', status: 'confirmed', communicationMode: 'video', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "student avatar Ghana" },
-  { id: 'a4', studentName: 'Kwame Annan', date: '2024-08-07', time: '02:00 PM', reasonPreview: 'Academic stress.', status: 'completed', communicationMode: 'video', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "student portrait Ghana" },
-  { id: 'a5', studentName: 'Fatima Ibrahim', date: '2024-08-12', time: '09:00 AM', reasonPreview: 'Anxiety discussion.', status: 'confirmed', communicationMode: 'in-person', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "student image Ghana" },
-   { id: 'a6', studentName: 'John Mensah', date: '2024-08-01', time: '01:00 PM', reasonPreview: 'Cancelled by student.', status: 'cancelled', communicationMode: 'chat', studentAvatarUrl: 'https://placehold.co/40x40.png', studentAiHint: "student photo male Ghana" },
-];
-
-const pendingAppointments = allAppointments.filter(a => a.status === 'pending');
-const confirmedAppointments = allAppointments.filter(a => a.status === 'confirmed');
-const completedAppointments = allAppointments.filter(a => a.status === 'completed');
-
+import { useAuth } from "@/contexts/AuthContext";
+import { getCounselorAppointments, updateAppointmentStatus } from "@/lib/actions";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from 'next/navigation';
 
 export default function CounselorAppointmentsPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const router = useRouter();
+  
+  const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAccept = (id: string) => {
-    toast({ title: "Accepted", description: `Appointment ${id} confirmed.` });
-    // Update state/DB
+  const fetchData = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getCounselorAppointments(user.uid);
+      if (result.error) throw new Error(result.error);
+      setAllAppointments(result.data?.map(a => ({ ...a, id: a.id! })) as Appointment[] || []);
+    } catch (err: any) {
+      setError(err.message);
+      toast({ variant: "destructive", title: "Failed to load appointments", description: err.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [user, toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleAccept = async (id: string) => {
+    const result = await updateAppointmentStatus(id, 'confirmed');
+    if (result.success) {
+      toast({ title: "Accepted", description: `Appointment ${id} confirmed.` });
+      fetchData(); // Refresh data
+    } else {
+      toast({ title: "Error", description: result.error, variant: 'destructive' });
+    }
   };
+  
   const handleReschedule = (id: string) => {
-    toast({ title: "Reschedule", description: `Initiate reschedule for ${id}.` });
-    // Update state/DB
+    toast({ title: "Reschedule", description: `Initiate reschedule for ${id}. (Not implemented)` });
   };
-  const handleCancel = (id: string) => {
-    toast({ title: "Declined", description: `Appointment ${id} declined.`, variant: "destructive" });
-    // Update state/DB
+  
+  const handleCancel = async (id: string) => {
+    const result = await updateAppointmentStatus(id, 'cancelled');
+    if (result.success) {
+      toast({ title: "Declined", description: `Appointment ${id} declined.`, variant: "destructive" });
+      fetchData(); // Refresh data
+    } else {
+      toast({ title: "Error", description: result.error, variant: 'destructive' });
+    }
   };
+  
+  const pendingAppointments = allAppointments.filter(a => a.status === 'Pending');
+  const confirmedAppointments = allAppointments.filter(a => a.status === 'Confirmed');
+  const completedAppointments = allAppointments.filter(a => a.status === 'Completed' || a.status === 'Cancelled');
+
+  if (loading) {
+    return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+  
+  if (error) {
+    return <div className="text-destructive text-center">{error}</div>;
+  }
   
   return (
     <div className="space-y-8">

@@ -4,7 +4,7 @@
 import { studentTriageAssistant } from '@/ai/flows/student-triage-assistant';
 import { SummarizeSessionNotesInput, summarizeSessionNotes } from '@/ai/flows/counselor-session-summary';
 import { z } from 'zod';
-import { AiChatSchema, AppointmentRequestSchema, type AppointmentRequestInput } from './schemas';
+import { AppointmentRequestSchema, type AppointmentRequestInput } from './schemas';
 import { getDbInstance } from './firebase';
 import { 
   collection, 
@@ -18,7 +18,8 @@ import {
   orderBy, 
   getDoc, 
   where,
-  Timestamp
+  Timestamp,
+  documentId
 } from 'firebase/firestore';
 import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai/flows/call-transcript-summary';
 import { transcribeAudioChunk as transcribeAudioChunkFlow, type TranscribeAudioChunkInput } from '@/ai/flows/transcribe-audio-chunk';
@@ -72,6 +73,77 @@ The required index is on the 'users' collection for the 'role' field. This is a 
   }
 }
 
+export async function getCounselorAppointments(counselorId: string) {
+    if (!counselorId) return { error: 'A counselor ID is required.' };
+    
+    try {
+        const db = getDbInstance();
+        const q = query(collection(db, 'appointments'), where('counselorId', '==', counselorId), orderBy('date', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const appointments = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return { data: appointments };
+    } catch (error: any) {
+        console.error("Error fetching counselor appointments:", error);
+        return { error: "Could not fetch appointments. This might be a permission issue or a missing Firestore index. Please check server logs." };
+    }
+}
+
+export async function getAssignedStudents(counselorId: string) {
+    if (!counselorId) return { error: 'A counselor ID is required.' };
+    
+    try {
+        const db = getDbInstance();
+        // First, find all appointments for the counselor to get unique student IDs
+        const appointmentsQuery = query(collection(db, 'appointments'), where('counselorId', '==', counselorId));
+        const appointmentsSnapshot = await getDocs(appointmentsQuery);
+        
+        if (appointmentsSnapshot.empty) {
+            return { data: [] };
+        }
+        
+        const studentIds = [...new Set(appointmentsSnapshot.docs.map(doc => doc.data().studentId))];
+
+        if (studentIds.length === 0) {
+            return { data: [] };
+        }
+        
+        // Now, fetch the user documents for these students
+        // Firestore 'in' query supports up to 30 items
+        const studentsQuery = query(collection(db, 'users'), where(documentId(), 'in', studentIds));
+        const studentsSnapshot = await getDocs(studentsQuery);
+        
+        const students = studentsSnapshot.docs.map(doc => {
+             const data = doc.data();
+             return {
+                id: doc.id,
+                name: data.fullName,
+                universityId: data.universityId,
+                avatarUrl: data.avatarUrl || `https://placehold.co/64x64.png`, // Provide a fallback
+                // You can add last/next session by processing the appointments data
+             }
+        });
+
+        return { data: students };
+    } catch (error: any) {
+        console.error("Error fetching assigned students:", error);
+        return { error: "Could not fetch assigned students. This might be a permission issue or a missing Firestore index. Please check server logs." };
+    }
+}
+
+export async function updateAppointmentStatus(appointmentId: string, status: 'confirmed' | 'cancelled') {
+    if (!appointmentId) return { error: 'Appointment ID is required.' };
+    try {
+        const db = getDbInstance();
+        const appointmentRef = doc(db, 'appointments', appointmentId);
+        await updateDoc(appointmentRef, { status: status.charAt(0).toUpperCase() + status.slice(1) });
+        return { success: true };
+    } catch (error: any) {
+        console.error(`Error updating appointment ${appointmentId} to ${status}:`, error);
+        return { error: `Failed to update appointment status.` };
+    }
+}
+
+
 export async function requestAppointment(
   input: AppointmentRequestInput,
   userId: string,
@@ -87,8 +159,8 @@ export async function requestAppointment(
     const db = getDbInstance();
     let counselorData: any = null;
 
-    if(validatedInput.counselorId && validatedInput.counselorId !== 'no-preference') {
-        const counselorDoc = await getDoc(doc(db, 'users', validatedInput.counselorId));
+    if(validatedInput.preferredCounselorId && validatedInput.preferredCounselorId !== 'no-preference') {
+        const counselorDoc = await getDoc(doc(db, 'users', validatedInput.preferredCounselorId));
         if(counselorDoc.exists()) {
             const data = counselorDoc.data();
             counselorData = {
@@ -109,25 +181,28 @@ export async function requestAppointment(
     }
     
     const communicationTypeMap = {
-        'video': 'Video Call',
-        'chat': 'Chat',
-        'in-person': 'In-Person'
+        'Video Call': 'video',
+        'Chat': 'chat',
+        'In-Person': 'in-person'
     };
     
     const appointmentData = {
       studentId: userId,
       studentName: studentName,
-      counselorId: validatedInput.counselorId === 'no-preference' ? null : validatedInput.counselorId,
+      studentAvatarUrl: '', // Add student avatar if available in user profile
+      studentAiHint: 'student photo',
+      counselorId: validatedInput.preferredCounselorId === 'no-preference' ? null : validatedInput.preferredCounselorId,
       counselor: counselorData, // Embed rich counselor details
-      date: validatedInput.preferredDate.toISOString(), // Store as ISO string
-      time: validatedInput.preferredTime,
-      reason: validatedInput.reason,
+      date: format(validatedInput.preferredDate, 'yyyy-MM-dd'),
+      time: validatedInput.preferredTimeSlot,
+      reasonPreview: validatedInput.reasonForAppointment.substring(0, 100) + '...',
+      reasonForAppointment: validatedInput.reasonForAppointment,
       status: 'Pending', // Set initial status
-      type: communicationTypeMap[validatedInput.communicationMode], // Set type
+      communicationMode: communicationTypeMap[validatedInput.sessionType], // Set type
       createdAt: serverTimestamp(),
       lastContact: new Date().toISOString(), // Default to creation time
       sessionNumber: null, // To be set when confirmed
-      duration: 50, // Default duration
+      duration: validatedInput.duration,
       notesAvailable: false, // Default value
     };
 

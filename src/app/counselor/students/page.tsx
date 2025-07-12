@@ -1,23 +1,67 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+'use client';
+
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Users, Search, UserPlus, FileText, MessageSquare } from "lucide-react";
+import { Users, Search, UserPlus, Loader2 } from "lucide-react";
 import { StudentOverviewCard } from "@/components/dashboard/StudentOverviewCard";
-import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { getAssignedStudents } from "@/lib/actions";
+import { useState, useEffect, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
 
-const allStudents = [
-  { id: 's1', name: 'Aisha Bello', universityId: 'ATU005678', lastSession: '2024-07-28', nextSession: '2024-08-10', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "female student" },
-  { id: 's2', name: 'Kwame Annan', universityId: 'ATU001234', lastSession: '2024-07-25', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "male student"  },
-  { id: 's3', name: 'Fatima Ibrahim', universityId: 'ATU009012', nextSession: '2024-08-12', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "female student smiling" },
-  { id: 's4', name: 'Chinedu Okoro', universityId: 'ATU003322', lastSession: '2024-07-15', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "male student glasses" },
-  { id: 's5', name: 'Amina Yusuf', universityId: 'ATU004411', nextSession: '2024-08-20', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "female student thinking" },
-  { id: 's6', name: 'John Mensah', universityId: 'ATU007788', lastSession: '2024-06-30', avatarUrl: 'https://placehold.co/64x64.png', aiHint: "male student laptop" },
-];
-
+type Student = {
+  id: string;
+  name: string;
+  universityId: string;
+  lastSession?: string;
+  nextSession?: string;
+  avatarUrl?: string;
+  aiHint?: string;
+};
 
 export default function CounselorStudentsPage() {
-  // Add search/filter state and logic here in a real app
-  const filteredStudents = allStudents;
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  const [allStudents, setAllStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const fetchStudents = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getAssignedStudents(user.uid);
+      if (result.error) throw new Error(result.error);
+      setAllStudents(result.data || []);
+    } catch (err: any) {
+      setError(err.message);
+      toast({ variant: "destructive", title: "Failed to load students", description: err.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [user, toast]);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
+  
+  const filteredStudents = allStudents.filter(student => 
+    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.universityId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+  
+  if (error) {
+    return <div className="text-destructive text-center">{error}</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -28,7 +72,13 @@ export default function CounselorStudentsPage() {
         </div>
         <div className="flex gap-2 items-center">
             <div className="relative w-full md:w-auto max-w-sm">
-            <Input type="search" placeholder="Search students by name or ID..." className="pl-10" />
+            <Input 
+              type="search" 
+              placeholder="Search students by name or ID..." 
+              className="pl-10" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             </div>
             <Button variant="outline" disabled>
@@ -56,7 +106,7 @@ export default function CounselorStudentsPage() {
 
       <div className="text-center mt-8">
         {/* Pagination would go here if many students */}
-        {filteredStudents.length > 5 && <Button variant="outline">Load More Students</Button>}
+        {allStudents.length > 12 && <Button variant="outline">Load More Students</Button>}
       </div>
     </div>
   );
