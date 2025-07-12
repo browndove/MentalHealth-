@@ -240,11 +240,12 @@ export async function getStudentSessions(userId: string, isCounselor: boolean = 
   if (!userId) {
     return { error: 'Authentication required.' };
   }
+  
+  const fieldToQuery = isCounselor ? 'counselorId' : 'studentId';
 
   try {
     const db = getDbInstance();
     // Query based on whether it's a student or counselor asking
-    const fieldToQuery = isCounselor ? 'counselorId' : 'studentId';
     const q = query(
       collection(db, 'appointments'),
       where(fieldToQuery, '==', userId),
