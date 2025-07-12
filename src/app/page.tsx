@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { Loader2, AlertTriangle, BookOpen, PlayCircle, FileText, Headphones, Youtube, Send } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AppLogo } from '@/components/layout/AppLogo';
+import { useToast } from '@/hooks/use-toast';
 
 const featuredResources = [
   {
@@ -43,20 +44,35 @@ const featuredResources = [
 ];
 
 export default function HomePage() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && user) {
+    if (loading) return; // Wait until loading is complete
+
+    if (user) {
       if (user.role === 'student') {
         router.replace('/student/dashboard');
       } else if (user.role === 'counselor') {
         router.replace('/counselor/dashboard');
+      } else {
+        // This is the error state for users with an auth record but no valid role in Firestore
+        console.error(`HomePage: User ${user.uid} logged in, but role is '${user.role || 'not set/null'}'. Logging out.`);
+        toast({
+            variant: "destructive",
+            title: "Incomplete Profile",
+            description: "Your user role could not be determined. You have been logged out. Please contact support or try registering again.",
+        });
+        logout().finally(() => {
+            router.replace('/login');
+        });
       }
     }
-  }, [user, loading, router]);
-
-  if (loading) {
+  }, [user, loading, router, logout, toast]);
+  
+  // While loading or if user exists (and is being redirected), show a loading spinner.
+  if (loading || user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -64,38 +80,8 @@ export default function HomePage() {
       </div>
     );
   }
-  
-  if (user) {
-     if (user.role === 'student' || user.role === 'counselor') {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="mt-4 text-muted-foreground">Redirecting to your dashboard...</p>
-            </div>
-        );
-     } else {
-        // This is the error state for users with an auth record but no valid role in Firestore
-        console.error(`HomePage: User ${user.uid} logged in, but role is '${user.role || 'not set/null'}'. This usually means their document in the 'users' collection is missing or incomplete.`);
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 text-center">
-                <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-                <h1 className="text-2xl font-semibold mb-2 text-destructive-foreground">Could not determine your user role.</h1>
-                <p className="text-muted-foreground mb-1">This might be due to an incomplete profile or a data issue.</p>
-                <p className="text-muted-foreground mb-4 text-sm max-w-md">
-                   Your account exists, but your user profile document in the database is either missing or does not have a 'role' field.
-                </p>
-                <p className="text-muted-foreground text-xs mb-2">
-                  UID: {user.uid}
-                </p>
-                <p className="text-muted-foreground text-xs mb-4">
-                  Please ensure a document exists in your Firestore 'users' collection with this ID, and that it has a field named 'role' set to either 'student' or 'counselor'.
-                </p>
-                <Button onClick={() => router.push('/login')}>Try Logging In Again</Button>
-            </div>
-        );
-     }
-  }
 
+  // Only show the landing page if there is no user and loading is complete.
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-10">
