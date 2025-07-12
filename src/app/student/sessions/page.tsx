@@ -47,77 +47,6 @@ interface Session {
   notesAvailable: boolean;
 }
 
-const mockSessions: Session[] = [
-    {
-        id: 'sess1', 
-        sessionNumber: 5, 
-        date: '2024-08-25T14:00:00.000Z', 
-        time: '02:00 PM',
-        counselor: { 
-          name: 'Dr. Emily Carter', 
-          avatarUrl: 'https://placehold.co/40x40.png',
-          avatarFallback: 'EC', 
-          specialties: ['Anxiety', 'CBT'] 
-        },
-        duration: 50, 
-        lastContact: '2024-08-18T10:00:00.000Z', 
-        type: 'Video Call', 
-        status: 'Upcoming', 
-        notesAvailable: false
-    },
-    {
-        id: 'sess2', 
-        sessionNumber: 4, 
-        date: '2024-08-18T10:00:00.000Z', 
-        time: '10:00 AM',
-        counselor: { 
-          name: 'Dr. Emily Carter', 
-          avatarUrl: 'https://placehold.co/40x40.png',
-          avatarFallback: 'EC', 
-          specialties: ['Anxiety', 'CBT'] 
-        },
-        duration: 50, 
-        lastContact: '2024-08-11T11:00:00.000Z', 
-        type: 'Video Call', 
-        status: 'Completed', 
-        notesAvailable: true
-    },
-    {
-        id: 'sess3', 
-        sessionNumber: 3, 
-        date: '2024-08-11T11:00:00.000Z', 
-        time: '11:00 AM',
-        counselor: { 
-          name: 'Dr. David Chen', 
-          avatarUrl: 'https://placehold.co/40x40.png',
-          avatarFallback: 'DC', 
-          specialties: ['Stress Management', 'Academic Pressure'] 
-        },
-        duration: 50, 
-        lastContact: '2024-08-04T09:30:00.000Z', 
-        type: 'Video Call', 
-        status: 'Completed', 
-        notesAvailable: true
-    },
-    {
-        id: 'sess4', 
-        sessionNumber: 2, 
-        date: '2024-07-28T15:00:00.000Z', 
-        time: '03:00 PM',
-        counselor: { 
-          name: 'Dr. David Chen',
-          avatarUrl: 'https://placehold.co/40x40.png', 
-          avatarFallback: 'DC', 
-          specialties: ['Stress Management'] 
-        },
-        duration: 50, 
-        lastContact: '2024-07-21T10:00:00.000Z', 
-        type: 'Chat', 
-        status: 'Cancelled', 
-        notesAvailable: false
-    },
-];
-
 const statusStyles = {
     Upcoming: "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700",
     Completed: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700",
@@ -142,7 +71,6 @@ export default function StudentSessionsDashboard() {
     if (user) {
         setLoading(true);
         setError(null);
-        // Using mock data for now, but here's how you'd fetch real data
         const result = await getStudentSessions(user.uid);
         if ('error' in result) {
             setError(result.error);
@@ -156,13 +84,7 @@ export default function StudentSessionsDashboard() {
   }, [user]);
   
   useEffect(() => {
-    // To demonstrate with mock data for now
-    setTimeout(() => {
-        setSessions(mockSessions);
-        setLoading(false);
-    }, 1500);
-    // When you're ready to use live data, replace the above with this:
-    // fetchSessions();
+    fetchSessions();
   }, [fetchSessions]);
 
   const completedSessions = sessions.filter(s => s.status === 'Completed').length;
@@ -184,14 +106,14 @@ export default function StudentSessionsDashboard() {
             <div className="h-10 bg-muted rounded-md w-40"></div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-                <div key={`stat-${i}`} className="h-36 bg-muted rounded-lg animate-pulse"></div>
-            ))}
+          {[...Array(4)].map((_, i) => (
+            <div key={`stat-${i}`} className="h-36 bg-muted rounded-lg animate-pulse"></div>
+          ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-               <div key={`action-${i}`} className="h-24 bg-muted rounded-lg animate-pulse"></div>
-            ))}
+          {[...Array(3)].map((_, i) => (
+             <div key={`action-${i}`} className="h-24 bg-muted rounded-lg animate-pulse"></div>
+          ))}
         </div>
         <div className="h-32 bg-muted rounded-lg animate-pulse"></div>
         <div className="h-56 bg-muted rounded-lg animate-pulse"></div>
