@@ -22,6 +22,9 @@ export interface UserProfile {
   fullName: string | null;
   role: 'student' | 'counselor' | null;
   universityId?: string;
+  phoneNumber?: string;
+  bio?: string;
+  avatarUrl?: string;
   createdAt?: any; // Firestore Timestamp
 }
 
@@ -54,9 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             fullName: firebaseUser.displayName,
-            role: profileData.role || null,
-            universityId: profileData.universityId,
-            createdAt: profileData.createdAt,
+            ...profileData,
           });
         } else {
            setUser({
@@ -89,10 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             uid: userCredential.user.uid,
             email: userCredential.user.email,
             fullName: userCredential.user.displayName,
-            role: profileData.role || null,
-            universityId: profileData.universityId,
+            ...profileData
           };
-          // State will be updated by the onAuthStateChanged listener, no need to setUser here
           return loggedInUser;
         } else {
             throw new Error("Your user profile could not be found in our database. Please contact support.");
@@ -112,8 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         displayName: input.fullName,
       });
 
-      const userProfileData: UserProfile = {
-        uid: firebaseUser.uid,
+      const userProfileData: Omit<UserProfile, 'uid'> = {
         email: input.email,
         fullName: input.fullName,
         universityId: input.universityId,
@@ -123,8 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await setDoc(doc(db, 'users', firebaseUser.uid), userProfileData);
       
-      // State will be updated by the onAuthStateChanged listener
-      return userProfileData;
+      return { uid: firebaseUser.uid, ...userProfileData };
     }
     return null;
   };
@@ -132,7 +129,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     const auth = getAuthInstance();
     await signOut(auth);
-    // onAuthStateChanged will set user to null
   };
 
   return (

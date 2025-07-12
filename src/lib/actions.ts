@@ -35,7 +35,7 @@ export async function transcribeAudioChunk(input: TranscribeAudioChunkInput) {
     }
 }
 
-export async function getCounselors(userId: string): Promise<{ data: { id: string; name: string }[] } | { error: string }> {
+export async function getCounselors(userId: string): Promise<{ data: { id: string; name: string, specialties: string[] }[] } | { error: string }> {
   if (!userId) {
     return { error: "Action requires an authenticated user." };
   }
@@ -53,6 +53,7 @@ export async function getCounselors(userId: string): Promise<{ data: { id: strin
       id: doc.id,
       name: doc.data().fullName || 'Unnamed Counselor',
       specialties: doc.data().specializations || [],
+      avatarUrl: doc.data().avatarUrl
     }));
     
     return { data: counselors };
@@ -84,12 +85,15 @@ export async function getCounselorAppointments(counselorId: string) {
         const q = query(collection(db, 'appointments'), where('counselorId', '==', counselorId));
         const querySnapshot = await getDocs(q);
         
-        const appointments = querySnapshot.docs.map(doc => ({ 
-            id: doc.id, 
-            ...doc.data(),
-            // Ensure date is a comparable value for sorting
-            sortableDate: doc.data().date ? new Date(doc.data().date).getTime() : 0,
-        }));
+        const appointments = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id, 
+                ...data,
+                date: data.date ? format(new Date(data.date), 'yyyy-MM-dd') : '',
+                sortableDate: data.date ? new Date(data.date).getTime() : 0,
+            }
+        });
 
         // Sort the results in the action instead of in the query
         appointments.sort((a, b) => b.sortableDate - a.sortableDate);
@@ -133,7 +137,6 @@ export async function getAssignedStudents(counselorId: string) {
                 name: data.fullName,
                 universityId: data.universityId,
                 avatarUrl: data.avatarUrl || `https://placehold.co/64x64.png`, // Provide a fallback
-                // You can add last/next session by processing the appointments data
              }
         });
 
@@ -171,32 +174,17 @@ export async function requestAppointment(
     }
     
     const db = getDbInstance();
-    let counselorData: any = null;
     let counselorId: string | null = null;
 
     if(validatedInput.preferredCounselorId && validatedInput.preferredCounselorId !== 'no-preference') {
         counselorId = validatedInput.preferredCounselorId;
-        const counselorDocRef = doc(db, 'users', counselorId);
-        const counselorDoc = await getDoc(counselorDocRef);
-        if(counselorDoc.exists()) {
-            const data = counselorDoc.data();
-            counselorData = {
-              name: data.fullName || 'Unnamed Counselor',
-              avatarUrl: data.avatarUrl || '',
-              avatarFallback: data.fullName?.split(" ").map((n:string) => n[0]).join("").toUpperCase() || 'C',
-              specialties: data.specializations || [],
-            };
-        } else {
-           return { error: 'The selected counselor could not be found.' };
-        }
     } else {
-        counselorId = null; // No preference
-        counselorData = {
-            name: 'Pending Assignment',
-            avatarUrl: '',
-            avatarFallback: 'P',
-            specialties: [],
-        };
+        const counselorsResult = await getCounselors(userId);
+        if('data' in counselorsResult && counselorsResult.data.length > 0) {
+          counselorId = counselorsResult.data[Math.floor(Math.random() * counselorsResult.data.length)].id;
+        } else {
+          return { error: "No counselors are available at this time. Please try again later." };
+        }
     }
     
     const communicationTypeMap: { [key: string]: 'video' | 'chat' | 'in-person' } = {
@@ -208,11 +196,8 @@ export async function requestAppointment(
     const appointmentData = {
       studentId: userId,
       studentName: studentName,
-      studentAvatarUrl: '',
-      studentAiHint: 'student photo',
       counselorId: counselorId,
-      counselor: counselorData,
-      date: validatedInput.preferredDate.toISOString(),
+      date: validatedInput.preferredDate,
       time: validatedInput.preferredTimeSlot,
       reasonPreview: validatedInput.reasonForAppointment.substring(0, 100) + '...',
       reasonForAppointment: validatedInput.reasonForAppointment,
@@ -220,6 +205,7 @@ export async function requestAppointment(
       communicationMode: communicationTypeMap[validatedInput.sessionType],
       type: validatedInput.sessionType,
       createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
       lastContact: new Date().toISOString(),
       sessionNumber: null,
       duration: validatedInput.duration,
@@ -250,41 +236,38 @@ match /appointments/{appointmentId} {
   }
 }
 
-export async function getStudentSessions(userId: string): Promise<{ data: any[] } | { error: string }> {
+export async function getStudentSessions(userId: string, isCounselor: boolean = false): Promise<{ data: any[] } | { error: string }> {
   if (!userId) {
     return { error: 'Authentication required.' };
   }
 
   try {
     const db = getDbInstance();
-    // Query without ordering to avoid needing a composite index.
+    // Query based on whether it's a student or counselor asking
+    const fieldToQuery = isCounselor ? 'counselorId' : 'studentId';
     const q = query(
       collection(db, 'appointments'),
-      where('studentId', '==', userId)
+      where(fieldToQuery, '==', userId),
+      orderBy("date", "desc")
     );
 
     const querySnapshot = await getDocs(q);
     const sessions = querySnapshot.docs.map(doc => {
       const data = doc.data();
-      // The data should now largely match the Session interface.
-      // We just need to handle the createdAt timestamp for sorting.
-      const createdAtValue = data.createdAt?.toDate ? data.createdAt.toDate().getTime() : (data.createdAt ? new Date(data.createdAt).getTime() : 0);
-
-
+      const dateVal = data.date?.toDate ? data.date.toDate() : (data.date ? new Date(data.date) : new Date());
       return {
         id: doc.id,
         ...data,
-        createdAt: createdAtValue, // Keep for sorting
+        date: dateVal.toISOString().split('T')[0],
       };
     });
     
-    // Sort the results in code instead of in the query
-    sessions.sort((a, b) => b.createdAt - a.createdAt);
-
     return { data: sessions };
   } catch (error: any) {
-    console.error('Error fetching student sessions:', error);
-     // This simplified error is now sufficient
+    console.error('Error fetching sessions:', error);
+    if (error.code === 'failed-precondition') {
+      return { error: `Query failed. This is likely due to a missing Firestore index. Please check server logs for a link to create the required index on the 'appointments' collection for the '${fieldToQuery}' and 'date' fields.` };
+    }
     return { error: `An unexpected error occurred while fetching your sessions: ${error.message}` };
   }
 }
@@ -382,8 +365,7 @@ export async function getUserConversations(userId: string): Promise<{ data?: { i
 
     try {
         const db = getDbInstance();
-        // More robust query without orderBy to avoid needing a composite index
-        const q = query(collection(db, 'conversations'), where('userId', '==', userId));
+        const q = query(collection(db, 'conversations'), where('userId', '==', userId), orderBy('updatedAt', 'desc'));
         const querySnapshot = await getDocs(q);
 
         const conversations = querySnapshot.docs.map(doc => {
@@ -391,21 +373,16 @@ export async function getUserConversations(userId: string): Promise<{ data?: { i
             return {
                 id: doc.id,
                 title: data.title || 'Untitled Chat',
-                updatedAt: data.updatedAt, // Keep as Timestamp for sorting
+                updatedAt: data.updatedAt,
             };
-        });
-
-        // Sort in code instead of in the query
-        conversations.sort((a, b) => {
-            const timeA = a.updatedAt?.toMillis() || 0;
-            const timeB = b.updatedAt?.toMillis() || 0;
-            return timeB - timeA;
         });
 
         return { data: conversations };
     } catch (error: any) {
         console.error("Error fetching conversations:", error);
-         // Return a generic error to the client, but log the specific one on the server
+         if (error.code === 'failed-precondition') {
+            return { error: "Query failed due to missing Firestore index. Check server logs for a link to create it." };
+         }
         return { error: "An unexpected error occurred while fetching your past conversations." };
     }
 }

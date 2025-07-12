@@ -23,6 +23,7 @@ import { getCounselorAppointments, updateAppointmentStatus } from "@/lib/actions
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppointmentsChart } from "@/components/counselor/AppointmentsChart";
+import { Badge } from "@/components/ui/badge";
 
 export default function CounselorAppointmentsPage() {
   const { toast } = useToast();
@@ -31,6 +32,7 @@ export default function CounselorAppointmentsPage() {
   const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'All' | 'Pending' | 'Confirmed' | 'History'>('All');
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -57,7 +59,6 @@ export default function CounselorAppointmentsPage() {
 
   const handleUpdateStatus = async (id: string, newStatus: 'Confirmed' | 'Cancelled') => {
     const originalAppointments = [...allAppointments];
-    // Optimistically update UI
     setAllAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
     
     const result = await updateAppointmentStatus(id, newStatus.toLowerCase() as 'confirmed' | 'cancelled');
@@ -70,34 +71,24 @@ export default function CounselorAppointmentsPage() {
       setAllAppointments(originalAppointments); // Revert on error
     }
   };
+  
+  const filteredAppointments = useMemo(() => {
+    if (filter === 'All') return allAppointments;
+    if (filter === 'Pending') return allAppointments.filter(a => a.status === 'Pending');
+    if (filter === 'Confirmed') return allAppointments.filter(a => a.status === 'Confirmed');
+    if (filter === 'History') return allAppointments.filter(a => ['Completed', 'Cancelled'].includes(a.status));
+    return [];
+  }, [allAppointments, filter]);
 
-  const {
-    pendingAppointments,
-    confirmedAppointments,
-    historyAppointments,
-    todaysAppointments,
-    pendingNotesCount,
-    totalStudents,
-  } = useMemo(() => {
+  const stats = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    const uniqueStudentIds = new Set(allAppointments.map(a => a.studentId));
-    
     return {
-      pendingAppointments: allAppointments.filter(a => a.status === 'Pending'),
-      confirmedAppointments: allAppointments.filter(a => a.status === 'Confirmed'),
-      historyAppointments: allAppointments.filter(a => ['Completed', 'Cancelled'].includes(a.status)),
-      todaysAppointments: allAppointments.filter(a => a.date === today && a.status === 'Confirmed'),
-      pendingNotesCount: allAppointments.filter(a => a.status === 'Completed' && !a.notesAvailable).length,
-      totalStudents: uniqueStudentIds.size,
-    };
+      todaysAppointments: allAppointments.filter(a => a.date === today && a.status === 'Confirmed').length,
+      pendingAppointments: allAppointments.filter(a => a.status === 'Pending').length,
+      confirmedAppointments: allAppointments.filter(a => a.status === 'Confirmed').length,
+      needsNotesCount: allAppointments.filter(a => a.status === 'Completed' && !a.notesAvailable).length,
+    }
   }, [allAppointments]);
-
-  const stats = [
-    { name: "Today's Sessions", value: loading ? '...' : todaysAppointments.length, icon: Clock },
-    { name: "Pending Requests", value: loading ? '...' : pendingAppointments.length, icon: AlertTriangle },
-    { name: "Total Students", value: loading ? '...' : totalStudents, icon: Users },
-    { name: "Needs Notes", value: loading ? '...' : pendingNotesCount, icon: NotebookPen },
-  ];
 
   const renderSkeleton = () => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -115,7 +106,6 @@ export default function CounselorAppointmentsPage() {
                 <CardContent className="p-4 pt-0 space-y-3 flex-grow">
                     <Skeleton className="h-4 w-48" />
                     <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-8 w-full mt-2" />
                 </CardContent>
                 <CardFooter className="p-4 pt-2 flex justify-end gap-2">
                     <Skeleton className="h-9 w-20 rounded-md" />
@@ -126,8 +116,8 @@ export default function CounselorAppointmentsPage() {
     </div>
   );
   
-  const renderEmptyState = (title: string, description: string, imageHint: string) => (
-      <Card className="col-span-full border-dashed">
+  const renderEmptyState = (title: string, description: string) => (
+      <Card className="col-span-full border-dashed mt-6">
         <CardContent className="py-12 text-center flex flex-col items-center justify-center">
             <div className="bg-secondary p-6 rounded-full mb-6">
                 <FileText className="h-12 w-12 text-muted-foreground" />
@@ -142,7 +132,7 @@ export default function CounselorAppointmentsPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold font-headline tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Appointments Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Manage Appointments</h1>
           <p className="text-lg text-muted-foreground">
               Review, confirm, and track all your student sessions.
           </p>
@@ -165,67 +155,32 @@ export default function CounselorAppointmentsPage() {
         </Card>
       )}
 
-      {/* Stats Dashboard */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Stats Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Today's Sessions</CardTitle><Clock className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? '...' : stats.todaysAppointments}</div></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Pending Requests</CardTitle><AlertTriangle className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? '...' : stats.pendingAppointments}</div></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Confirmed Sessions</CardTitle><CalendarCheck className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? '...' : stats.confirmedAppointments}</div></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Needs Notes</CardTitle><NotebookPen className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? '...' : stats.needsNotesCount}</div></CardContent></Card>
+      </div>
+
+      <div className="flex items-center gap-2">
+          {(['All', 'Pending', 'Confirmed', 'History'] as const).map(f => (
+              <Button key={f} variant={filter === f ? 'default' : 'outline'} onClick={() => setFilter(f)}>
+                  {f}
+                  {f === 'Pending' && <Badge variant="secondary" className="ml-2">{stats.pendingAppointments}</Badge>}
+              </Button>
+          ))}
       </div>
       
-      {/* Charts and Visualizations */}
-      {!loading && !error && allAppointments.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Appointment Trends</CardTitle>
-              <CardDescription>A look at your session activity over time.</CardDescription>
-            </CardHeader>
-            <CardContent className="pl-2">
-              <AppointmentsChart data={allAppointments} />
-            </CardContent>
-          </Card>
+      {loading ? renderSkeleton() : filteredAppointments.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {filteredAppointments.map(apt => (
+            <AppointmentCard key={apt.id} appointment={apt} onUpdateStatus={handleUpdateStatus}/>
+          ))}
+        </div>
+      ) : (
+        !error && renderEmptyState("No Appointments Found", `There are no appointments matching the "${filter}" filter.`)
       )}
-
-      {/* Unified Appointment List */}
-      <div className="space-y-6">
-         <div>
-            <h2 className="text-2xl font-semibold font-headline">Pending Requests ({pendingAppointments.length})</h2>
-            <p className="text-muted-foreground">New appointments that need your confirmation.</p>
-         </div>
-         {loading ? renderSkeleton() : pendingAppointments.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {pendingAppointments.map(apt => (
-                <AppointmentCard key={apt.id} appointment={apt} onUpdateStatus={handleUpdateStatus}/>
-              ))}
-            </div>
-          ) : (
-             !error && renderEmptyState("All Caught Up!", "There are no pending appointment requests at the moment. Good job!", "empty inbox illustration")
-          )}
-      </div>
-
-       <div className="space-y-6">
-         <div>
-            <h2 className="text-2xl font-semibold font-headline">Upcoming & Recent ({confirmedAppointments.length + historyAppointments.length})</h2>
-            <p className="text-muted-foreground">Your confirmed, completed, and cancelled sessions.</p>
-         </div>
-         {loading ? null : (confirmedAppointments.length > 0 || historyAppointments.length > 0) ? (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {[...confirmedAppointments, ...historyAppointments].map(apt => (
-                  <AppointmentCard key={apt.id} appointment={apt} onUpdateStatus={handleUpdateStatus} />
-                ))}
-            </div>
-          ) : (
-            !error && renderEmptyState("No Session History", "Confirmed, completed, and cancelled appointments will be logged here.", "archive box illustration")
-          )}
-      </div>
-
     </div>
   );
 }

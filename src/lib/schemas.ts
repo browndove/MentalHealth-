@@ -14,7 +14,7 @@ export const RegisterSchema = z.object({
   fullName: z.string().min(3, { message: 'Full name is required.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
   confirmPassword: z.string().min(6, { message: 'Please confirm your password.' }),
-  role: z.enum(['student', 'counselor'], { message: 'Please select a role.' }),
+  role: z.enum(['student', 'counselor'], { required_error: 'Please select a role.' }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match.",
   path: ['confirmPassword'], // path of error
@@ -23,25 +23,14 @@ export const RegisterSchema = z.object({
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 
 export const AppointmentRequestSchema = z.object({
-  // Section 1: Counselor & Scheduling
   preferredCounselorId: z.string().optional(),
   preferredDate: z.date({ required_error: 'Please select a date.' }),
   preferredTimeSlot: z.string().min(1, { message: 'Please select a time slot.' }),
-  alternativeDate: z.date().optional(),
-  alternativeTimeSlot: z.string().optional(),
-  
-  // Section 2: Session & Appointment Details
   sessionType: z.enum(['Video Call', 'Chat', 'In-Person'], { required_error: 'Please select a session type.' }),
   duration: z.number().int().min(30).max(60),
-  isFollowUp: z.boolean().default(false),
-  previousSessionId: z.string().optional(),
-  
   reasonForAppointment: z.string().min(10, { message: 'Please provide a brief reason (min 10 characters).' }).max(500),
-  urgencyLevel: z.enum(['Routine', 'Moderate', 'Urgent']),
   specificTopics: z.array(z.string()).optional(),
-  
-  // Section 3: Additional Information
-  accessibilityNeeds: z.string().optional(),
+  urgencyLevel: z.enum(['Routine', 'Moderate', 'Urgent']),
   moodRating: z.number().int().min(1).max(5),
   hasEmergencyContact: z.boolean().default(false),
   emergencyContactInfo: z.object({
@@ -51,7 +40,7 @@ export const AppointmentRequestSchema = z.object({
   }).optional(),
 }).refine(data => {
   if (data.hasEmergencyContact) {
-    return data.emergencyContactInfo !== undefined;
+    return data.emergencyContactInfo?.name && data.emergencyContactInfo?.relationship && data.emergencyContactInfo?.phone;
   }
   return true;
 }, {
@@ -79,7 +68,7 @@ export type AiChatInput = z.infer<typeof AiChatSchema>;
 export const ProfileSchema = z.object({
   fullName: z.string().min(3, "Full name is required."),
   email: z.string().email("Invalid email address."),
-  universityId: z.string().min(1, "University ID is required."),
+  universityId: z.string().optional(),
   phoneNumber: z.string().optional(),
   bio: z.string().max(200, "Bio can be at most 200 characters.").optional(),
 });

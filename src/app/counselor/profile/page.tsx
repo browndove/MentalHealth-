@@ -4,22 +4,23 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle, Edit3, BadgeCheck, Mail, Phone, Briefcase, Loader2 } from 'lucide-react';
+import { UserCircle, Edit3, BadgeCheck, Mail, Phone, Briefcase, Loader2, Award, Star } from 'lucide-react';
 import React from 'react';
 import { useAuth, type UserProfile } from '@/contexts/AuthContext';
+import { Badge } from '@/components/ui/badge';
 
 export default function CounselorProfilePage() {
   const { user, loading } = useAuth();
-  // Placeholder data - in a real app, this would come from an API or session
+
   const counselorProfile = {
     fullName: user?.fullName || 'Counselor Name',
     email: user?.email || 'counselor@university.ac.uk',
     universityId: user?.universityId || 'COUNS0000',
-    phoneNumber: '02012345678', // This would also come from DB
+    phoneNumber: '02012345678',
     bio: 'Experienced counselor specializing in cognitive behavioral therapy (CBT) and stress management. Dedicated to supporting student well-being and academic success.',
-    avatarUrl: 'https://placehold.co/128x128.png',
-    specializations: ['CBT', 'Stress Management', 'Anxiety Disorders', 'Student Mental Health'], // This would come from DB
-    qualifications: 'PhD in Clinical Psychology, Licensed Professional Counselor (LPC)',
+    avatarUrl: user?.avatarUrl || 'https://placehold.co/128x128.png',
+    specializations: ['CBT', 'Stress Management', 'Anxiety Disorders', 'Student Mental Health'],
+    qualifications: 'PhD in Clinical Psychology, LPC',
     yearsOfExperience: 10,
   };
   
@@ -29,70 +30,90 @@ export default function CounselorProfilePage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <UserCircle className="h-10 w-10 text-primary" />
-          <h1 className="text-4xl font-headline">Counselor Profile</h1>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Counselor Profile</h1>
+          <p className="text-muted-foreground">Your professional information and statistics.</p>
         </div>
-         <Button variant="outline" disabled> {/* Editing disabled for this example */}
+        <Button variant="outline" disabled>
           <Edit3 className="mr-2 h-4 w-4" />
-          Edit Profile (Coming Soon)
+          Edit Profile
         </Button>
       </div>
 
-      <Card className="shadow-lg overflow-hidden">
-        <div className="md:flex">
-          <div className="md:w-1/3 bg-gradient-to-br from-primary/10 via-background to-background p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r">
-            <Avatar className="h-40 w-40 mb-4 border-4 border-primary shadow-lg">
-              <AvatarImage src={counselorProfile.avatarUrl} alt={counselorProfile.fullName} data-ai-hint="professional portrait" />
-              <AvatarFallback className="text-5xl">{counselorProfile.fullName?.split(" ").map(n=>n[0]).join("")}</AvatarFallback>
-            </Avatar>
-            <h2 className="text-2xl font-bold font-headline text-primary">{counselorProfile.fullName}</h2>
-            <p className="text-muted-foreground">{counselorProfile.qualifications}</p>
-            <div className="mt-2 text-sm text-accent flex items-center">
-                <BadgeCheck className="h-4 w-4 mr-1"/> Verified Counselor
-            </div>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+            <Card className="shadow-lg overflow-hidden">
+                <CardHeader className="bg-muted/30 p-8 flex flex-col md:flex-row items-center gap-6">
+                    <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
+                      <AvatarImage src={counselorProfile.avatarUrl} alt={counselorProfile.fullName} data-ai-hint="professional portrait" />
+                      <AvatarFallback className="text-4xl">{counselorProfile.fullName?.split(" ").map(n=>n[0]).join("")}</AvatarFallback>
+                    </Avatar>
+                    <div className="text-center md:text-left">
+                        <h2 className="text-2xl font-bold">{counselorProfile.fullName}</h2>
+                        <p className="text-muted-foreground">{counselorProfile.qualifications}</p>
+                        <div className="mt-2 text-sm text-primary flex items-center justify-center md:justify-start">
+                            <BadgeCheck className="h-4 w-4 mr-1.5"/> Verified Counselor
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-8 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground flex items-center mb-2"><Briefcase className="w-5 h-5 mr-3 text-primary" /> Specializations</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {counselorProfile.specializations.map(spec => (
+                        <Badge key={spec} variant="secondary">{spec}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">About Me</h3>
+                    <p className="text-muted-foreground mt-1 leading-relaxed">{counselorProfile.bio}</p>
+                  </div>
 
-          <div className="md:w-2/3 p-8">
-            <CardTitle className="text-2xl mb-6 border-b pb-4">Professional Information</CardTitle>
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground flex items-center"><Briefcase className="w-4 h-4 mr-2 text-primary" /> Specializations</h3>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {counselorProfile.specializations.map(spec => (
-                    <span key={spec} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">{spec}</span>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Bio</h3>
-                <p className="text-foreground mt-1 leading-relaxed">{counselorProfile.bio}</p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground flex items-center"><Mail className="w-4 h-4 mr-2 text-primary" /> Email Address</h3>
-                  <p className="text-foreground mt-1">{counselorProfile.email}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground flex items-center"><Phone className="w-4 h-4 mr-2 text-primary" /> Phone Number</h3>
-                  <p className="text-foreground mt-1">{counselorProfile.phoneNumber || 'Not provided'}</p>
-                </div>
-                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">University ID</h3>
-                  <p className="text-foreground mt-1">{counselorProfile.universityId}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Years of Experience</h3>
-                  <p className="text-foreground mt-1">{counselorProfile.yearsOfExperience} years</p>
-                </div>
-              </div>
-            </div>
-          </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t">
+                      <div>
+                          <h4 className="font-semibold flex items-center"><Mail className="w-4 h-4 mr-2 text-primary" /> Email Address</h4>
+                          <p className="text-muted-foreground mt-1">{counselorProfile.email}</p>
+                      </div>
+                      <div>
+                          <h4 className="font-semibold flex items-center"><Phone className="w-4 h-4 mr-2 text-primary" /> Phone Number</h4>
+                          <p className="text-muted-foreground mt-1">{counselorProfile.phoneNumber || 'Not provided'}</p>
+                      </div>
+                  </div>
+                </CardContent>
+            </Card>
         </div>
-      </Card>
+        <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Contact Info</CardTitle>
+                    <CardDescription>University contact details.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                    <div>
+                        <h4 className="font-semibold">University ID</h4>
+                        <p className="text-muted-foreground">{counselorProfile.universityId}</p>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold">Years of Experience</h4>
+                        <p className="text-muted-foreground">{counselorProfile.yearsOfExperience} years</p>
+                    </div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Qualifications</CardTitle>
+                    <CardDescription>Professional credentials.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                   <p className="flex items-start gap-2 text-muted-foreground"><Award className="h-4 w-4 mt-1 text-primary shrink-0"/> {counselorProfile.qualifications}</p>
+                   <p className="flex items-start gap-2 text-muted-foreground"><Star className="h-4 w-4 mt-1 text-primary shrink-0"/> {counselorProfile.specializations.join(', ')}</p>
+                </CardContent>
+            </Card>
+        </div>
+      </div>
     </div>
   );
 }
