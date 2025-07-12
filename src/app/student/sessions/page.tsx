@@ -71,21 +71,34 @@ export default function StudentSessionsDashboard() {
     if (user) {
         setLoading(true);
         setError(null);
-        const result = await getStudentSessions(user.uid);
-        if ('error' in result) {
-            setError(result.error);
-        } else {
-            setSessions(result.data as Session[]);
+        try {
+            const result = await getStudentSessions(user.uid);
+            if ('error' in result) {
+                setError(result.error);
+            } else {
+                setSessions(result.data as Session[]);
+            }
+        } catch(e: any) {
+            setError("An unexpected client-side error occurred.");
+            console.error(e);
+        } finally {
+            setLoading(false);
         }
+    } else if (!user && !loading) {
+        // If there's no user and we are not in the initial loading phase, stop.
         setLoading(false);
-    } else {
-        setLoading(false); // If no user, stop loading.
     }
-  }, [user]);
+  }, [user, loading]);
   
   useEffect(() => {
-    fetchSessions();
-  }, [fetchSessions]);
+    // Only fetch if there is a user.
+    if(user) {
+      fetchSessions();
+    } else {
+      // If no user is logged in after initial check, stop loading.
+      setLoading(false);
+    }
+  }, [user, fetchSessions]);
 
   const completedSessions = sessions.filter(s => s.status === 'Completed').length;
   const totalDurationMinutes = sessions
@@ -249,7 +262,7 @@ export default function StudentSessionsDashboard() {
                         <CardTitle className="text-xl">Session with {session.counselor.name}</CardTitle>
                         <p className="text-muted-foreground text-sm">{format(new Date(session.date), "EEEE, MMMM d, yyyy")} at {session.time}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {session.counselor.specialties.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+                          {session.counselor.specialties?.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
                         </div>
                       </div>
                     </div>
