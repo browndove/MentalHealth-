@@ -91,6 +91,7 @@ export async function getCounselorAppointments(counselorId: string) {
                 id: doc.id, 
                 ...data,
                 date: data.date ? format(new Date(data.date), 'yyyy-MM-dd') : '',
+                // Add a sortable date field
                 sortableDate: data.date ? new Date(data.date).getTime() : 0,
             }
         });
@@ -147,12 +148,12 @@ export async function getAssignedStudents(counselorId: string) {
     }
 }
 
-export async function updateAppointmentStatus(appointmentId: string, status: 'confirmed' | 'cancelled') {
+export async function updateAppointmentStatus(appointmentId: string, status: 'Confirmed' | 'Cancelled') {
     if (!appointmentId) return { error: 'Appointment ID is required.' };
     try {
         const db = getDbInstance();
         const appointmentRef = doc(db, 'appointments', appointmentId);
-        await updateDoc(appointmentRef, { status: status.charAt(0).toUpperCase() + status.slice(1) });
+        await updateDoc(appointmentRef, { status: status });
         return { success: true };
     } catch (error: any) {
         console.error(`Error updating appointment ${appointmentId} to ${status}:`, error);
@@ -237,19 +238,19 @@ match /appointments/{appointmentId} {
 }
 
 export async function getStudentSessions(userId: string, isCounselor: boolean = false): Promise<{ data: any[] } | { error: string }> {
+  let fieldToQuery: 'studentId' | 'counselorId';
   if (!userId) {
     return { error: 'Authentication required.' };
   }
   
-  const fieldToQuery = isCounselor ? 'counselorId' : 'studentId';
+  fieldToQuery = isCounselor ? 'counselorId' : 'studentId';
 
   try {
     const db = getDbInstance();
-    // Query based on whether it's a student or counselor asking
+    // Simplified query to only filter by the user's ID to avoid needing a composite index.
     const q = query(
       collection(db, 'appointments'),
-      where(fieldToQuery, '==', userId),
-      orderBy("date", "desc")
+      where(fieldToQuery, '==', userId)
     );
 
     const querySnapshot = await getDocs(q);
@@ -259,11 +260,20 @@ export async function getStudentSessions(userId: string, isCounselor: boolean = 
       return {
         id: doc.id,
         ...data,
-        date: dateVal.toISOString().split('T')[0],
+        date: dateVal, // Keep as Date object for sorting
       };
     });
+
+    // Sort by date in the action itself after fetching
+    sessions.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    // Format the date to string after sorting is done
+    const formattedSessions = sessions.map(session => ({
+        ...session,
+        date: session.date.toISOString().split('T')[0],
+    }));
     
-    return { data: sessions };
+    return { data: formattedSessions };
   } catch (error: any) {
     console.error('Error fetching sessions:', error);
     if (error.code === 'failed-precondition') {
