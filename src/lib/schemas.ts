@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const LoginSchema = z.object({
@@ -22,16 +23,41 @@ export const RegisterSchema = z.object({
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 
 export const AppointmentRequestSchema = z.object({
-  counselorId: z.string().optional(), // Or make it required if student must select
+  // Section 1: Counselor & Scheduling
+  preferredCounselorId: z.string().optional(),
   preferredDate: z.date({ required_error: 'Please select a date.' }),
-  preferredTime: z.string().min(1, { message: 'Please select a time slot.' }),
-  reason: z.string().min(10, { message: 'Please provide a brief reason (min 10 characters).' }).max(500),
-  communicationMode: z.enum(['video', 'chat', 'in-person'], { message: 'Please select a communication mode.'}),
-}).refine(data => data.counselorId !== '', {
-  path: ['counselorId'],
-  message: 'This should not be empty.', // This error should not appear if logic is correct
+  preferredTimeSlot: z.string().min(1, { message: 'Please select a time slot.' }),
+  alternativeDate: z.date().optional(),
+  alternativeTimeSlot: z.string().optional(),
+  
+  // Section 2: Session & Appointment Details
+  sessionType: z.enum(['Video Call', 'Chat', 'In-Person'], { required_error: 'Please select a session type.' }),
+  duration: z.number().int().min(30).max(60),
+  isFollowUp: z.boolean().default(false),
+  previousSessionId: z.string().optional(),
+  
+  reasonForAppointment: z.string().min(10, { message: 'Please provide a brief reason (min 10 characters).' }).max(500),
+  urgencyLevel: z.enum(['Routine', 'Moderate', 'Urgent']),
+  specificTopics: z.array(z.string()).optional(),
+  
+  // Section 3: Additional Information
+  accessibilityNeeds: z.string().optional(),
+  moodRating: z.number().int().min(1).max(5),
+  hasEmergencyContact: z.boolean().default(false),
+  emergencyContactInfo: z.object({
+    name: z.string().min(1, 'Name is required.'),
+    relationship: z.string().min(1, 'Relationship is required.'),
+    phone: z.string().min(1, 'Phone number is required.'),
+  }).optional(),
+}).refine(data => {
+  if (data.hasEmergencyContact) {
+    return data.emergencyContactInfo !== undefined;
+  }
+  return true;
+}, {
+  message: "Emergency contact information is required when the checkbox is selected.",
+  path: ["emergencyContactInfo"],
 });
-
 
 export type AppointmentRequestInput = z.infer<typeof AppointmentRequestSchema>;
 
