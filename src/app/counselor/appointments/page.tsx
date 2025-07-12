@@ -3,7 +3,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppointmentCard, type Appointment } from "@/components/dashboard/AppointmentCard";
 import { 
   CalendarCheck, 
@@ -13,7 +12,8 @@ import {
   Loader2, 
   Users, 
   Clock,
-  NotebookPen
+  NotebookPen,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getCounselorAppointments, updateAppointmentStatus } from "@/lib/actions";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppointmentsChart } from "@/components/counselor/AppointmentsChart";
 
 export default function CounselorAppointmentsPage() {
   const { toast } = useToast();
@@ -63,7 +64,7 @@ export default function CounselorAppointmentsPage() {
     
     if (result.success) {
       toast({ title: "Status Updated", description: `Appointment has been ${newStatus.toLowerCase()}.` });
-      fetchData(); // Refresh data to be sure
+      await fetchData(); // Refresh data to be sure
     } else {
       toast({ title: "Error", description: result.error, variant: 'destructive' });
       setAllAppointments(originalAppointments); // Revert on error
@@ -75,29 +76,33 @@ export default function CounselorAppointmentsPage() {
     confirmedAppointments,
     historyAppointments,
     todaysAppointments,
-    pendingNotesCount
+    pendingNotesCount,
+    totalStudents,
   } = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
+    const uniqueStudentIds = new Set(allAppointments.map(a => a.studentId));
+    
     return {
       pendingAppointments: allAppointments.filter(a => a.status === 'Pending'),
       confirmedAppointments: allAppointments.filter(a => a.status === 'Confirmed'),
       historyAppointments: allAppointments.filter(a => ['Completed', 'Cancelled'].includes(a.status)),
       todaysAppointments: allAppointments.filter(a => a.date === today && a.status === 'Confirmed'),
-      pendingNotesCount: allAppointments.filter(a => a.status === 'Completed' && !a.notesAvailable).length
+      pendingNotesCount: allAppointments.filter(a => a.status === 'Completed' && !a.notesAvailable).length,
+      totalStudents: uniqueStudentIds.size,
     };
   }, [allAppointments]);
 
   const stats = [
     { name: "Today's Sessions", value: loading ? '...' : todaysAppointments.length, icon: Clock },
     { name: "Pending Requests", value: loading ? '...' : pendingAppointments.length, icon: AlertTriangle },
-    { name: "Total Confirmed", value: loading ? '...' : confirmedAppointments.length, icon: CalendarCheck },
+    { name: "Total Students", value: loading ? '...' : totalStudents, icon: Users },
     { name: "Needs Notes", value: loading ? '...' : pendingNotesCount, icon: NotebookPen },
   ];
 
   const renderSkeleton = () => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {[...Array(3)].map((_, i) => (
-            <Card key={i} className="flex flex-col shadow-md">
+        {[...Array(6)].map((_, i) => (
+            <Card key={i} className="flex flex-col shadow-sm border-dashed">
                 <CardHeader className="p-4">
                     <div className="flex items-center gap-3">
                         <Skeleton className="h-12 w-12 rounded-full" />
@@ -122,16 +127,11 @@ export default function CounselorAppointmentsPage() {
   );
   
   const renderEmptyState = (title: string, description: string, imageHint: string) => (
-      <Card className="col-span-full">
+      <Card className="col-span-full border-dashed">
         <CardContent className="py-12 text-center flex flex-col items-center justify-center">
-            <Image 
-                src={`https://placehold.co/300x200.png`} 
-                alt={title} 
-                width={250} 
-                height={167} 
-                className="mx-auto mb-6 rounded-lg shadow-sm" 
-                data-ai-hint={imageHint} 
-            />
+            <div className="bg-secondary p-6 rounded-full mb-6">
+                <FileText className="h-12 w-12 text-muted-foreground" />
+            </div>
             <h3 className="text-xl font-semibold mb-1">{title}</h3>
             <p className="text-muted-foreground max-w-sm mx-auto">{description}</p>
         </CardContent>
@@ -141,18 +141,15 @@ export default function CounselorAppointmentsPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center space-x-4">
-          <CalendarCheck className="h-10 w-10 text-primary" />
-          <div>
-            <h1 className="text-4xl font-bold font-headline">Manage Appointments</h1>
-             <p className="text-lg text-muted-foreground">
-                Review, confirm, and track all your student sessions.
-            </p>
-          </div>
+        <div>
+          <h1 className="text-4xl font-bold font-headline tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Appointments Dashboard</h1>
+          <p className="text-lg text-muted-foreground">
+              Review, confirm, and track all your student sessions.
+          </p>
         </div>
-         <Button asChild>
+         <Button asChild size="lg">
             <Link href="/counselor/notes">
-              <PlusCircle className="mr-2 h-4 w-4"/> New Session Note
+              <PlusCircle className="mr-2 h-5 w-5"/> New Session Note
             </Link>
         </Button>
       </div>
@@ -171,7 +168,7 @@ export default function CounselorAppointmentsPage() {
       {/* Stats Dashboard */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
-          <Card key={index}>
+          <Card key={index} className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
               <stat.icon className="h-4 w-4 text-muted-foreground" />
@@ -182,56 +179,53 @@ export default function CounselorAppointmentsPage() {
           </Card>
         ))}
       </div>
+      
+      {/* Charts and Visualizations */}
+      {!loading && !error && allAppointments.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Appointment Trends</CardTitle>
+              <CardDescription>A look at your session activity over time.</CardDescription>
+            </CardHeader>
+            <CardContent className="pl-2">
+              <AppointmentsChart data={allAppointments} />
+            </CardContent>
+          </Card>
+      )}
 
-      <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3">
-          <TabsTrigger value="pending">
-            <AlertTriangle className="mr-2 h-4 w-4"/> Pending ({loading ? '...' : pendingAppointments.length})
-          </TabsTrigger>
-          <TabsTrigger value="confirmed">
-            <CalendarCheck className="mr-2 h-4 w-4"/> Confirmed ({loading ? '...' : confirmedAppointments.length})
-          </TabsTrigger>
-          <TabsTrigger value="history">
-            <ListChecks className="mr-2 h-4 w-4"/> History ({loading ? '...' : historyAppointments.length})
-          </TabsTrigger>
-        </TabsList>
+      {/* Unified Appointment List */}
+      <div className="space-y-6">
+         <div>
+            <h2 className="text-2xl font-semibold font-headline">Pending Requests ({pendingAppointments.length})</h2>
+            <p className="text-muted-foreground">New appointments that need your confirmation.</p>
+         </div>
+         {loading ? renderSkeleton() : pendingAppointments.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {pendingAppointments.map(apt => (
+                <AppointmentCard key={apt.id} appointment={apt} onUpdateStatus={handleUpdateStatus}/>
+              ))}
+            </div>
+          ) : (
+             !error && renderEmptyState("All Caught Up!", "There are no pending appointment requests at the moment. Good job!", "empty inbox illustration")
+          )}
+      </div>
 
-        <TabsContent value="pending" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {loading ? renderSkeleton() : pendingAppointments.length > 0 ? (
-                pendingAppointments.map(apt => (
-                  <AppointmentCard key={apt.id} appointment={apt} onUpdateStatus={handleUpdateStatus}/>
-                ))
-            ) : (
-              renderEmptyState("All Caught Up!", "There are no pending appointment requests at the moment. Good job!", "empty inbox illustration")
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="confirmed" className="mt-6">
-           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {loading ? renderSkeleton() : confirmedAppointments.length > 0 ? (
-                confirmedAppointments.map(apt => (
+       <div className="space-y-6">
+         <div>
+            <h2 className="text-2xl font-semibold font-headline">Upcoming & Recent ({confirmedAppointments.length + historyAppointments.length})</h2>
+            <p className="text-muted-foreground">Your confirmed, completed, and cancelled sessions.</p>
+         </div>
+         {loading ? null : (confirmedAppointments.length > 0 || historyAppointments.length > 0) ? (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {[...confirmedAppointments, ...historyAppointments].map(apt => (
                   <AppointmentCard key={apt.id} appointment={apt} onUpdateStatus={handleUpdateStatus} />
-                ))
-            ) : (
-              renderEmptyState("No Confirmed Sessions", "Once you accept a pending request, it will appear here.", "calendar check illustration")
-            )}
-           </div>
-        </TabsContent>
+                ))}
+            </div>
+          ) : (
+            !error && renderEmptyState("No Session History", "Confirmed, completed, and cancelled appointments will be logged here.", "archive box illustration")
+          )}
+      </div>
 
-        <TabsContent value="history" className="mt-6">
-           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {loading ? renderSkeleton() : historyAppointments.length > 0 ? (
-                historyAppointments.map(apt => (
-                  <AppointmentCard key={apt.id} appointment={apt} />
-                ))
-            ) : (
-              renderEmptyState("No Session History", "Completed and cancelled appointments will be logged here for your records.", "archive box illustration")
-            )}
-           </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

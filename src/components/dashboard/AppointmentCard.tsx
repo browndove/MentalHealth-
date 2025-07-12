@@ -4,8 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
     Calendar, Clock, User, CheckCircle, XCircle, AlertTriangle, MoreHorizontal, 
-    Video, MessageSquare, ListVideo, PhoneCall, NotebookPen, UserPlus, Info, 
-    Repeat, AlarmClock, MessageCircleWarning
+    Video, MessageSquare, NotebookPen, UserPlus, Repeat, MessageCircleWarning
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -17,7 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
 import Link from 'next/link';
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import { format, formatDistanceToNow, parseISO, differenceInDays } from 'date-fns';
 
 export interface Appointment {
   id: string;
@@ -47,7 +46,7 @@ export function AppointmentCard({ appointment, onUpdateStatus }: AppointmentCard
   const lowerCaseStatus = appointment.status?.toLowerCase() as 'pending' | 'confirmed' | 'cancelled' | 'completed' || 'pending';
   
   const statusStyles = {
-    pending: { border: "border-yellow-500", text: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-500/10" },
+    pending: { border: "border-amber-500", text: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" },
     confirmed: { border: "border-green-500", text: "text-green-600 dark:text-green-400", bg: "bg-green-500/10" },
     cancelled: { border: "border-red-500", text: "text-red-600 dark:text-red-400", bg: "bg-red-500/10" },
     completed: { border: "border-blue-500", text: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
@@ -55,12 +54,12 @@ export function AppointmentCard({ appointment, onUpdateStatus }: AppointmentCard
 
   const currentStatusStyle = statusStyles[lowerCaseStatus];
   
-  const CommIcon = appointment.communicationMode === 'video' ? Video : appointment.communicationMode === 'chat' ? MessageSquare : PhoneCall;
-  const isInitialSession = appointment.sessionNumber === null || appointment.sessionNumber === 1;
+  const CommIcon = appointment.communicationMode === 'video' ? Video : appointment.communicationMode === 'chat' ? MessageSquare : User;
+  const isInitialSession = appointment.sessionNumber === null || appointment.sessionNumber <= 1;
 
   const lastContactDate = appointment.lastContact ? parseISO(appointment.lastContact) : null;
-  const daysSinceContact = lastContactDate ? formatDistanceToNow(lastContactDate, { addSuffix: true }) : 'N/A';
-  const needsFollowUp = lastContactDate ? (new Date().getTime() - lastContactDate.getTime()) > (14 * 24 * 60 * 60 * 1000) : false; // 14 days
+  const daysSinceContact = lastContactDate ? differenceInDays(new Date(), lastContactDate) : null;
+  const needsFollowUp = daysSinceContact !== null && daysSinceContact > 14;
 
   return (
     <Card className={cn(
@@ -99,15 +98,23 @@ export function AppointmentCard({ appointment, onUpdateStatus }: AppointmentCard
           <div className="flex items-center"><Clock className="w-4 h-4 mr-2 text-primary/80" /> {appointment.duration} min</div>
         </div>
 
-        <p className="text-muted-foreground italic line-clamp-2 pt-1 border-t border-dashed mt-2">
+        <p className="text-muted-foreground italic line-clamp-2 pt-2 border-t border-dashed mt-2">
           &quot;{appointment.reasonForAppointment}&quot;
         </p>
+        
+        <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
+            {needsFollowUp && (
+              <div className="flex items-center text-xs text-red-600 dark:text-red-400 font-medium">
+                <MessageCircleWarning className="w-3.5 h-3.5 mr-1.5" />Follow-up needed ({daysSinceContact} days)
+              </div>
+            )}
+            {appointment.status === 'Completed' && !appointment.notesAvailable && (
+                 <div className="flex items-center text-xs text-amber-600 dark:text-amber-400 font-medium">
+                    <NotebookPen className="w-3.5 h-3.5 mr-1.5" /> Notes Pending
+                 </div>
+            )}
+        </div>
 
-        {needsFollowUp && (
-          <div className="flex items-center text-xs text-red-600 dark:text-red-400 font-medium pt-1">
-            <MessageCircleWarning className="w-3.5 h-3.5 mr-1.5" />Follow-up needed ({daysSinceContact})
-          </div>
-        )}
       </CardContent>
 
       <CardFooter className="p-3 pt-2 bg-muted/50 border-t flex justify-end gap-2">
@@ -138,7 +145,7 @@ export function AppointmentCard({ appointment, onUpdateStatus }: AppointmentCard
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link href={`/counselor/students/${appointment.studentId}/profile`}>
+                    <Link href={`/counselor/students/${appointment.studentId}`}>
                       <User className="mr-2 h-4 w-4" /> View Student Profile
                     </Link>
                   </DropdownMenuItem>
