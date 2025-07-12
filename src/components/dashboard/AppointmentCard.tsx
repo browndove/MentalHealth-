@@ -18,7 +18,7 @@ export interface Appointment {
   date: string;
   time: string;
   reasonPreview: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
   communicationMode: 'video' | 'chat' | 'in-person';
 }
 
@@ -31,6 +31,7 @@ interface AppointmentCardProps {
 
 export function AppointmentCard({ appointment, onAccept, onReschedule, onCancel }: AppointmentCardProps) {
   const initials = appointment.studentName.split(" ").map(n => n[0]).join("");
+  const lowerCaseStatus = appointment.status.toLowerCase() as 'pending' | 'confirmed' | 'cancelled' | 'completed';
   
   const statusStyles = {
     pending: { border: "border-yellow-500", bg: "bg-yellow-100 dark:bg-yellow-900/50", text: "text-yellow-700 dark:text-yellow-300", iconColor: "text-yellow-600 dark:text-yellow-400" },
@@ -39,14 +40,14 @@ export function AppointmentCard({ appointment, onAccept, onReschedule, onCancel 
     completed: { border: "border-blue-500", bg: "bg-blue-100 dark:bg-blue-900/50", text: "text-blue-700 dark:text-blue-300", iconColor: "text-blue-600 dark:text-blue-400" },
   };
 
-  const currentStatusStyle = statusStyles[appointment.status];
+  const currentStatusStyle = statusStyles[lowerCaseStatus];
 
   const StatusIcon = {
     pending: AlertTriangle,
     confirmed: CheckCircle,
     cancelled: XCircle,
     completed: CheckCircle,
-  }[appointment.status];
+  }[lowerCaseStatus];
 
   const CommIcon = {
     video: Video,
@@ -86,14 +87,14 @@ export function AppointmentCard({ appointment, onAccept, onReschedule, onCancel 
         <p className="flex items-center text-muted-foreground"><Clock className="w-4 h-4 mr-2 text-primary/80" /> {appointment.time}</p>
         <p className="text-muted-foreground italic line-clamp-2 pt-1">Reason: {appointment.reasonPreview}</p>
       </CardContent>
-      {appointment.status === 'pending' && onAccept && onReschedule && onCancel && (
+      {appointment.status === 'Pending' && onAccept && onReschedule && onCancel && (
         <CardFooter className="p-4 pt-2 flex justify-end gap-2">
           <Button variant="outline" size="sm" onClick={() => onCancel(appointment.id)}>Decline</Button>
           <Button variant="secondary" size="sm" onClick={() => onReschedule(appointment.id)}>Reschedule</Button>
           <Button size="sm" onClick={() => onAccept(appointment.id)}>Accept</Button>
         </CardFooter>
       )}
-       {(appointment.status === 'confirmed' || appointment.status === 'completed' || appointment.status === 'cancelled') && (
+       {(appointment.status === 'Confirmed' || appointment.status === 'Completed' || appointment.status === 'Cancelled') && (
          <CardFooter className="p-4 pt-2 flex justify-end">
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -103,8 +104,8 @@ export function AppointmentCard({ appointment, onAccept, onReschedule, onCancel 
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem disabled>View Session Details</DropdownMenuItem>
-                    {appointment.status === 'confirmed' && <DropdownMenuItem disabled>Start Session Notes</DropdownMenuItem>}
-                    {appointment.status === 'completed' && <DropdownMenuItem disabled>View Session Notes</DropdownMenuItem>}
+                    {appointment.status === 'Confirmed' && <DropdownMenuItem disabled>Start Session Notes</DropdownMenuItem>}
+                    {appointment.status === 'Completed' && <DropdownMenuItem disabled>View Session Notes</DropdownMenuItem>}
                 </DropdownMenuContent>
             </DropdownMenu>
          </CardFooter>

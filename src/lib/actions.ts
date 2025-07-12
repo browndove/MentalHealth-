@@ -23,6 +23,7 @@ import {
 } from 'firebase/firestore';
 import { summarizeCallTranscript, type SummarizeCallTranscriptInput } from '@/ai/flows/call-transcript-summary';
 import { transcribeAudioChunk as transcribeAudioChunkFlow, type TranscribeAudioChunkInput } from '@/ai/flows/transcribe-audio-chunk';
+import { format } from 'date-fns';
 
 export async function transcribeAudioChunk(input: TranscribeAudioChunkInput) {
     try {
@@ -158,9 +159,12 @@ export async function requestAppointment(
     
     const db = getDbInstance();
     let counselorData: any = null;
+    let counselorId: string | null = null;
+
 
     if(validatedInput.preferredCounselorId && validatedInput.preferredCounselorId !== 'no-preference') {
-        const counselorDoc = await getDoc(doc(db, 'users', validatedInput.preferredCounselorId));
+        counselorId = validatedInput.preferredCounselorId;
+        const counselorDoc = await getDoc(doc(db, 'users', counselorId));
         if(counselorDoc.exists()) {
             const data = counselorDoc.data();
             counselorData = {
@@ -191,7 +195,7 @@ export async function requestAppointment(
       studentName: studentName,
       studentAvatarUrl: '', // Add student avatar if available in user profile
       studentAiHint: 'student photo',
-      counselorId: validatedInput.preferredCounselorId === 'no-preference' ? null : validatedInput.preferredCounselorId,
+      counselorId: counselorId,
       counselor: counselorData, // Embed rich counselor details
       date: format(validatedInput.preferredDate, 'yyyy-MM-dd'),
       time: validatedInput.preferredTimeSlot,

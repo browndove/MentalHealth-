@@ -40,8 +40,10 @@ export default function CounselorAppointmentsPage() {
   }, [user, toast]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (user) {
+      fetchData();
+    }
+  }, [user, fetchData]);
 
   const handleAccept = async (id: string) => {
     const result = await updateAppointmentStatus(id, 'confirmed');
