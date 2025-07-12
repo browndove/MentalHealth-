@@ -127,15 +127,24 @@ export function RequestAppointmentForm() {
       return;
     }
     setIsSubmitting(true);
-    // In a real app, this action would be updated to handle the new complex schema
-    console.log("Form submitted with values:", values);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast({
-      title: 'Appointment Request Submitted!',
-      description: 'Your request has been sent. You will be notified once confirmed.',
-    });
-    form.reset();
-    setAvailableSlots([]);
+    
+    const result = await requestAppointment(values, user.uid, user.fullName);
+    
+    if (result.success) {
+        toast({
+          title: 'Appointment Request Submitted!',
+          description: 'Your request has been sent. You will be notified once confirmed.',
+        });
+        form.reset();
+        setAvailableSlots([]);
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Submission Failed',
+            description: result.error,
+        });
+    }
+
     setIsSubmitting(false);
   }
 
@@ -177,14 +186,22 @@ export function RequestAppointmentForm() {
                     name="preferredCounselorId"
                     render={({ field }) => (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {counselors.map(c => (
-                          <CounselorSelectionCard
-                            key={c.id}
-                            counselor={c}
-                            isSelected={field.value === c.id}
-                            onSelect={field.onChange}
-                          />
-                        ))}
+                         <Controller
+                            name="preferredCounselorId"
+                            control={form.control}
+                            render={({ field }) => (
+                                <>
+                                {counselors.map(c => (
+                                    <CounselorSelectionCard
+                                        key={c.id}
+                                        counselor={c}
+                                        isSelected={field.value === c.id}
+                                        onSelect={() => field.onChange(c.id)}
+                                    />
+                                    ))}
+                                </>
+                            )}
+                         />
                       </div>
                     )}
                   />
