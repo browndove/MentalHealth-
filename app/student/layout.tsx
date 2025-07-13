@@ -1,7 +1,7 @@
 'use client';
 
 import { Header } from "@/components/layout/Header";
-import { SidebarNav } from "@/components/layout/SidebarNav";
+import { SidebarNav } from "../../src/components/layout/SidebarNav";
 import { SidebarProvider, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
 import { studentNavItems } from "@/lib/constants";
 import { useAuth } from "@/contexts/AuthContext";
