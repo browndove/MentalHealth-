@@ -43,14 +43,17 @@ const serializeFirestoreData = (doc: any) => {
 // Get sessions for a specific student
 export async function getStudentSessions(studentId: string, forCounselor: boolean = false) {
   try {
+    // Fetch sessions without ordering in the query to avoid composite index requirement
     const q = query(
         collection(db, 'appointments'),
-        where('studentId', '==', studentId),
-        orderBy('date', 'desc')
+        where('studentId', '==', studentId)
     );
     const querySnapshot = await getDocs(q);
-    const sessions = querySnapshot.docs.map(doc => serializeFirestoreData(doc));
+    let sessions = querySnapshot.docs.map(doc => serializeFirestoreData(doc));
     
+    // Sort the sessions by date in descending order (newest first) in code
+    sessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
     // For counselor view, we might not need to enrich with counselor details again
     if (forCounselor) {
       return { data: sessions };
