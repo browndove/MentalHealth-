@@ -95,8 +95,7 @@ export default function HomePage() {
           </Button>
         </nav>
       </header>
-
-      <section className="container mx-auto px-6 py-20 md:py-32 flex flex-col md:flex-row items-center">
+    <section className="container mx-auto px-6 py-20 md:py-32 flex flex-col md:flex-row items-center">
         <div className="md:w-1/2 mb-10 md:mb-0 text-center md:text-left">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline tracking-tight mb-6">
             Your Companion for Mental Wellness

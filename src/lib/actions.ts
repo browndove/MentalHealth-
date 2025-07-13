@@ -237,7 +237,23 @@ export async function requestAppointment(
       notesAvailable: false,
     };
 
-    await addDoc(collection(db, 'appointments'), appointmentData);
+    try {
+        await addDoc(collection(db, 'appointments'), appointmentData);
+    } catch(e: any) {
+        console.error("Firestore write error in requestAppointment:", e);
+        if (e.code === 'permission-denied') {
+            const rulesError = `PERMISSION DENIED: Your security rules are blocking the creation of appointments. Please ensure your firestore.rules file allows students to create documents in the 'appointments' collection. 
+            
+A rule like this is needed in your rules file:
+match /appointments/{appointmentId} { 
+  // Allow a logged-in user to create an appointment for themselves.
+  allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid; 
+}`;
+            return { error: rulesError };
+        }
+        return { error: "A database error occurred while creating the appointment." };
+    }
+
 
     return { success: true };
   } catch (error) {
@@ -246,15 +262,6 @@ export async function requestAppointment(
     }
     console.error('Appointment Request Error:', error);
     if (error instanceof Error) {
-        if (error.message.includes('permission-denied') || error.message.includes('PERMISSION_DENIED')) {
-            const rulesError = `Permission Denied: Your security rules are blocking the creation of appointments. Please ensure your firestore.rules file allows students to create documents in the 'appointments' collection. 
-            
-A rule like this is needed:
-match /appointments/{appointmentId} { 
-  allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid; 
-}`;
-            return { error: rulesError };
-        }
         return { error: error.message };
     }
     return { error: 'An unexpected error occurred while submitting your request.' };
@@ -386,7 +393,9 @@ export async function handleAiAssistantChat(input: {
     }
     console.error('AI Assistant Error:', error);
     if (error instanceof Error) {
-        return { error: error.message };
+        const keyUsed = process.env.GOOGLE_API_KEY || "Not Found";
+        const debugInfo = `\n\n[Debug Info] Key Used: ${keyUsed.substring(0, 4)}...${keyUsed.substring(keyUsed.length - 4)}`;
+        return { error: error.message + debugInfo };
     }
     return { error: 'An unexpected error occurred while communicating with the AI. Please try again.' };
   }
@@ -484,3 +493,6 @@ export async function handleSummarizeCallTranscript(
 
 
       
+
+
+    

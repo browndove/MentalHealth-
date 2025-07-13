@@ -51,6 +51,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Slider } from '../ui/slider';
 import { Input } from '../ui/input';
 import { Skeleton } from '../ui/skeleton';
+import Link from 'next/link';
 
 const allTimeSlots = ['09:00 AM', '10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'];
 const commonTopics = ["Stress", "Anxiety", "Relationships", "Academic Pressure", "Depression", "Family Issues", "Time Management", "Other"];
@@ -97,9 +98,7 @@ export function RequestAppointmentForm() {
   }, [selectedDate, form]);
 
   const fetchCounselors = useCallback(async () => {
-    if (authLoading) return;
-    if (!user) {
-      setCounselorError("You must be logged in to see available counselors.");
+    if (authLoading || !user) {
       setIsLoadingCounselors(false);
       return;
     }
@@ -123,7 +122,11 @@ export function RequestAppointmentForm() {
 
   async function onSubmit(values: AppointmentRequestInput) {
     if (!user || !user.fullName) {
-      toast({ variant: 'destructive', title: 'Authentication Error' });
+      toast({ 
+        variant: 'destructive', 
+        title: 'Authentication Error',
+        description: 'You must be logged in to request an appointment.'
+      });
       return;
     }
     setIsSubmitting(true);
@@ -153,6 +156,30 @@ export function RequestAppointmentForm() {
   const moodEmojis = ['😔', '😕', '😐', '🙂', '😄'];
   const hasEmergencyContact = form.watch('hasEmergencyContact');
 
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Card className="text-center p-8">
+        <CardHeader>
+          <CardTitle>Please Log In</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">You need to be logged in to book an appointment.</p>
+          <Button asChild>
+            <Link href="/login">Log In</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -179,6 +206,9 @@ export function RequestAppointmentForm() {
                   <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Could Not Load Counselors</AlertTitle>
+                    <AlertDescription>
+                        {counselorError}
+                    </AlertDescription>
                   </Alert>
                 ) : (
                   <FormField
@@ -408,7 +438,7 @@ export function RequestAppointmentForm() {
         </Accordion>
 
         <div className="flex justify-end pt-4">
-            <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting || authLoading || !!counselorError}>
+            <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting || authLoading || (!!counselorError && counselors.length === 0)}>
               {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Submit Request'}
             </Button>
         </div>
