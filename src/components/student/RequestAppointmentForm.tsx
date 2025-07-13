@@ -1,9 +1,10 @@
 
 'use client';
 
+import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -21,16 +22,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
+import * as PopoverPrimitive from "@radix-ui/react-popover";
+import { DayPicker } from "react-day-picker";
+import { Calendar as CalendarIcon, Loader2, Video, MessageCircle, Users, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { RequestAppointmentSchema, type RequestAppointmentInput } from '@/lib/schemas';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { createAppointment, getCounselors } from '@/lib/actions';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { CalendarIcon, Loader2, Video, MessageCircle, Users } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import type { User } from '@/lib/types';
@@ -39,6 +40,107 @@ const availableTimes = [
   "09:00", "10:00", "11:00", "12:00",
   "14:00", "15:00", "16:00", "17:00",
 ];
+
+const Popover = PopoverPrimitive.Root;
+const PopoverTrigger = PopoverPrimitive.Trigger;
+
+const PopoverContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
+>(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        className
+      )}
+      {...props}
+    />
+  </PopoverPrimitive.Portal>
+))
+PopoverContent.displayName = PopoverPrimitive.Content.displayName;
+
+const RadioGroup = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
+>(({ className, ...props }, ref) => {
+  return <RadioGroupPrimitive.Root className={cn("grid gap-2", className)} {...props} ref={ref} />
+})
+RadioGroup.displayName = RadioGroupPrimitive.Root.displayName;
+
+const RadioGroupItem = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
+>(({ className, ...props }, ref) => {
+  return (
+    <RadioGroupPrimitive.Item
+      ref={ref}
+      className={cn(
+        "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+      {...props}
+    >
+      <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
+        <Circle className="h-2.5 w-2.5 fill-current text-current" />
+      </RadioGroupPrimitive.Indicator>
+    </RadioGroupPrimitive.Item>
+  )
+})
+RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName;
+
+const Calendar = ({
+  className,
+  classNames,
+  showOutsideDays = true,
+  ...props
+} : React.ComponentProps<typeof DayPicker>) => {
+  return (
+    <DayPicker
+      showOutsideDays={showOutsideDays}
+      className={cn("p-3", className)}
+      classNames={{
+        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+        month: "space-y-4",
+        caption: "flex justify-center pt-1 relative items-center",
+        caption_label: "text-sm font-medium",
+        nav: "space-x-1 flex items-center",
+        nav_button: cn(
+          buttonVariants({ variant: "outline" }),
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+        ),
+        nav_button_previous: "absolute left-1",
+        nav_button_next: "absolute right-1",
+        table: "w-full border-collapse space-y-1",
+        head_row: "flex",
+        head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+        row: "flex w-full mt-2",
+        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+        day: cn(
+          buttonVariants({ variant: "ghost" }),
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+        ),
+        day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+        day_today: "bg-accent text-accent-foreground",
+        day_outside: "text-muted-foreground opacity-50",
+        day_disabled: "text-muted-foreground opacity-50",
+        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+        day_hidden: "invisible",
+        ...classNames,
+      }}
+       components={{
+        IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+        IconRight: () => <ChevronRight className="h-4 w-4" />,
+      }}
+      {...props}
+    />
+  )
+}
+Calendar.displayName = "Calendar"
+
 
 export function RequestAppointmentForm() {
   const { toast } = useToast();
@@ -228,38 +330,32 @@ export function RequestAppointmentForm() {
                         defaultValue={field.value}
                         className="grid grid-cols-1 md:grid-cols-3 gap-4"
                       >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <Card className="w-full">
-                            <label className="flex flex-col items-center justify-center p-4 cursor-pointer">
-                              <FormControl>
-                                <RadioGroupItem value="video" className="sr-only" />
-                              </FormControl>
-                              <Video className="h-8 w-8 mb-2 text-primary"/>
-                              <span className="font-semibold">Video Call</span>
-                            </label>
-                          </Card>
+                        <FormItem>
+                          <label className="flex flex-col items-center justify-center p-4 cursor-pointer border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
+                            <FormControl>
+                              <RadioGroupItem value="video" className="sr-only" />
+                            </FormControl>
+                            <Video className="h-8 w-8 mb-2 text-primary"/>
+                            <span className="font-semibold">Video Call</span>
+                          </label>
                         </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                           <Card className="w-full">
-                            <label className="flex flex-col items-center justify-center p-4 cursor-pointer">
-                              <FormControl>
-                                <RadioGroupItem value="chat" className="sr-only"/>
-                              </FormControl>
-                              <MessageCircle className="h-8 w-8 mb-2 text-primary"/>
-                              <span className="font-semibold">Chat</span>
-                            </label>
-                          </Card>
+                        <FormItem>
+                           <label className="flex flex-col items-center justify-center p-4 cursor-pointer border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
+                            <FormControl>
+                              <RadioGroupItem value="chat" className="sr-only"/>
+                            </FormControl>
+                            <MessageCircle className="h-8 w-8 mb-2 text-primary"/>
+                            <span className="font-semibold">Chat</span>
+                          </label>
                         </FormItem>
-                         <FormItem className="flex items-center space-x-3 space-y-0">
-                           <Card className="w-full">
-                            <label className="flex flex-col items-center justify-center p-4 cursor-pointer">
-                              <FormControl>
-                                <RadioGroupItem value="in-person" className="sr-only" />
-                              </FormControl>
-                              <Users className="h-8 w-8 mb-2 text-primary"/>
-                              <span className="font-semibold">In-Person</span>
-                            </label>
-                          </Card>
+                         <FormItem>
+                           <label className="flex flex-col items-center justify-center p-4 cursor-pointer border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
+                            <FormControl>
+                              <RadioGroupItem value="in-person" className="sr-only" />
+                            </FormControl>
+                            <Users className="h-8 w-8 mb-2 text-primary"/>
+                            <span className="font-semibold">In-Person</span>
+                          </label>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
@@ -281,105 +377,4 @@ export function RequestAppointmentForm() {
   );
 }
 
-// These UI components are needed by the form, so I'll create them here
-// In a real app, these would be in their own files under components/ui
-// but since I can only edit one file, I'll define them locally.
-
-const RadioGroup = React.forwardRef<
-  React.ElementRef<typeof import('@radix-ui/react-radio-group').Root>,
-  React.ComponentPropsWithoutRef<typeof import('@radix-ui/react-radio-group').Root>
->(({ className, ...props }, ref) => {
-  return <import('@radix-ui/react-radio-group').Root className={cn("grid gap-2", className)} {...props} ref={ref} />
-})
-RadioGroup.displayName = import('@radix-ui/react-radio-group').Root.displayName
-
-const RadioGroupItem = React.forwardRef<
-  React.ElementRef<typeof import('@radix-ui/react-radio-group').Item>,
-  React.ComponentPropsWithoutRef<typeof import('@radix-ui/react-radio-group').Item>
->(({ className, ...props }, ref) => {
-  return (
-    <import('@radix-ui/react-radio-group').Item
-      ref={ref}
-      className={cn(
-        "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-        className
-      )}
-      {...props}
-    >
-      <import('@radix-ui/react-radio-group').Indicator className="flex items-center justify-center">
-        <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-      </import('@radix-ui/react-radio-group').Indicator>
-    </import('@radix-ui/react-radio-group').Item>
-  )
-})
-RadioGroupItem.displayName = import('@radix-ui/react-radio-group').Item.displayName
-
-
-const Popover = import('@radix-ui/react-popover').Root;
-const PopoverTrigger = import('@radix-ui/react-popover').Trigger;
-
-const PopoverContent = React.forwardRef<
-  React.ElementRef<typeof import('@radix-ui/react-popover').Content>,
-  React.ComponentPropsWithoutRef<typeof import('@radix-ui/react-popover').Content>
->(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
-  <import('@radix-ui/react-popover').Portal>
-    <import('@radix-ui/react-popover').Content
-      ref={ref}
-      align={align}
-      sideOffset={sideOffset}
-      className={cn(
-        "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-        className
-      )}
-      {...props}
-    />
-  </import('@radix-ui/react-popover').Portal>
-))
-PopoverContent.displayName = import('@radix-ui/react-popover').Content.displayName
-
-const DayPicker = require("react-day-picker");
-
-const Calendar = ({
-  className,
-  classNames,
-  showOutsideDays = true,
-  ...props
-} : React.ComponentProps<typeof DayPicker.DayPicker>) => {
-  return (
-    <DayPicker.DayPicker
-      showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
-      classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
-        nav: "space-x-1 flex items-center",
-        nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-        ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-1",
-        head_row: "flex",
-        head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-        row: "flex w-full mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-        day: cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
-        ),
-        day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground",
-        day_outside: "text-muted-foreground opacity-50",
-        day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-        day_hidden: "invisible",
-        ...classNames,
-      }}
-      {...props}
-    />
-  )
-}
-Calendar.displayName = "Calendar"
+    
