@@ -122,7 +122,7 @@ export async function getCounselorAppointments(counselorId: string) {
 export async function updateAppointmentStatus(appointmentId: string, status: 'confirmed' | 'cancelled') {
   try {
     const appointmentRef = doc(db, 'appointments', appointmentId);
-    await updateDoc(appointmentRef, { status: status });
+    await updateDoc(appointmentRef, { status: status, modifiedAt: serverTimestamp() });
     return { success: true };
   } catch (error: any) {
     console.error("Error updating appointment status:", error);
@@ -173,9 +173,14 @@ export async function createAppointment(userId: string, data: RequestAppointment
       date: data.preferredDate.toISOString().split('T')[0], // Store date as YYYY-MM-DD string
       time: data.preferredTime,
       contactMethod: data.contactMethod,
+      appointmentType: data.appointmentType,
+      priority: data.priority,
+      referralSource: data.referralSource || null,
+      timezone: data.timezone,
       status: 'Pending', // initial status
+      createdBy: userId,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      modifiedAt: serverTimestamp(),
     });
     return { success: true };
   } catch (error: any) {

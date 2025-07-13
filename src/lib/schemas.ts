@@ -37,9 +37,13 @@ export type ProfileInput = z.infer<typeof ProfileSchema>;
 // Schema for requesting an appointment
 export const RequestAppointmentSchema = z.object({
   counselorId: z.string().min(1, { message: "Please select a counselor." }),
-  reason: z.string().min(10, { message: "Please provide a brief reason for your visit (min. 10 characters)."}).max(500),
   preferredDate: z.date({ required_error: "Please select a preferred date."}),
   preferredTime: z.string().min(1, { message: "Please select a preferred time."}),
   contactMethod: z.enum(['video', 'chat', 'in-person'], { required_error: "Please select a contact method."}),
+  appointmentType: z.enum(['initial-consultation', 'follow-up', 'academic-support', 'crisis-support'], { required_error: "Please select an appointment type."}),
+  priority: z.enum(['normal', 'urgent'], { required_error: "Please select a priority level."}),
+  reason: z.string().min(10, { message: "Please provide a brief reason for your visit (min. 10 characters)."}).max(1000, "The reason should not exceed 1000 characters."),
+  referralSource: z.string().optional(),
+  timezone: z.string(), // Will be populated automatically
 });
 export type RequestAppointmentInput = z.infer<typeof RequestAppointmentSchema>;
