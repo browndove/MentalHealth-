@@ -14,9 +14,13 @@ import {
   serverTimestamp,
   orderBy,
   limit,
+  writeBatch,
+  Timestamp,
 } from 'firebase/firestore';
 import type { RequestAppointmentInput } from './schemas';
 import type { User } from './types';
+import { chat, type HistoryItem } from '@/ai/flows/assistant-flow';
+import { revalidatePath } from 'next/cache';
 
 
 // Helper to serialize Firestore data, converting Timestamps to ISO strings
@@ -232,4 +236,87 @@ export async function getConversationMessages(conversationId: string, userId: st
         console.error('Error fetching messages:', error);
         return { error: 'Failed to load messages for this conversation.' };
     }
+}
+
+export async function sendMessageToAi(
+  conversationId: string | null,
+  userId: string,
+  message: string
+) {
+  try {
+    let convoId = conversationId;
+    let newConversationId: string | undefined = undefined;
+    const userConversationCollection = collection(db, 'users', userId, 'conversations');
+    let conversationRef;
+
+    // If no conversationId, create a new conversation
+    if (!convoId) {
+      const newConvo = await addDoc(userConversationCollection, {
+        title: message.substring(0, 40), // Use first 40 chars as title
+        createdAt: serverTimestamp(),
+        userId: userId,
+      });
+      convoId = newConvo.id;
+      newConversationId = convoId;
+      conversationRef = doc(userConversationCollection, convoId);
+    } else {
+      conversationRef = doc(userConversationCollection, convoId);
+    }
+    
+    // Fetch previous messages for context
+    const messagesQuery = query(
+      collection(conversationRef, 'messages'),
+      orderBy('createdAt', 'asc'),
+      limit(10) // Get last 10 messages for context window
+    );
+    const messagesSnapshot = await getDocs(messagesQuery);
+    const history: HistoryItem[] = [];
+    messagesSnapshot.docs.forEach(doc => {
+        // We need pairs of user/model messages. Assuming they are interleaved.
+        const data = doc.data();
+        if (data.sender === 'user') {
+            history.push({ user: data.text, model: '' });
+        } else if (data.sender === 'ai' && history.length > 0) {
+            history[history.length - 1].model = data.text;
+        }
+    });
+
+    // Call Genkit flow
+    const aiResponse = await chat({ message, history });
+
+    // Save messages to Firestore in a batch
+    const batch = writeBatch(db);
+    const userMessageRef = doc(collection(conversationRef, 'messages'));
+    const aiMessageRef = doc(collection(conversationRef, 'messages'));
+
+    batch.set(userMessageRef, {
+      text: message,
+      sender: 'user',
+      createdAt: serverTimestamp(),
+    });
+
+    batch.set(aiMessageRef, {
+      text: aiResponse,
+      sender: 'ai',
+      createdAt: serverTimestamp(),
+    });
+
+    await batch.commit();
+
+    // Revalidate the path if a new conversation was created
+    if(newConversationId) {
+        revalidatePath('/student/ai-assistant');
+    }
+
+    return {
+      success: true,
+      aiResponse,
+      newConversationId,
+      userMessageId: userMessageRef.id,
+      aiMessageId: aiMessageRef.id,
+    };
+  } catch (error: any) {
+    console.error('Error sending message to AI:', error);
+    return { error: 'Failed to get a response from the AI assistant.' };
+  }
 }
