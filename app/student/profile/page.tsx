@@ -157,7 +157,7 @@ export default function ProfilePage() {
             )}
           </form>
         </Form>
-      </Card>
+      </div>
     </div>
   );
 }
