@@ -19,7 +19,7 @@ export const studentNavItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    title: 'My Sessions',
+    title: 'Appointments',
     href: '/student/sessions',
     icon: Calendar,
   },
