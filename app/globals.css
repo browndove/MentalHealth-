@@ -1,103 +1,103 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Light Theme - Accra TechMind */
-    --background: 204 20% 95%; /* #f0f4f7 - Light grey */
-    --foreground: 215 25% 27%; /* #1e293b */
+    /* Light Theme - Japanese Minimalism */
+    --background: 30 15% 96%; /* #f8f6f3 - Warm off-white like rice paper */
+    --foreground: 210 15% 20%; /* #2d3748 - Deep charcoal */
 
-    --card: 0 0% 100%; /* #ffffff */
-    --card-foreground: 215 25% 27%; /* #1e293b */
+    --card: 0 0% 100%; /* #ffffff - Pure white */
+    --card-foreground: 210 15% 20%; /* #2d3748 */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
+    --popover-foreground: 210 15% 20%;
 
-    --primary: 206 90% 68%; /* #64B5F6 - Soft blue */
-    --primary-foreground: 215 25% 27%;
+    --primary: 210 100% 45%; /* #0066cc - Deep indigo blue (瑠璃色 - Ruri-iro) */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 13% 91%; /* #e2e8f0 */
-    --secondary-foreground: 215 25% 27%;
+    --secondary: 210 20% 92%; /* #eef2f6 - Soft grey like morning mist */
+    --secondary-foreground: 210 15% 20%;
 
-    --muted: 220 16% 96%; /* #f1f5f9 */
-    --muted-foreground: 215 14% 53%; /* #64748b */
+    --muted: 30 20% 94%; /* #f4f2ef - Warm neutral like tatami */
+    --muted-foreground: 210 10% 45%; /* #6b7280 */
 
-    --accent: 174 44% 60%; /* #4DB6AC - Muted teal */
-    --accent-foreground: 215 25% 27%;
+    --accent: 15 40% 70%; /* #b8956a - Warm gold (山吹色 - Yamabuki-iro) */
+    --accent-foreground: 210 15% 20%;
     
-    --destructive: 0 84% 60%; /* #ef4444 */
+    --destructive: 0 70% 55%; /* #dc2626 - Traditional red (紅色 - Beni-iro) */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%; /* #e2e8f0 */
-    --input: 220 13% 91%;
-    --ring: 206 90% 68%; /* primary */
+    --border: 210 15% 88%; /* #e2e8f0 - Subtle border like ink wash */
+    --input: 210 15% 88%;
+    --ring: 210 100% 45%; /* primary */
 
-    --radius: 0.75rem; /* 12px */
+    --radius: 0.875rem; /* 14px - Slightly more rounded for Japanese aesthetic */
     
-    /* Chart colors */
-    --chart-1: 206 90% 68%; /* primary */
-    --chart-2: 174 44% 60%; /* accent */
-    --chart-3: 217 91% 60%; /* Blue status */
-    --chart-4: 39 91% 55%; /* Yellow status */
-    --chart-5: 215 14% 53%; /* A neutral grey */
+    /* Chart colors - Japanese color palette */
+    --chart-1: 210 100% 45%; /* 瑠璃色 - Ruri-iro (lapis lazuli) */
+    --chart-2: 15 40% 70%; /* 山吹色 - Yamabuki-iro (golden yellow) */
+    --chart-3: 160 45% 55%; /* 青緑色 - Ao-midori (blue-green) */
+    --chart-4: 300 25% 65%; /* 藤色 - Fuji-iro (wisteria) */
+    --chart-5: 25 35% 75%; /* 肌色 - Hada-iro (skin tone) */
     
-    /* Sidebar specific colors */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 25% 27%;
-    --sidebar-primary: 206 90% 68%; /* primary */
+    /* Sidebar specific colors - Japanese aesthetic */
+    --sidebar-background: 30 25% 97%; /* #faf9f6 - Warmer white like shoji paper */
+    --sidebar-foreground: 210 15% 20%;
+    --sidebar-primary: 210 100% 45%; /* 瑠璃色 - Ruri-iro */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 204 20% 95%; /* background */
-    --sidebar-accent-foreground: 215 25% 27%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 206 90% 68%;
+    --sidebar-accent: 30 20% 94%; /* Warm muted tone */
+    --sidebar-accent-foreground: 210 15% 20%;
+    --sidebar-border: 210 15% 85%; /* Subtle like ink wash */
+    --sidebar-ring: 210 100% 45%;
   }
 
   .dark {
-    /* Dark Theme - Accra TechMind */
-    --background: 210 10% 23%; /* #333a45 */
-    --foreground: 210 40% 98%; /* #e5e7eb */
+    /* Dark Theme - Japanese Night Aesthetic */
+    --background: 210 20% 8%; /* #0f1419 - Deep night blue like sumi ink */
+    --foreground: 30 15% 92%; /* #eae6e0 - Warm white like moonlight */
 
-    --card: 210 10% 15%; /* #222730 */
-    --card-foreground: 210 40% 98%;
+    --card: 210 20% 12%; /* #1a202c - Deep card background */
+    --card-foreground: 30 15% 92%;
 
-    --popover: 210 10% 15%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 210 20% 12%;
+    --popover-foreground: 30 15% 92%;
 
-    --primary: 206 90% 68%; /* #64B5F6 - Soft blue */
-    --primary-foreground: 215 25% 27%;
+    --primary: 210 85% 65%; /* #4da6ff - Lighter blue for dark mode */
+    --primary-foreground: 210 20% 8%;
 
-    --secondary: 217 33% 17%; /* #1f2937 */
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 210 25% 16%; /* #2a3441 - Darker secondary */
+    --secondary-foreground: 30 15% 92%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 210 25% 16%;
+    --muted-foreground: 210 15% 70%; /* #9ca3af */
 
-    --accent: 174 44% 60%; /* #4DB6AC - Muted teal */
-    --accent-foreground: 215 25% 27%;
+    --accent: 25 45% 65%; /* #c4956c - Warm gold for dark mode */
+    --accent-foreground: 210 20% 8%;
     
-    --destructive: 0 63% 51%; /* #ef4444 */
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 65% 60%; /* #e53e3e - Softer red for dark mode */
+    --destructive-foreground: 30 15% 92%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 206 90% 68%;
+    --border: 210 25% 20%; /* #374151 - Subtle border */
+    --input: 210 25% 20%;
+    --ring: 210 85% 65%;
     
-    --chart-1: 206 90% 68%;
-    --chart-2: 174 44% 60%;
-    --chart-3: 217 91% 60%;
-    --chart-4: 39 91% 55%;
-    --chart-5: 215 20% 65%;
+    /* Chart colors - Japanese dark palette */
+    --chart-1: 210 85% 65%; /* Lighter blue */
+    --chart-2: 25 45% 65%; /* Warm gold */
+    --chart-3: 160 40% 60%; /* Muted teal */
+    --chart-4: 300 30% 70%; /* Soft purple */
+    --chart-5: 210 15% 70%; /* Neutral grey */
 
-    --sidebar-background: 210 10% 15%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 206 90% 68%;
-    --sidebar-primary-foreground: 215 25% 27%;
-    --sidebar-accent: 210 10% 23%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 206 90% 68%;
+    --sidebar-background: 210 25% 10%; /* #141b24 - Deep sidebar background */
+    --sidebar-foreground: 30 15% 92%;
+    --sidebar-primary: 210 85% 65%;
+    --sidebar-primary-foreground: 210 20% 8%;
+    --sidebar-accent: 210 20% 8%;
+    --sidebar-accent-foreground: 30 15% 92%;
+    --sidebar-border: 210 25% 20%;
+    --sidebar-ring: 210 85% 65%;
   }
 }
 
@@ -109,31 +109,146 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Japanese typography enhancement */
+    font-variant-numeric: tabular-nums;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer utilities {
-  @keyframes speaking-pulse {
+  /* Japanese-inspired animations */
+  
+  @keyframes zen-pulse {
     0%, 100% {
-      box-shadow: 0 0 0 0px hsl(var(--primary) / 0.7);
+      box-shadow: 0 0 0 0px hsl(var(--primary) / 0.4);
+      transform: scale(1);
     }
     50% {
-      box-shadow: 0 0 0 4px hsl(var(--primary) / 0.3);
+      box-shadow: 0 0 0 8px hsl(var(--primary) / 0.1);
+      transform: scale(1.02);
     }
   }
-  .animate-speaking-pulse {
-    animation: speaking-pulse 2s infinite;
+  .animate-zen-pulse {
+    animation: zen-pulse 3s ease-in-out infinite;
   }
 
-  @keyframes mic-pulse {
-    0%, 100% {
-      filter: drop-shadow(0 0 2px hsl(var(--primary) / 0.6));
+  @keyframes ink-drop {
+    0% {
+      filter: drop-shadow(0 0 2px hsl(var(--primary) / 0.3));
+      transform: scale(1);
     }
     50% {
-      filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.9));
+      filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.6));
+      transform: scale(1.05);
+    }
+    100% {
+      filter: drop-shadow(0 0 2px hsl(var(--primary) / 0.3));
+      transform: scale(1);
     }
   }
-  .animate-mic-pulse {
-    animation: mic-pulse 1.5s ease-in-out infinite;
+  .animate-ink-drop {
+    animation: ink-drop 2.5s ease-in-out infinite;
+  }
+
+  @keyframes paper-fold {
+    0% {
+      transform: perspective(400px) rotateY(0deg);
+      opacity: 1;
+    }
+    50% {
+      transform: perspective(400px) rotateY(-5deg);
+      opacity: 0.9;
+    }
+    100% {
+      transform: perspective(400px) rotateY(0deg);
+      opacity: 1;
+    }
+  }
+  .animate-paper-fold {
+    animation: paper-fold 4s ease-in-out infinite;
+  }
+
+  @keyframes ripple {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+  .animate-ripple {
+    animation: ripple 0.6s linear;
+  }
+
+  /* Japanese-inspired utility classes */
+  .text-shadow-subtle {
+    text-shadow: 0 1px 3px hsl(var(--foreground) / 0.1);
+  }
+
+  .bg-washi {
+    background-image: 
+      radial-gradient(circle at 25% 25%, hsl(var(--muted) / 0.3) 1px, transparent 1px),
+      radial-gradient(circle at 75% 75%, hsl(var(--muted) / 0.2) 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+  }
+
+  .bg-tatami {
+    background-image: 
+      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .border-ink {
+    border-color: hsl(var(--border));
+    border-style: solid;
+    border-width: 1px;
+  }
+
+  .shadow-paper {
+    box-shadow: 
+      0 1px 3px hsl(var(--foreground) / 0.1),
+      0 1px 2px hsl(var(--foreground) / 0.06);
+  }
+
+  .shadow-origami {
+    box-shadow: 
+      0 4px 6px -1px hsl(var(--foreground) / 0.1),
+      0 2px 4px -1px hsl(var(--foreground) / 0.06);
+  }
+
+  .shadow-zen {
+    box-shadow: 
+      0 10px 15px -3px hsl(var(--foreground) / 0.1),
+      0 4px 6px -2px hsl(var(--foreground) / 0.05);
+  }
+
+  /* Scrollbar styling for Japanese aesthetic */
+  .scrollbar-zen {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+
+  .scrollbar-zen::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-zen::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-zen::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+    border: none;
+  }
+
+  .scrollbar-zen::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
   }
 }
