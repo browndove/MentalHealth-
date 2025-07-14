@@ -1,0 +1,139 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Theme - Accra TechMind */
+    --background: 204 20% 95%; /* #f0f4f7 - Light grey */
+    --foreground: 215 25% 27%; /* #1e293b */
+
+    --card: 0 0% 100%; /* #ffffff */
+    --card-foreground: 215 25% 27%; /* #1e293b */
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 27%;
+
+    --primary: 206 90% 68%; /* #64B5F6 - Soft blue */
+    --primary-foreground: 215 25% 27%;
+
+    --secondary: 220 13% 91%; /* #e2e8f0 */
+    --secondary-foreground: 215 25% 27%;
+
+    --muted: 220 16% 96%; /* #f1f5f9 */
+    --muted-foreground: 215 14% 53%; /* #64748b */
+
+    --accent: 174 44% 60%; /* #4DB6AC - Muted teal */
+    --accent-foreground: 215 25% 27%;
+    
+    --destructive: 0 84% 60%; /* #ef4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%; /* #e2e8f0 */
+    --input: 220 13% 91%;
+    --ring: 206 90% 68%; /* primary */
+
+    --radius: 0.75rem; /* 12px */
+    
+    /* Chart colors */
+    --chart-1: 206 90% 68%; /* primary */
+    --chart-2: 174 44% 60%; /* accent */
+    --chart-3: 217 91% 60%; /* Blue status */
+    --chart-4: 39 91% 55%; /* Yellow status */
+    --chart-5: 215 14% 53%; /* A neutral grey */
+    
+    /* Sidebar specific colors */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 27%;
+    --sidebar-primary: 206 90% 68%; /* primary */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 204 20% 95%; /* background */
+    --sidebar-accent-foreground: 215 25% 27%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 206 90% 68%;
+  }
+
+  .dark {
+    /* Dark Theme - Accra TechMind */
+    --background: 210 10% 23%; /* #333a45 */
+    --foreground: 210 40% 98%; /* #e5e7eb */
+
+    --card: 210 10% 15%; /* #222730 */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 210 10% 15%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 206 90% 68%; /* #64B5F6 - Soft blue */
+    --primary-foreground: 215 25% 27%;
+
+    --secondary: 217 33% 17%; /* #1f2937 */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 174 44% 60%; /* #4DB6AC - Muted teal */
+    --accent-foreground: 215 25% 27%;
+    
+    --destructive: 0 63% 51%; /* #ef4444 */
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 206 90% 68%;
+    
+    --chart-1: 206 90% 68%;
+    --chart-2: 174 44% 60%;
+    --chart-3: 217 91% 60%;
+    --chart-4: 39 91% 55%;
+    --chart-5: 215 20% 65%;
+
+    --sidebar-background: 210 10% 15%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 206 90% 68%;
+    --sidebar-primary-foreground: 215 25% 27%;
+    --sidebar-accent: 210 10% 23%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 206 90% 68%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+@layer utilities {
+  @keyframes speaking-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0px hsl(var(--primary) / 0.7);
+    }
+    50% {
+      box-shadow: 0 0 0 4px hsl(var(--primary) / 0.3);
+    }
+  }
+  .animate-speaking-pulse {
+    animation: speaking-pulse 2s infinite;
+  }
+
+  @keyframes mic-pulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 2px hsl(var(--primary) / 0.6));
+    }
+    50% {
+      filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.9));
+    }
+  }
+  .animate-mic-pulse {
+    animation: mic-pulse 1.5s ease-in-out infinite;
+  }
+}

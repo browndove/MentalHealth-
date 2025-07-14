@@ -1,0 +1,160 @@
+
+'use client';
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Search, PlusCircle, FileText, Loader2, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { useAuth } from "@/contexts/AuthContext";
+import { getStudentSessions } from "@/lib/actions";
+import { useState, useEffect, useCallback } from "react";
+import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface Note {
+  id: string;
+  sessionId: string;
+  studentName: string;
+  sessionDate: string;
+  summaryPreview: string;
+  lastUpdated: string;
+}
+
+export default function CounselorNotesPage() {
+  const { user } = useAuth();
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const fetchNotes = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      // In a real app, you'd fetch notes. We're using completed sessions as a proxy.
+      const sessionsResult = await getStudentSessions(user.uid, true); // Assume this can fetch for counselor
+      if (sessionsResult.error) throw new Error(sessionsResult.error);
+      
+      const completedSessions = sessionsResult.data.filter(s => s.status === 'Completed');
+      
+      const formattedNotes = completedSessions.map(session => ({
+        id: session.id,
+        sessionId: session.id,
+        studentName: session.studentName || 'Unknown Student',
+        sessionDate: format(new Date(session.date), 'PPP'),
+        summaryPreview: session.reasonPreview || "No preview available.",
+        lastUpdated: session.updatedAt ? format(new Date(session.updatedAt.toDate()), 'PPp') : format(new Date(), 'PPp'),
+      }));
+      setNotes(formattedNotes);
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
+
+  const filteredNotes = notes.filter(note =>
+    note.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    note.sessionDate.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const renderSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[...Array(6)].map((_, i) => (
+         <Card key={i} className="flex flex-col">
+            <CardHeader>
+                <Skeleton className="h-5 w-3/5" />
+                <Skeleton className="h-3 w-2/5" />
+            </CardHeader>
+            <CardContent className="flex-grow space-y-2">
+                 <Skeleton className="h-4 w-full" />
+                 <Skeleton className="h-4 w-full" />
+                 <Skeleton className="h-4 w-4/5" />
+            </CardContent>
+            <CardFooter>
+                 <Skeleton className="h-10 w-full" />
+            </CardFooter>
+         </Card>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Session Notes</h1>
+          <p className="text-muted-foreground">Access and manage your confidential session notes.</p>
+        </div>
+        <div className="flex gap-2 items-center w-full md:w-auto">
+          <div className="relative flex-1 md:flex-initial md:w-64">
+            <Input 
+              type="search" 
+              placeholder="Search by student or date..." 
+              className="pl-10" 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          </div>
+          <Button asChild>
+            <Link href="/counselor/students">
+              <PlusCircle className="mr-2 h-4 w-4" /> New Note
+            </Link>
+          </Button>
+        </div>
+      </div>
+      
+      {error && (
+        <Card className="bg-destructive/10 border-destructive shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive"><AlertTriangle/> Error</CardTitle>
+          </CardHeader>
+          <CardContent><p className="text-destructive-foreground">{error}</p></CardContent>
+        </Card>
+      )}
+
+      {loading ? (
+        renderSkeleton()
+      ) : filteredNotes.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredNotes.map(note => (
+            <Card key={note.id} className="hover:shadow-xl transition-shadow duration-300 flex flex-col bg-card">
+              <CardHeader>
+                <CardTitle>{note.studentName}</CardTitle>
+                <CardDescription>Session: {note.sessionDate}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <p className="text-sm text-muted-foreground line-clamp-3 italic">&quot;{note.summaryPreview}&quot;</p>
+              </CardContent>
+              <CardFooter className="border-t pt-4 flex flex-col items-start gap-2">
+                <Button asChild className="w-full">
+                  <Link href={`/counselor/sessions/${note.sessionId}/notes`}>
+                    <FileText className="mr-2 h-4 w-4" /> View/Edit Note
+                  </Link>
+                </Button>
+                 <p className="text-xs text-muted-foreground w-full text-right">Last updated: {note.lastUpdated}</p>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card className="shadow-lg">
+          <CardContent className="pt-6 text-center flex flex-col items-center justify-center p-12">
+            <Image src="https://placehold.co/300x200.png" alt="No notes found" width={300} height={200} className="mx-auto mb-4 rounded-xl" data-ai-hint="empty notebook illustration" />
+            <h3 className="text-xl font-semibold">No Notes Found</h3>
+            <p className="text-muted-foreground mt-2 max-w-sm">Create a new note for a completed session via the student list to get started.</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
